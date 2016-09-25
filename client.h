@@ -14,11 +14,14 @@ public:
     ~Client();
 private:
     // variables
-    struct addrinfo *m_p;
-    struct addrinfo *m_servinfo;
+    struct addrinfo* m_p;
+    struct addrinfo* m_servinfo;
     int m_sockfd;
+    char m_rcv_buf[MAXBUFLEN];
     // functions
-
+    static void* timer_countdown(void* parameters);
+    int create_socket_server(const char* port);
+    void handle_syn_ack(char resp[MAXBUFLEN]);  // return port of child server
 };
 
 #endif  // CLIENT_H
