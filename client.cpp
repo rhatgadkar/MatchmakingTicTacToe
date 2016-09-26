@@ -151,3 +151,29 @@ void Client::handle_syn_ack(char resp[MAXBUFLEN])
     cout << "Received ACK from server." << endl;
     memcpy(resp, buf, MAXBUFLEN);
 }
+
+int Client::send_position(int pos)
+{
+    int numbytes;
+
+    char buf[1];
+    buf[0] = pos + '0';
+    numbytes = sendto(m_sockfd, buf, 1, 0, m_p->ai_addr, m_p->ai_addrlen);
+    if (numbytes == -1)
+        return -1;
+    return 0;
+}
+
+int Client::receive_position()
+{
+    int numbytes;
+    struct sockaddr_storage their_addr;
+    socklen_t addr_len;
+
+    char buf[1];
+    numbytes = recvfrom(m_sockfd, buf, 1, 0, (struct sockaddr*)&their_addr,
+                        &addr_len);
+    if (numbytes == -1)
+        return -1;
+    return (buf[0] - '0');
+}

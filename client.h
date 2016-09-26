@@ -12,8 +12,11 @@ class Client
 public:
     Client();
     ~Client();
+    int send_position(int pos);
+    int receive_position();
 private:
     // variables
+    bool m_is_p1;
     struct addrinfo* m_p;
     struct addrinfo* m_servinfo;
     int m_sockfd;
