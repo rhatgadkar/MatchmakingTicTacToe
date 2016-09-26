@@ -43,6 +43,19 @@ Client::Client()
     }
     memset(m_rcv_buf, 0, MAXBUFLEN);
     handle_syn_ack(m_rcv_buf);
+
+    if (strcmp(m_rcv_buf, "player-1") == 0)
+    {
+        cout << "You are player 1." << endl;
+        m_is_p1 = true;
+    }
+    else if (strcmp(m_rcv_buf, "player-2") == 0)
+    {
+        cout << "You are player 2." << endl;
+        m_is_p1 = false;
+    }
+    else
+        cout << "hmm.  error." << endl;
 }
 
 Client::~Client()
@@ -110,7 +123,7 @@ void* Client::timer_countdown(void* parameters)
     do
     {
         time(&end);
-        if (got_ack)
+        if (*got_ack)
             return NULL;
     } while(difftime(end, start) < 15);
     cout << "Did not receive ACK in under 15 seconds.  Exiting." << endl;

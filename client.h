@@ -14,6 +14,7 @@ public:
     ~Client();
     int send_position(int pos);
     int receive_position();
+    bool is_p1() { return m_is_p1; }
 private:
     // variables
     bool m_is_p1;
