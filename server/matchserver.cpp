@@ -267,6 +267,14 @@ void create_child_process(int curr_port)
                         perror("server: ACK to second_addr");
                         exit(1);
                     }
+                    if ((numbytes = sendto(sockfd, "player-2",
+                                           strlen("player-2"), 0,
+                                           (struct sockaddr*)&first_addr,
+                                           addr_len)) == -1)
+                    {
+                        perror("server: ACK to first_addr for second_addr");
+                        exit(1);
+                    }
 
                     printf("Second client connected.\n");
                 }
@@ -300,6 +308,13 @@ void create_child_process(int curr_port)
                 else if (found_first_addr && !found_second_addr)
                 {
                     printf("Waiting for second client to connect...\n");
+/*                    char* msg = "Waiting for Player 2 to connect...";
+                    if ((numbytes = sendto(sockfd, msg, strlen(msg), 0,
+                             (struct sockaddr*)&first_addr, addr_len)) == -1)
+                    {
+                        perror("server: forward waiting to first_addr");
+                        exit(1);
+                    }*/
                 }
             }
         }

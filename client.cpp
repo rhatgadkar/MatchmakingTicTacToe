@@ -44,10 +44,29 @@ Client::Client()
     memset(m_rcv_buf, 0, MAXBUFLEN);
     handle_syn_ack(m_rcv_buf);
 
+    // get assigned player-1 or player-2
     if (strcmp(m_rcv_buf, "player-1") == 0)
     {
         cout << "You are player 1." << endl;
         m_is_p1 = true;
+        cout << "Waiting for player 2 to connect..." << endl;
+        
+        int numbytes;
+        struct sockaddr_storage their_addr;
+        socklen_t addr_len;
+
+        addr_len = sizeof(their_addr);
+        
+        numbytes = recvfrom(m_sockfd, m_rcv_buf, 1, 0,
+                            (struct sockaddr*)&their_addr, &addr_len);
+        if (numbytes == -1)
+            perror("recvfrom ACK");
+
+        if (strcmp(m_rcv_buf, "player-2") == 0)
+        {
+            cout << "Player 2 has connected.  Starting game." << endl;
+        }
+
     }
     else if (strcmp(m_rcv_buf, "player-2") == 0)
     {
@@ -182,8 +201,10 @@ int Client::receive_position()
     int numbytes;
     struct sockaddr_storage their_addr;
     socklen_t addr_len;
-
     char buf[1];
+
+    addr_len = sizeof(their_addr);
+
     numbytes = recvfrom(m_sockfd, buf, 1, 0, (struct sockaddr*)&their_addr,
                         &addr_len);
     if (numbytes == -1)
