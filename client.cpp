@@ -18,6 +18,7 @@ Client::Client()
     m_servinfo = NULL;
 
     int res;
+    char buf[MAXBUFLEN];
 
     // connect to parent server
     res = create_socket_server(SERVERPORT);
@@ -26,8 +27,8 @@ Client::Client()
         cout << "Could not create socket to parent server.  Exiting" << endl;
         exit(1);
     }
-    memset(m_rcv_buf, 0, MAXBUFLEN);
-    handle_syn_ack(m_rcv_buf);
+    memset(buf, 0, MAXBUFLEN);
+    handle_syn_ack(buf);
 
     // close connection to parent server
     close(m_sockfd);
@@ -35,40 +36,33 @@ Client::Client()
 
     // connect to child server
     sleep(2);
-    res = create_socket_server(m_rcv_buf);
+    res = create_socket_server(buf);
     if (res != 0)
     {
         cout << "Could not create socket to child server.  Exiting" << endl;
         exit(1);
     }
-    memset(m_rcv_buf, 0, MAXBUFLEN);
-    handle_syn_ack(m_rcv_buf);
+    memset(buf, 0, MAXBUFLEN);
+    handle_syn_ack(buf);
 
     // get assigned player-1 or player-2
-    if (strcmp(m_rcv_buf, "player-1") == 0)
+    if (strcmp(buf, "player-1") == 0)
     {
         cout << "You are player 1." << endl;
         m_is_p1 = true;
         cout << "Waiting for player 2 to connect..." << endl;
         
-        int numbytes;
-        struct sockaddr_storage their_addr;
-        socklen_t addr_len;
-
-        addr_len = sizeof(their_addr);
-        
-        numbytes = recvfrom(m_sockfd, m_rcv_buf, 1, 0,
-                            (struct sockaddr*)&their_addr, &addr_len);
-        if (numbytes == -1)
+        res = receive_from_server(buf, MAXBUFLEN);
+        if (res == -1)
             perror("recvfrom ACK");
 
-        if (strcmp(m_rcv_buf, "player-2") == 0)
+        if (strcmp(buf, "player-2") == 0)
         {
             cout << "Player 2 has connected.  Starting game." << endl;
         }
 
     }
-    else if (strcmp(m_rcv_buf, "player-2") == 0)
+    else if (strcmp(buf, "player-2") == 0)
     {
         cout << "You are player 2." << endl;
         m_is_p1 = false;
@@ -85,7 +79,7 @@ Client::~Client()
     {
         cout << "Client is exiting.  Closing server." << endl;
 
-        res = sendto(m_sockfd, "bye", 3, 0, m_p->ai_addr, m_p->ai_addrlen);
+        res = send_to_server("bye");
         if (res == -1)
             perror("client: sendto exiting");
 
@@ -98,7 +92,6 @@ int Client::create_socket_server(const char* port)
 {
     struct addrinfo hints;
     int rv;
-    int numbytes;
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
@@ -152,20 +145,17 @@ void* Client::timer_countdown(void* parameters)
 
 void Client::handle_syn_ack(char resp[MAXBUFLEN])
 {
-    int numbytes;
+    int res;
     char buf[MAXBUFLEN];
-    struct sockaddr_storage their_addr;
-    socklen_t addr_len;
     int got_ack;
     
     memset(buf, 0, MAXBUFLEN);
-    addr_len = sizeof(their_addr);
     got_ack = 0;
     
     // send initial SYN and make sure receive ACK from server within certain
     // time.  if not receive ACK within 15 seconds, exit client.
-    numbytes = sendto(m_sockfd, "SYN", 3, 0, m_p->ai_addr, m_p->ai_addrlen);
-    if (numbytes == -1)
+    res = send_to_server("SYN");
+    if (res == -1)
     {
         perror("client: SYN");
         exit(1);
@@ -174,9 +164,8 @@ void Client::handle_syn_ack(char resp[MAXBUFLEN])
     pthread_t thread_timer;
     pthread_create(&thread_timer, NULL, &(Client::timer_countdown), &got_ack);
 
-    numbytes = recvfrom(m_sockfd, buf, MAXBUFLEN-1, 0,
-                        (struct sockaddr*)&their_addr, &addr_len);
-    if (numbytes == -1)
+    res = receive_from_server(buf, MAXBUFLEN);
+    if (res == -1)
         perror("recvfrom ACK");
     
     got_ack = 1;
@@ -186,28 +175,57 @@ void Client::handle_syn_ack(char resp[MAXBUFLEN])
 
 int Client::send_position(int pos)
 {
-    int numbytes;
+    int res;
+    char buf[MAXBUFLEN];
 
-    char buf[1];
+    memset(buf, 0, MAXBUFLEN);
     buf[0] = pos + '0';
-    numbytes = sendto(m_sockfd, buf, 1, 0, m_p->ai_addr, m_p->ai_addrlen);
-    if (numbytes == -1)
+    
+    res = send_to_server(buf);
+    if (res == -1)
         return -1;
     return 0;
 }
 
 int Client::receive_position()
 {
+    int res;
+    char buf[MAXBUFLEN];
+
+    memset(buf, 0, MAXBUFLEN);
+
+    res = receive_from_server(buf, MAXBUFLEN);
+    if (res == -1)
+        return -1;
+    return (buf[0] - '0');
+}
+
+int Client::send_to_server(const char* text)
+{
+    int numbytes;
+    
+    numbytes = sendto(m_sockfd, text, strlen(text), 0, m_p->ai_addr,
+                      m_p->ai_addrlen);
+    if (numbytes == -1)
+        return -1;
+    return 0;
+}
+
+int Client::receive_from_server(char* buf, size_t size)
+{
     int numbytes;
     struct sockaddr_storage their_addr;
     socklen_t addr_len;
-    char buf[1];
 
     addr_len = sizeof(their_addr);
+    do
+    {
+        numbytes = recvfrom(m_sockfd, buf, size, 0,
+                            (struct sockaddr*)&their_addr, &addr_len);
+    } while (memcmp((struct sockaddr*)&their_addr, m_p->ai_addr,
+                    sizeof(struct sockaddr)) != 0);
 
-    numbytes = recvfrom(m_sockfd, buf, 1, 0, (struct sockaddr*)&their_addr,
-                        &addr_len);
     if (numbytes == -1)
         return -1;
-    return (buf[0] - '0');
+    return 0;
 }
