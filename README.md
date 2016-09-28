@@ -1,1 +1,1 @@
-TicTacToe game.  Currently supports 2 player functionality.
+Networked matchmaking TicTacToe game.  Pairs of players automatically get matched to a game.
