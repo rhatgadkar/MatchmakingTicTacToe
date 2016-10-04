@@ -54,7 +54,10 @@ Client::Client()
         
         res = receive_from_server(buf, MAXBUFLEN);
         if (res == -1)
+        {
             perror("recvfrom ACK");
+            exit(1);
+        }
 
         if (strcmp(buf, "player-2") == 0)
         {
@@ -81,7 +84,10 @@ Client::~Client()
 
         res = send_to_server("bye");
         if (res == -1)
+        {
             perror("client: sendto exiting");
+            exit(1);
+        }
 
         close(m_sockfd);
         freeaddrinfo(m_servinfo);
@@ -166,7 +172,10 @@ void Client::handle_syn_ack(char resp[MAXBUFLEN])
 
     res = receive_from_server(buf, MAXBUFLEN);
     if (res == -1)
+    {
         perror("recvfrom ACK");
+        exit(1);
+    }
     
     got_ack = 1;
     cout << "Received ACK from server." << endl;
