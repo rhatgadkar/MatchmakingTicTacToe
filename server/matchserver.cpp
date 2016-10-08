@@ -53,7 +53,9 @@ void* kill_zombie_process(void* parameters)
             }
             close(fd);
             port = (int)strtol(buf, (char**)NULL, 10);
+            pthread_mutex_lock(&ports_used_mutex);
             params->ports_used->erase(port);
+            pthread_mutex_unlock(&ports_used_mutex);
         }
     }
     return NULL;
@@ -133,9 +135,11 @@ int main()
     for (;;)
     {
         handle_syn_port(sockfd, curr_port, client_port, ports_used);
-            
+
+        pthread_mutex_lock(&ports_used_mutex);
         if (ports_used[curr_port] == 1)
             create_match_server(curr_port);
+        pthread_mutex_unlock(&ports_used_mutex);
     }
     
     close(sockfd);

@@ -11,6 +11,8 @@ using namespace std;
 #define LISTENPORT 4950  // the port clients will be connecting to
 #define MAXBUFLEN 100
 
+pthread_mutex_t ports_used_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 int setup_connection(int& sockfd, struct addrinfo* servinfo, int port_int)
 {
     int status;
@@ -84,6 +86,7 @@ void handle_syn_port(int sockfd, int& curr_port, int& client_port,
 
     curr_port = LISTENPORT + 1;
     // priority should be to find count == 1 first
+    pthread_mutex_lock(&ports_used_mutex);
     for (; curr_port <= client_port; curr_port++)
     {
         if (ports_used[curr_port] == 1)
@@ -107,6 +110,7 @@ void handle_syn_port(int sockfd, int& curr_port, int& client_port,
     }
     else
         ports_used[curr_port] = 2;
+    pthread_mutex_unlock(&ports_used_mutex);
 
     sprintf(port, "%d", curr_port);
     status = send_to_address(sockfd, port, &their_addr);
