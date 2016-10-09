@@ -3,12 +3,9 @@
 
 #include <map>
 #include <netinet/in.h>
-#include <pthread.h>
 
 #define LISTENPORT 4950  // the port clients will be connecting to
 #define MAXBUFLEN 100
-
-extern pthread_mutex_t ports_used_mutex;
 
 static int receive_from(int sockfd, char* buf, size_t size,
                         struct sockaddr* their_addr);

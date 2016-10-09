@@ -3,7 +3,7 @@
 #include <cstdio>
 #include <unistd.h>
 #include <map>
-#include <pthread.h>
+#include <signal.h>
 #include <fcntl.h>
 #include <iostream>
 #include <sys/types.h>
@@ -14,51 +14,34 @@ using namespace std;
 
 const char* file = "file.txt";
 
-struct kill_zombie_params
-{
-    map<int, int>* ports_used;
-};
+map<int, int> ports_used;
 
-void* kill_zombie_process(void* parameters)
+void sigchld_handler(int s)
 {
-    if (parameters == NULL)
-    {
-        cerr << "params is NULL" << endl;
-        exit(1);
-    }
-    
     int fd;
     struct flock lock_r;
     int status;
     char buf[MAXBUFLEN];
     int port;
     
-    struct kill_zombie_params* params = (struct kill_zombie_params*)parameters;
-
-    for (;;)
+    while(waitpid(-1, NULL, WNOHANG) > 0)
     {
-        waitpid(-1, &status, WNOHANG);  // kill zombie process
-        if (WIFEXITED(status))
+        fd = open(file, O_RDONLY);
+        memset(&lock_r, 0, sizeof(lock_r));
+        lock_r.l_type = F_RDLCK;
+        fcntl(fd, F_SETLKW, &lock_r);
+        memset(buf, 0, MAXBUFLEN);
+        status = read(fd, buf, MAXBUFLEN);
+        if (status == -1)
         {
-            fd = open(file, O_RDONLY);
-            memset(&lock_r, 0, sizeof(lock_r));
-            lock_r.l_type = F_RDLCK;
-            fcntl(fd, F_SETLKW, &lock_r);
-            memset(buf, 0, MAXBUFLEN);
-            status = read(fd, buf, MAXBUFLEN);
-            if (status == -1)
-            {
-                perror("read port file");
-                return NULL;
-            }
+            perror("read port file");
             close(fd);
-            port = (int)strtol(buf, (char**)NULL, 10);
-            pthread_mutex_lock(&ports_used_mutex);
-            params->ports_used->erase(port);
-            pthread_mutex_unlock(&ports_used_mutex);
+            return;
         }
+        close(fd);
+        port = (int)strtol(buf, (char**)NULL, 10);
+        ports_used.erase(port);
     }
-    return NULL;
 }
 
 void create_match_server(int curr_port)
@@ -122,24 +105,25 @@ int main()
 
     int curr_port;
     int client_port;
-    map<int, int> ports_used;
 
     client_port = LISTENPORT + 1;
 
-    struct kill_zombie_params zombie_params;
-    zombie_params.ports_used = &ports_used;
-    pthread_t kill_zombie_id;
-    pthread_create(&kill_zombie_id, NULL, &kill_zombie_process,
-                   &zombie_params);
+    struct sigaction sa;
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = &sigchld_handler;
+    sa.sa_flags = SA_RESTART;
+    if (sigaction(SIGCHLD, &sa, NULL) == -1)
+    {
+        perror("sigaction");
+        exit(1);
+    }
 
     for (;;)
     {
         handle_syn_port(sockfd, curr_port, client_port, ports_used);
 
-        pthread_mutex_lock(&ports_used_mutex);
         if (ports_used[curr_port] == 1)
             create_match_server(curr_port);
-        pthread_mutex_unlock(&ports_used_mutex);
     }
     
     close(sockfd);
