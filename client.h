@@ -12,9 +12,11 @@ class Client
 public:
     Client();
     ~Client();
-    int send_position(int pos);
+    bool send_position(int pos);
     int receive_position();
     bool is_p1() { return m_is_p1; }
+    bool send_giveup();
+    bool receive_giveup();
 private:
     // variables
     bool m_is_p1;

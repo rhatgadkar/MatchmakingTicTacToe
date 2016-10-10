@@ -1,16 +1,70 @@
 #include "game.h"
 #include "client.h"
 #include <iostream>
+#include <signal.h>
+#include <pthread.h>
 using namespace std;
+
+sig_atomic_t Game::sigint_check = 0;
 
 Game::Game()
 	: m_p1('x'), m_p2('o')
 {
 }
 
+void Game::sigint_handler(int s)
+{
+    Game::sigint_check = 1;
+    cout << "got SIGINT" << endl;
+}
+
+void* Game::check_sigint(void* parameters)
+{
+    Client* c = (Client*)parameters;
+
+    for (;;)
+    {
+        if (Game::sigint_check)
+        {
+            c->send_giveup();
+            cout << "You have given up" << endl;
+            exit(0);
+        }
+    }
+}
+
+void* Game::check_giveup(void* parameters)
+{
+    Client* c = (Client*)parameters;
+
+    while (!c->receive_giveup())
+    {
+    }
+
+    if (c->is_p1())
+        cout << "Player 2 has given up.  Player 1 wins." << endl;
+    else
+        cout << "Player 1 has given up.  Player 2 wins." << endl;
+    exit(0);
+}
+
 void Game::start()
 {
     Client c;
+    
+    pthread_t giveup_t;
+    pthread_create(&giveup_t, NULL, &(Game::check_giveup), &c);
+    struct sigaction sa;
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = &(Game::sigint_handler);
+    sa.sa_flags = SA_RESTART;
+    if (sigaction(SIGINT, &sa, NULL) == -1)
+    {
+        perror("sigaction");
+        exit(1);
+    }
+    pthread_t thread_sigint_id;
+    pthread_create(&thread_sigint_id, NULL, &(Game::check_sigint), &c);
 
 	bool p1turn = true;
 	for (;;)
@@ -41,8 +95,7 @@ void Game::start()
                     continue;
                 break;
             }
-            int res = c.send_position(input);
-            if (res == -1)
+            if (!c.send_position(input))
             {
                 cout << "error with send_position" << endl;
                 return;

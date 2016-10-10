@@ -182,7 +182,7 @@ void Client::handle_syn_ack(char resp[MAXBUFLEN])
     memcpy(resp, buf, MAXBUFLEN);
 }
 
-int Client::send_position(int pos)
+bool Client::send_position(int pos)
 {
     int res;
     char buf[MAXBUFLEN];
@@ -192,8 +192,18 @@ int Client::send_position(int pos)
     
     res = send_to_server(buf);
     if (res == -1)
-        return -1;
-    return 0;
+        return false;
+    return true;
+}
+
+bool Client::send_giveup()
+{
+    int res;
+
+    res = send_to_server("giveup");
+    if (res == -1)
+        return false;
+    return true;
 }
 
 int Client::receive_position()
@@ -209,10 +219,22 @@ int Client::receive_position()
     return (buf[0] - '0');
 }
 
+bool Client::receive_giveup()
+{
+    int res;
+    char buf[MAXBUFLEN];
+
+    memset(buf, 0, MAXBUFLEN);
+
+    res = receive_from_server(buf, MAXBUFLEN);
+    if (res == -1 || strcmp(buf, "giveup") != 0)
+        return false;
+    return true;
+}
+
 int Client::send_to_server(const char* text)
 {
     int numbytes;
-    
     numbytes = sendto(m_sockfd, text, strlen(text), 0, m_p->ai_addr,
                       m_p->ai_addrlen);
     if (numbytes == -1)

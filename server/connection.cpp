@@ -160,6 +160,8 @@ void handle_match_msg(int sockfd)
         cout << "Got packet from " << their_addr_str << ", "
              << their_addr_v4->sin_port << endl;
 
+        cout << "packet is: " << buf << endl;
+
         if (strcmp(buf, "bye") == 0)
         {
             if (found_first_addr && !found_second_addr)
@@ -206,6 +208,40 @@ void handle_match_msg(int sockfd)
                      << their_addr_str << ", " << their_addr_v4->sin_port
                      << endl;
 
+            }
+            return;
+        }
+        else if (strcmp(buf, "giveup") == 0)
+        {
+            cout << "Received 'giveup'" << endl;
+
+            if (found_first_addr && !found_second_addr)
+            {
+            }
+            else if (memcmp(&first_addr, &their_addr, sizeof(their_addr)) == 0)
+            {
+                // send giveup to second address
+                status = send_to_address(sockfd, "giveup",
+                                       (struct sockaddr*)&second_addr);
+                if (status == -1)
+                {
+                    perror("server: sendto");
+                    exit(1);
+                }
+            }
+            else if (memcmp(&second_addr, &their_addr, sizeof(their_addr)) == 0)
+            {
+                // send giveup to first address
+                status = send_to_address(sockfd, "giveup",
+                                       (struct sockaddr*)&first_addr);
+                if (status == -1)
+                {
+                    perror("server: sendto");
+                    exit(1);
+                }
+            }
+            else
+            {
             }
             return;
         }
