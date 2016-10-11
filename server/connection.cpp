@@ -5,6 +5,8 @@
 #include <cstdio>
 #include <iostream>
 #include <map>
+#include <cstdlib>
+#include <unistd.h>
 #include "connection.h"
 using namespace std;
 

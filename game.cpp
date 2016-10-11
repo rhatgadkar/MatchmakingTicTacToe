@@ -3,6 +3,9 @@
 #include <iostream>
 #include <signal.h>
 #include <pthread.h>
+#include <cstring>
+#include <cstdlib>
+#include <cstdio>
 using namespace std;
 
 sig_atomic_t Game::sigint_check = 0;
