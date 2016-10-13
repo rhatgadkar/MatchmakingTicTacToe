@@ -66,7 +66,6 @@ void create_match_server(int curr_port)
             cout << "hmm" << endl;
             exit(1);
         }
-
         
         int fd;
         struct flock lock_w;
@@ -94,6 +93,7 @@ int main()
 {
     int status;
     int sockfd;
+    int sockfd_client;
     struct addrinfo* servinfo;
 
     status = setup_connection(sockfd, servinfo, LISTENPORT);
@@ -102,6 +102,7 @@ int main()
         cout << "something went wrong" << endl;
         return status;
     }
+    cout << "Parent server is listening." << endl;
 
     int curr_port;
     int client_port;
@@ -120,7 +121,8 @@ int main()
 
     for (;;)
     {
-        handle_syn_port(sockfd, curr_port, client_port, ports_used);
+        handle_syn_port(sockfd, curr_port, client_port, ports_used,
+                        sockfd_client);
 
         if (ports_used[curr_port] == 1)
             create_match_server(curr_port);

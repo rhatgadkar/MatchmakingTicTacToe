@@ -151,7 +151,7 @@ int Client::create_socket_server(const char* port)
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_socktype = SOCK_STREAM;
 
     rv = getaddrinfo(SERVERIP, port, &hints, &m_servinfo);
     if (rv != 0)
@@ -169,6 +169,14 @@ int Client::create_socket_server(const char* port)
             perror("client: socket");
             continue;
         }
+
+        if ((connect(m_sockfd, m_p->ai_addr, m_p->ai_addrlen)) == -1)
+        {
+            close(m_sockfd);
+            perror("client: connect");
+            continue;
+        }
+
         break;
     }
 
@@ -295,8 +303,7 @@ bool Client::receive_giveup()
 int Client::send_to_server(const char* text)
 {
     int numbytes;
-    numbytes = sendto(m_sockfd, text, strlen(text), 0, m_p->ai_addr,
-                      m_p->ai_addrlen);
+    numbytes = send(m_sockfd, text, strlen(text), 0);
     if (numbytes == -1)
         return -1;
     return 0;
@@ -305,17 +312,7 @@ int Client::send_to_server(const char* text)
 int Client::receive_from_server(char* buf, size_t size)
 {
     int numbytes;
-    struct sockaddr_storage their_addr;
-    socklen_t addr_len;
-
-    addr_len = sizeof(their_addr);
-    do
-    {
-        numbytes = recvfrom(m_sockfd, buf, size, 0,
-                            (struct sockaddr*)&their_addr, &addr_len);
-    } while (memcmp((struct sockaddr*)&their_addr, m_p->ai_addr,
-                    sizeof(struct sockaddr)) != 0);
-
+    numbytes = recv(m_sockfd, buf, size, 0);
     if (numbytes == -1)
         return -1;
     return 0;

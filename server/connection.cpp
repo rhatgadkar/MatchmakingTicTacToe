@@ -1,12 +1,14 @@
 #include <sys/types.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <sys/socket.h>
 #include <cstring>
 #include <cstdio>
 #include <iostream>
 #include <map>
 #include <cstdlib>
 #include <unistd.h>
+#include <pthread.h>
 #include "connection.h"
 using namespace std;
 
@@ -21,7 +23,7 @@ int setup_connection(int& sockfd, struct addrinfo* servinfo, int port_int)
     
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE;  // use my IP
     sprintf(port, "%d", port_int);
 
@@ -39,6 +41,13 @@ int setup_connection(int& sockfd, struct addrinfo* servinfo, int port_int)
         {
             continue;
         }
+        int yes = 1;
+        if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes,
+                       sizeof(int)) == -1)
+        {
+            perror("setsockopt");
+            exit(1);
+        }
         if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1)
         {
             close(sockfd);
@@ -51,11 +60,18 @@ int setup_connection(int& sockfd, struct addrinfo* servinfo, int port_int)
         cerr << "Failed to bind socket" << endl;
         return 2;
     }
+
+    if ((listen(sockfd, BACKLOG)) == -1)
+    {
+        perror("listen");
+        return 2;
+    }
+
     return 0;
 }
 
 void handle_syn_port(int sockfd, int& curr_port, int& client_port,
-                     map<int, int>& ports_used)
+                     map<int, int>& ports_used, int& sockfd_client)
 {
     int status;
     struct sockaddr their_addr;
@@ -70,7 +86,15 @@ void handle_syn_port(int sockfd, int& curr_port, int& client_port,
     memset(s, 0, INET_ADDRSTRLEN);
     their_addr_v4 = NULL;
 
-    status = receive_from(sockfd, buf, MAXBUFLEN-1, &their_addr);
+    sockfd_client = accept(sockfd, &their_addr, &addr_len);
+    if (sockfd_client == -1)
+    {
+        perror("accept");
+        return;
+    }
+    cout << "Accepted client." << endl;
+
+    status = receive_from(sockfd_client, buf, MAXBUFLEN-1);
     if (status == -1)
     {
         perror("recvfrom SYN");
@@ -111,11 +135,87 @@ void handle_syn_port(int sockfd, int& curr_port, int& client_port,
         ports_used[curr_port] = 2;
 
     sprintf(port, "%d", curr_port);
-    status = send_to_address(sockfd, port, &their_addr);
+    status = send_to_address(sockfd_client, port);
     if (status == -1)
         perror("sendto ACK");
 
     cout << "Sent ACK to use port: " << port << endl;
+}
+
+struct client_thread_params
+{
+    int* sockfd_curr_client;
+    int* sockfd_other_client;
+    struct sockaddr_in* addr_v4;
+    int* exit_function;
+};
+
+void* client_thread(void* parameters)
+{
+    struct client_thread_params* params;
+    params = (struct client_thread_params*)parameters;
+
+    int status;
+    char buf[MAXBUFLEN];
+    char addr_str[INET_ADDRSTRLEN];
+
+    inet_ntop(AF_INET, &(params->addr_v4->sin_addr),
+              addr_str, sizeof(addr_str));
+    
+    while (*(params->exit_function) == 0)
+    {
+        memset(buf, 0, MAXBUFLEN);
+        
+        status = receive_from(*(params->sockfd_curr_client), buf, MAXBUFLEN-1);
+        if (status == -1)
+        {
+            perror("recv");
+        }
+        
+        if (strcmp(buf, "bye") == 0)
+        {
+            cout << "Received 'bye', closing connection to "
+                 << addr_str << ", "
+                 << params->addr_v4->sin_port
+                 << endl;
+            
+            if (*(params->sockfd_other_client) != -1)
+            {
+                // send bye to second address
+                status = send_to_address(*(params->sockfd_other_client), "bye");
+                if (status == -1)
+                {
+                    perror("server: sendto");
+                    exit(1);
+                }
+            }
+            return NULL;
+        }
+        else if (strcmp(buf, "giveup") == 0)
+        {
+            cout << "Received 'giveup'" << endl;
+
+            // send giveup to second address
+            status = send_to_address(*(params->sockfd_other_client), "giveup");
+            if (status == -1)
+            {
+                perror("server: sendto");
+                exit(1);
+            }
+            return NULL;
+        }
+        else
+        {
+            // forward message from first_addr to second_addr
+            status = send_to_address(*(params->sockfd_other_client), buf);
+            if (status == -1)
+            {
+                perror("server: forward to second_addr");
+                exit(1);
+            }
+        }
+    }
+    return NULL;
 }
 
 void handle_match_msg(int sockfd)
@@ -128,8 +228,6 @@ void handle_match_msg(int sockfd)
     struct sockaddr_in second_addr;
     memset(&first_addr, 0, sizeof(first_addr));
     memset(&second_addr, 0, sizeof(second_addr));
-    bool found_first_addr = false;
-    bool found_second_addr = false;
 
     struct sockaddr_in *first_addr_v4 = NULL;
     struct sockaddr_in *second_addr_v4 = NULL;
@@ -143,218 +241,79 @@ void handle_match_msg(int sockfd)
     socklen_t addr_len = sizeof(their_addr);
     char s[INET_ADDRSTRLEN];
 
-    for (;;)
+    int sockfd_client_1 = -1;
+    int sockfd_client_2 = -1;
+
+    int exit_function = 0;
+
+    while (sockfd_client_1 == -1 && exit_function == 0)
     {
-        memset(buf, 0, MAXBUFLEN);
-
-        cout << "Waiting to recvfrom..." << endl;
-
-        status = receive_from(sockfd, buf, MAXBUFLEN-1, &their_addr);
-        if (status == -1)
-        {
-            perror("recvfrom");
-        }
-        their_addr_v4 = (struct sockaddr_in *)&their_addr;
-
-        inet_ntop(AF_INET, &(their_addr_v4->sin_addr), their_addr_str,
-                  sizeof(their_addr_str));
-
-        cout << "Got packet from " << their_addr_str << ", "
-             << their_addr_v4->sin_port << endl;
-
-        cout << "packet is: " << buf << endl;
-
-        if (strcmp(buf, "bye") == 0)
-        {
-            if (found_first_addr && !found_second_addr)
-            {
-                cout << "Received 'bye', closing connection to "
-                     << first_addr_str << ", " << first_addr_v4->sin_port
-                     << endl;
-            }
-            else if (found_first_addr && found_second_addr)
-            {
-                cout << "Received 'bye', closing connection to "
-                     << first_addr_str << ", " << first_addr_v4->sin_port
-                     << endl;
-                cout << "Received 'bye', closing connection to "
-                     << second_addr_str << ", "
-                     << second_addr_v4->sin_port << endl;
-
-                if (memcmp(&first_addr, &their_addr, sizeof(their_addr)) == 0)
-                {
-                    // send bye to second address
-                    status = send_to_address(sockfd, "bye",
-                                           (struct sockaddr*)&second_addr);
-                    if (status == -1)
-                    {
-                        perror("server: sendto");
-                        exit(1);
-                    }
-                }
-                else if (memcmp(&second_addr, &their_addr, sizeof(their_addr)) == 0)
-                {
-                    // send bye to first address
-                    status = send_to_address(sockfd, "bye",
-                                           (struct sockaddr*)&first_addr);
-                    if (status == -1)
-                    {
-                        perror("server: sendto");
-                        exit(1);
-                    }
-                }
-            }
-            else
-            {
-                cout << "Received 'bye', closing connection to "
-                     << their_addr_str << ", " << their_addr_v4->sin_port
-                     << endl;
-
-            }
-            return;
-        }
-        else if (strcmp(buf, "giveup") == 0)
-        {
-            cout << "Received 'giveup'" << endl;
-
-            if (found_first_addr && !found_second_addr)
-            {
-            }
-            else if (memcmp(&first_addr, &their_addr, sizeof(their_addr)) == 0)
-            {
-                // send giveup to second address
-                status = send_to_address(sockfd, "giveup",
-                                       (struct sockaddr*)&second_addr);
-                if (status == -1)
-                {
-                    perror("server: sendto");
-                    exit(1);
-                }
-            }
-            else if (memcmp(&second_addr, &their_addr, sizeof(their_addr)) == 0)
-            {
-                // send giveup to first address
-                status = send_to_address(sockfd, "giveup",
-                                       (struct sockaddr*)&first_addr);
-                if (status == -1)
-                {
-                    perror("server: sendto");
-                    exit(1);
-                }
-            }
-            else
-            {
-            }
-            return;
-        }
-        else
-        {
-            if (!found_first_addr)
-            {
-                found_first_addr = true;
-                memcpy(&first_addr, &their_addr, sizeof(their_addr));
-                first_addr_v4 = (struct sockaddr_in*)&first_addr;
-
-                inet_ntop(AF_INET, &(first_addr_v4->sin_addr),
-                          first_addr_str, sizeof(first_addr_str));
-        
-                // send ACK to client 1 (player 1)
-                status = send_to_address(sockfd, "player-1",
-                                       (struct sockaddr*)&first_addr);
-                if (status == -1)
-                {
-                    perror("server: ACK to first_addr");
-                    exit(1);
-                }
-
-                cout << "Waiting for second client to connect..." << endl;
-            }
-            else if (found_first_addr && !found_second_addr &&
-                     memcmp(&first_addr, &their_addr, sizeof(their_addr)) != 0)
-            {
-                found_second_addr = true;
-                memcpy(&second_addr, &their_addr, sizeof(their_addr));
-                second_addr_v4 = (struct sockaddr_in*)&second_addr;
-
-                inet_ntop(AF_INET, &(second_addr_v4->sin_addr),
-                          second_addr_str, sizeof(second_addr_str));
-
-                // send ACK to client 2 (player 2)
-                status = send_to_address(sockfd, "player-2",
-                                       (struct sockaddr*)&second_addr);
-                if (status == -1)
-                {
-                    perror("server: ACK to second_addr");
-                    exit(1);
-                }
-                status = send_to_address(sockfd, "player-2",
-                                       (struct sockaddr*)&first_addr);
-                if (status == -1)
-                {
-                    perror("server: ACK to first_addr");
-                    exit(1);
-                }
-
-                printf("Second client connected.\n");
-            }
-            else if (found_first_addr && found_second_addr)
-            {
-                if (memcmp(&first_addr, &their_addr, sizeof(their_addr)) == 0)
-                {
-                    // forward message from first_addr to second_addr
-                    status = send_to_address(sockfd, buf,
-                                           (struct sockaddr*)&second_addr);
-                    if (status == -1)
-                    {
-                        perror("server: forward to second_addr");
-                        exit(1);
-                    }
-                }
-                else if (memcmp(&second_addr, &their_addr, sizeof(their_addr)) == 0)
-                {
-                    // forward message from second_addr to first_addr
-                    status = send_to_address(sockfd, buf,
-                                           (struct sockaddr*)&first_addr);
-                    if (status == -1)
-                    {
-                        perror("server: forward to first_addr");
-                        exit(1);
-                    }
-                }
-                else
-                {
-                    cerr << "It shouldn't go here" << endl;
-                }
-            }
-            else if (found_first_addr && !found_second_addr)
-            {
-                cout << "Waiting for second client to connect..." << endl;
-            }
-        }
+        sockfd_client_1 = accept(sockfd, &their_addr, &addr_len);
     }
+    memcpy(&first_addr, &their_addr, sizeof(their_addr));
+    first_addr_v4 = (struct sockaddr_in*)&first_addr;
+    // send ACK to client 1 (player 1)
+    status = send_to_address(sockfd_client_1, "player-1");
+    if (status == -1)
+    {
+        perror("server: ACK to first_addr");
+        exit(1);
+    }
+    cout << "Waiting for second client to connect..." << endl;
+    struct client_thread_params first_thread_params;
+    first_thread_params.sockfd_curr_client = &sockfd_client_1;
+    first_thread_params.sockfd_other_client = &sockfd_client_2;
+    first_thread_params.addr_v4 = first_addr_v4;
+    first_thread_params.exit_function = &exit_function;
+    pthread_t first_thread;
+    pthread_create(&first_thread, NULL, &client_thread, &first_thread_params);
+
+    while (sockfd_client_2 == -1 && exit_function == 0)
+    {
+        sockfd_client_2 = accept(sockfd, &their_addr, &addr_len);
+    }
+    memcpy(&second_addr, &their_addr, sizeof(their_addr));
+    second_addr_v4 = (struct sockaddr_in*)&second_addr;
+    // send ACK to client 2 (player 2)
+    status = send_to_address(sockfd_client_2, "player-2");
+    if (status == -1)
+    {
+        perror("server: ACK to second_addr");
+        exit(1);
+    }
+    status = send_to_address(sockfd_client_1, "player-2");
+    if (status == -1)
+    {
+        perror("server: ACK to first_addr");
+        exit(1);
+    }
+    cout << "Second client connected." << endl;
+    struct client_thread_params second_thread_params;
+    second_thread_params.sockfd_curr_client = &sockfd_client_2;
+    second_thread_params.sockfd_other_client = &sockfd_client_1;
+    second_thread_params.addr_v4 = second_addr_v4;
+    second_thread_params.exit_function = &exit_function;
+    pthread_t second_thread;
+    pthread_create(&second_thread, NULL, &client_thread, &second_thread_params);
+
+    pthread_join(first_thread, NULL);
+    pthread_join(second_thread, NULL);
 }
 
-int receive_from(int sockfd, char* buf, size_t size,
-                 struct sockaddr* their_addr)
+int receive_from(int sockfd, char* buf, size_t size)
 {
     int numbytes;
-    socklen_t addr_len;
-
-    addr_len = sizeof(*their_addr);
-    numbytes = recvfrom(sockfd, buf, size, 0, their_addr, &addr_len);
+    numbytes = recv(sockfd, buf, size, 0);
 
     if (numbytes == -1)
         return -1;
     return 0;
 }
 
-int send_to_address(int sockfd, const char* text, struct sockaddr* their_addr)
+int send_to_address(int sockfd, const char* text)
 {
     int numbytes;
-    socklen_t addr_len;
-
-    addr_len = sizeof(*their_addr);
-    numbytes = sendto(sockfd, text, strlen(text), 0, their_addr, addr_len);
+    numbytes = send(sockfd, text, strlen(text), 0);
     
     if (numbytes == -1)
         return -1;
