@@ -41,13 +41,13 @@ int setup_connection(int& sockfd, struct addrinfo* servinfo, int port_int)
         {
             continue;
         }
-//        int yes = 1;
-//        if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes,
-//                       sizeof(int)) == -1)
-//        {
-//            perror("setsockopt");
-//            exit(1);
-//        }
+        int yes = 1;
+        if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes,
+                       sizeof(int)) == -1)
+        {
+            perror("setsockopt");
+            exit(1);
+        }
         if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1)
         {
             close(sockfd);
@@ -252,6 +252,7 @@ void* client_thread(void* parameters)
         else
         {
             // forward message from first_addr to second_addr
+            cout << "forwarding message" << endl;
             status = send_to_address(*(params->sockfd_other_client), buf);
             if (status == -1)
             {
@@ -335,11 +336,14 @@ void handle_match_msg(int sockfd)
     else
         cout << "Thread 1 was not canceled" << endl;
     pthread_join(second_thread, &st);
-    pthread_cancel(first_thread);
+//    pthread_cancel(first_thread);
     if (st == PTHREAD_CANCELED)
         cout << "Thread 2 was canceled" << endl;
     else
         cout << "Thread 2 was not canceled" << endl;
+
+    close(sockfd_client_1);
+    close(sockfd_client_2);
 }
 
 int receive_from(int sockfd, char* buf, size_t size)

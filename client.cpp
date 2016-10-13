@@ -209,6 +209,15 @@ void* Client::timer_countdown(void* parameters)
 
 void Client::handle_syn_ack(char resp[MAXBUFLEN])
 {
+//    struct sigaction sa;
+//    memset(&sa, 0, sizeof(sa));
+//    sa.sa_handler = &(Client::sigint_ignore_handler);
+//    if (sigaction(SIGINT, &sa, NULL) == -1)
+//    {
+//        perror("sigaction");
+//        exit(1);
+//    }
+
     int res;
     char buf[MAXBUFLEN];
     int got_ack;
