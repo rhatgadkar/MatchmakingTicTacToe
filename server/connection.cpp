@@ -149,12 +149,21 @@ struct client_thread_params
     struct sockaddr_in* addr_v4;
     int* exit_function;
     int sockfd;
+    pthread_t other_id;
 };
 
 void* client_thread(void* parameters)
 {
+    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+
     struct client_thread_params* params;
     params = (struct client_thread_params*)parameters;
+
+    if (params->addr_v4 != NULL)
+        cout << "Thread 1 is running." << endl;
+    else
+        cout << "Thread 2 is running." << endl;
 
     int status;
     char buf[MAXBUFLEN];
@@ -218,6 +227,7 @@ void* client_thread(void* parameters)
                     exit(1);
                 }
             }
+            pthread_cancel(params->other_id);
             return NULL;
         }
         else if (strcmp(buf, "giveup") == 0)
@@ -233,6 +243,7 @@ void* client_thread(void* parameters)
                 perror("server: sendto");
                 exit(1);
             }
+            pthread_cancel(params->other_id);
             return NULL;
         }
         else if (*(params->sockfd_other_client) == -1)
@@ -249,6 +260,7 @@ void* client_thread(void* parameters)
             }
         }
     }
+    pthread_cancel(params->other_id);
     return NULL;
 }
 
@@ -293,13 +305,17 @@ void handle_match_msg(int sockfd)
         perror("server: ACK to first_addr");
         exit(1);
     }
+
+    pthread_t first_thread;
+    pthread_t second_thread;
+
     struct client_thread_params first_thread_params;
     first_thread_params.sockfd_curr_client = &sockfd_client_1;
     first_thread_params.sockfd_other_client = &sockfd_client_2;
     first_thread_params.addr_v4 = first_addr_v4;
     first_thread_params.exit_function = &exit_function;
     first_thread_params.sockfd = sockfd;
-    pthread_t first_thread;
+    first_thread_params.other_id = second_thread;
     pthread_create(&first_thread, NULL, &client_thread, &first_thread_params);
 
     struct client_thread_params second_thread_params;
@@ -308,11 +324,22 @@ void handle_match_msg(int sockfd)
     second_thread_params.addr_v4 = NULL;
     second_thread_params.exit_function = &exit_function;
     second_thread_params.sockfd = sockfd;
-    pthread_t second_thread;
+    second_thread_params.other_id = first_thread;
     pthread_create(&second_thread, NULL, &client_thread, &second_thread_params);
 
-    pthread_join(first_thread, NULL);
-    pthread_join(second_thread, NULL);
+    void* st;
+    pthread_join(first_thread, &st);
+    pthread_cancel(second_thread);
+    if (st == PTHREAD_CANCELED)
+        cout << "Thread 1 was canceled" << endl;
+    else
+        cout << "Thread 1 was not canceled" << endl;
+    pthread_join(second_thread, &st);
+    pthread_cancel(first_thread);
+    if (st == PTHREAD_CANCELED)
+        cout << "Thread 2 was canceled" << endl;
+    else
+        cout << "Thread 2 was not canceled" << endl;
 }
 
 int receive_from(int sockfd, char* buf, size_t size)
