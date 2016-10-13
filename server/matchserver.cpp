@@ -73,7 +73,8 @@ void create_match_server(int curr_port)
         sprintf(str_curr_port, "%d", curr_port);
 
         handle_match_msg(sockfd);
-            
+
+        cout << "Clients have exited." << endl;
         fd = open(file, O_WRONLY | O_TRUNC);
         memset(&lock_w, 0, sizeof(lock_w));
         lock_w.l_type = F_WRLCK;

@@ -86,13 +86,6 @@ void handle_syn_port(int sockfd, int& curr_port, int& client_port,
     memset(s, 0, INET_ADDRSTRLEN);
     their_addr_v4 = NULL;
     
-//    if ((listen(sockfd, BACKLOG)) == -1)
-//    {
-//        perror("listen");
-//        return;
-//    }
-
-//    cout << "asdfkljsadlkfjsaldfj" << endl;
     sockfd_client = accept(sockfd, &their_addr, &addr_len);
     if (sockfd_client == -1)
     {
@@ -155,6 +148,7 @@ struct client_thread_params
     int* sockfd_other_client;
     struct sockaddr_in* addr_v4;
     int* exit_function;
+    int sockfd;
 };
 
 void* client_thread(void* parameters)
@@ -166,9 +160,35 @@ void* client_thread(void* parameters)
     char buf[MAXBUFLEN];
     char addr_str[INET_ADDRSTRLEN];
 
+    if (*(params->sockfd_curr_client) == -1 && *(params->exit_function) == 0)
+    {
+        struct sockaddr their_addr;
+        socklen_t addr_len = sizeof(their_addr);
+
+        cout << "Waiting for second client to connect..." << endl;
+        *(params->sockfd_curr_client) = accept(params->sockfd, &their_addr,
+                                               &addr_len);
+
+        params->addr_v4 = (struct sockaddr_in*)&their_addr;
+        // send ACK to client 2 (player 2)
+        status = send_to_address(*(params->sockfd_curr_client), "player-2");
+        if (status == -1)
+        {
+            perror("server: ACK to second_addr");
+            exit(1);
+        }
+        status = send_to_address(*(params->sockfd_other_client), "player-2");
+        if (status == -1)
+        {
+            perror("server: ACK to first_addr");
+            exit(1);
+        }
+        cout << "Second client connected." << endl;
+    }
+
     inet_ntop(AF_INET, &(params->addr_v4->sin_addr),
               addr_str, sizeof(addr_str));
-    
+
     while (*(params->exit_function) == 0)
     {
         memset(buf, 0, MAXBUFLEN);
@@ -181,6 +201,8 @@ void* client_thread(void* parameters)
         
         if (strcmp(buf, "bye") == 0)
         {
+            *(params->exit_function) = 1;
+
             cout << "Received 'bye', closing connection to "
                  << addr_str << ", "
                  << params->addr_v4->sin_port
@@ -200,6 +222,8 @@ void* client_thread(void* parameters)
         }
         else if (strcmp(buf, "giveup") == 0)
         {
+            *(params->exit_function) = 1;
+
             cout << "Received 'giveup'" << endl;
 
             // send giveup to second address
@@ -256,7 +280,7 @@ void handle_match_msg(int sockfd)
 
     int exit_function = 0;
 
-    while (sockfd_client_1 == -1 && exit_function == 0)
+    if (sockfd_client_1 == -1 && exit_function == 0)
     {
         sockfd_client_1 = accept(sockfd, &their_addr, &addr_len);
     }
@@ -269,40 +293,21 @@ void handle_match_msg(int sockfd)
         perror("server: ACK to first_addr");
         exit(1);
     }
-    cout << "Waiting for second client to connect..." << endl;
     struct client_thread_params first_thread_params;
     first_thread_params.sockfd_curr_client = &sockfd_client_1;
     first_thread_params.sockfd_other_client = &sockfd_client_2;
     first_thread_params.addr_v4 = first_addr_v4;
     first_thread_params.exit_function = &exit_function;
+    first_thread_params.sockfd = sockfd;
     pthread_t first_thread;
     pthread_create(&first_thread, NULL, &client_thread, &first_thread_params);
 
-    while (sockfd_client_2 == -1 && exit_function == 0)
-    {
-        sockfd_client_2 = accept(sockfd, &their_addr, &addr_len);
-    }
-    memcpy(&second_addr, &their_addr, sizeof(their_addr));
-    second_addr_v4 = (struct sockaddr_in*)&second_addr;
-    // send ACK to client 2 (player 2)
-    status = send_to_address(sockfd_client_2, "player-2");
-    if (status == -1)
-    {
-        perror("server: ACK to second_addr");
-        exit(1);
-    }
-    status = send_to_address(sockfd_client_1, "player-2");
-    if (status == -1)
-    {
-        perror("server: ACK to first_addr");
-        exit(1);
-    }
-    cout << "Second client connected." << endl;
     struct client_thread_params second_thread_params;
     second_thread_params.sockfd_curr_client = &sockfd_client_2;
     second_thread_params.sockfd_other_client = &sockfd_client_1;
-    second_thread_params.addr_v4 = second_addr_v4;
+    second_thread_params.addr_v4 = NULL;
     second_thread_params.exit_function = &exit_function;
+    second_thread_params.sockfd = sockfd;
     pthread_t second_thread;
     pthread_create(&second_thread, NULL, &client_thread, &second_thread_params);
 
