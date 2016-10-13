@@ -94,17 +94,17 @@ Client::Client()
         pthread_t thread_sigint_id;
         pthread_create(&thread_sigint_id, NULL, &(Client::check_sigint), this);
 
-        res = receive_from_server(buf, MAXBUFLEN);
-        if (res == -1)
+        do
         {
-            perror("recvfrom ACK");
-            exit(1);
-        }
+            res = receive_from_server(buf, MAXBUFLEN);
+            if (res == -1)
+            {
+                perror("recvfrom ACK");
+                exit(1);
+            }
+        } while (strcmp(buf, "player-2") != 0);
 
-        if (strcmp(buf, "player-2") == 0)
-        {
-            cout << "Player 2 has connected.  Starting game." << endl;
-        }
+        cout << "Player 2 has connected.  Starting game." << endl;
 
     }
     else if (strcmp(buf, "player-2") == 0)

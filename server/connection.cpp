@@ -41,13 +41,13 @@ int setup_connection(int& sockfd, struct addrinfo* servinfo, int port_int)
         {
             continue;
         }
-        int yes = 1;
-        if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes,
-                       sizeof(int)) == -1)
-        {
-            perror("setsockopt");
-            exit(1);
-        }
+//        int yes = 1;
+//        if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes,
+//                       sizeof(int)) == -1)
+//        {
+//            perror("setsockopt");
+//            exit(1);
+//        }
         if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1)
         {
             close(sockfd);
@@ -85,7 +85,14 @@ void handle_syn_port(int sockfd, int& curr_port, int& client_port,
     memset(buf, 0, MAXBUFLEN);
     memset(s, 0, INET_ADDRSTRLEN);
     their_addr_v4 = NULL;
+    
+//    if ((listen(sockfd, BACKLOG)) == -1)
+//    {
+//        perror("listen");
+//        return;
+//    }
 
+//    cout << "asdfkljsadlkfjsaldfj" << endl;
     sockfd_client = accept(sockfd, &their_addr, &addr_len);
     if (sockfd_client == -1)
     {
@@ -203,6 +210,9 @@ void* client_thread(void* parameters)
                 exit(1);
             }
             return NULL;
+        }
+        else if (*(params->sockfd_other_client) == -1)
+        {
         }
         else
         {

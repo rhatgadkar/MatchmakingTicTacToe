@@ -102,7 +102,6 @@ int main()
         cout << "something went wrong" << endl;
         return status;
     }
-    cout << "Parent server is listening." << endl;
 
     int curr_port;
     int client_port;
@@ -124,6 +123,7 @@ int main()
         handle_syn_port(sockfd, curr_port, client_port, ports_used,
                         sockfd_client);
 
+        close(sockfd_client);
         if (ports_used[curr_port] == 1)
             create_match_server(curr_port);
     }
