@@ -103,10 +103,12 @@ void Game::start()
                 cout << "error with send_position" << endl;
                 return;
             }
+            cout << "sent position" << endl;
         }
         // wait for other player to make move
         else
         {
+            cout << "waiting for position" << endl;
             input = c.receive_position();
             if (p1turn && !m_board.insert(m_p1.getSymbol(), input))
             {

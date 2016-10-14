@@ -258,6 +258,7 @@ bool Client::send_position(int pos)
     buf[0] = pos + '0';
     
     res = send_to_server(buf);
+//    cout << "sent: " << buf << endl;
     if (res == -1)
         return false;
     return true;
@@ -290,9 +291,11 @@ int Client::receive_position()
 
     memset(buf, 0, MAXBUFLEN);
 
+    cout << "waiting to receive pos" << endl;
     res = receive_from_server(buf, MAXBUFLEN);
     if (res == -1)
         return -1;
+    cout << "received: " << buf << endl;
     return (buf[0] - '0');
 }
 
