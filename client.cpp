@@ -217,26 +217,26 @@ void Client::handle_syn_ack(char resp[MAXBUFLEN])
 //        perror("sigaction");
 //        exit(1);
 //    }
-
+//
     int res;
     char buf[MAXBUFLEN];
-    int got_ack;
-    
+//    int got_ack;
+//
     memset(buf, 0, MAXBUFLEN);
-    got_ack = 0;
+//    got_ack = 0;
     
-    // send initial SYN and make sure receive ACK from server within certain
-    // time.  if not receive ACK within 15 seconds, exit client.
-    res = send_to_server("SYN");
-    if (res == -1)
-    {
-        perror("client: SYN");
-        exit(1);
-    }
-    cout << "Sent SYN to server, waiting for ACK..." << endl;
-    pthread_t thread_timer;
-    pthread_create(&thread_timer, NULL, &(Client::timer_countdown), &got_ack);
-
+//    // send initial SYN and make sure receive ACK from server within certain
+//    // time.  if not receive ACK within 15 seconds, exit client.
+//    res = send_to_server("SYN");
+//    if (res == -1)
+//    {
+//        perror("client: SYN");
+//        exit(1);
+//    }
+//    cout << "Sent SYN to server, waiting for ACK..." << endl;
+//    pthread_t thread_timer;
+//    pthread_create(&thread_timer, NULL, &(Client::timer_countdown), &got_ack);
+//
     res = receive_from_server(buf, MAXBUFLEN);
     if (res == -1)
     {
@@ -244,7 +244,7 @@ void Client::handle_syn_ack(char resp[MAXBUFLEN])
         exit(1);
     }
     
-    got_ack = 1;
+//    got_ack = 1;
     cout << "Received ACK from server." << endl;
     memcpy(resp, buf, MAXBUFLEN);
 }
@@ -291,11 +291,11 @@ int Client::receive_position()
 
     memset(buf, 0, MAXBUFLEN);
 
-    cout << "waiting to receive pos" << endl;
+//    cout << "waiting to receive pos" << endl;
     res = receive_from_server(buf, MAXBUFLEN);
+//    cout << "received: " << buf << " , result: " << res << endl;
     if (res == -1)
         return -1;
-    cout << "received: " << buf << endl;
     return (buf[0] - '0');
 }
 
@@ -324,7 +324,9 @@ int Client::send_to_server(const char* text)
 int Client::receive_from_server(char* buf, size_t size)
 {
     int numbytes;
+//    cout << "trying to receive from server" << endl;
     numbytes = recv(m_sockfd, buf, size, 0);
+//    cout << "received from server: " << buf << " , return: " << numbytes << endl;
     if (numbytes == -1)
         return -1;
     return 0;

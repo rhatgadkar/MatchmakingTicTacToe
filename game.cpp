@@ -55,19 +55,19 @@ void Game::start()
 {
     Client c;
     
-    pthread_t giveup_t;
-    pthread_create(&giveup_t, NULL, &(Game::check_giveup), &c);
-    struct sigaction sa;
-    memset(&sa, 0, sizeof(sa));
-    sa.sa_handler = &(Game::sigint_handler);
-    sa.sa_flags = SA_RESTART;
-    if (sigaction(SIGINT, &sa, NULL) == -1)
-    {
-        perror("sigaction");
-        exit(1);
-    }
-    pthread_t thread_sigint_id;
-    pthread_create(&thread_sigint_id, NULL, &(Game::check_sigint), &c);
+//    pthread_t giveup_t;
+//    pthread_create(&giveup_t, NULL, &(Game::check_giveup), &c);
+//    struct sigaction sa;
+//    memset(&sa, 0, sizeof(sa));
+//    sa.sa_handler = &(Game::sigint_handler);
+//    sa.sa_flags = SA_RESTART;
+//    if (sigaction(SIGINT, &sa, NULL) == -1)
+//    {
+//        perror("sigaction");
+//        exit(1);
+//    }
+//    pthread_t thread_sigint_id;
+//    pthread_create(&thread_sigint_id, NULL, &(Game::check_sigint), &c);
 
 	bool p1turn = true;
 	for (;;)
@@ -110,6 +110,7 @@ void Game::start()
         {
             cout << "waiting for position" << endl;
             input = c.receive_position();
+            cout << "input: " << input << endl;
             if (p1turn && !m_board.insert(m_p1.getSymbol(), input))
             {
                 cout << "error with receive_position" << endl;

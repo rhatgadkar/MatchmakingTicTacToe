@@ -94,19 +94,20 @@ void handle_syn_port(int sockfd, int& curr_port, int& client_port,
     }
     cout << "Accepted client." << endl;
 
-    status = receive_from(sockfd_client, buf, MAXBUFLEN-1);
-    if (status == -1)
-    {
-        perror("recvfrom SYN");
-        return;
-    }
-
-    if (strcmp(buf, "SYN") != 0)
-        return;
+//    status = receive_from(sockfd_client, buf, MAXBUFLEN-1);
+//    if (status == -1)
+//    {
+//        perror("recvfrom SYN");
+//        return;
+//    }
+//
+//    if (strcmp(buf, "SYN") != 0)
+//        return;
 
     their_addr_v4 = (struct sockaddr_in*)&their_addr;
     inet_ntop(AF_INET, &(their_addr_v4->sin_addr), s, sizeof(s));
-    cout << "Got SYN from " << s << ", " << their_addr_v4->sin_port << endl;
+//    cout << "Got SYN from " << s << ", " << their_addr_v4->sin_port << endl;
+    cout << "client: " << their_addr_v4->sin_port << " connected." << endl;
 
     curr_port = LISTENPORT + 1;
     // priority should be to find count == 1 first
@@ -319,7 +320,6 @@ int receive_from(int sockfd, char* buf, size_t size)
 {
     int numbytes;
     numbytes = recv(sockfd, buf, size, 0);
-cout << "received message: " << buf << endl;
     if (numbytes == -1)
         return -1;
     return 0;
@@ -329,7 +329,6 @@ int send_to_address(int sockfd, const char* text)
 {
     int numbytes;
     numbytes = send(sockfd, text, strlen(text), 0);
-cout << "sent message: " << text << endl;
     if (numbytes == -1)
         return -1;
     return 0;
