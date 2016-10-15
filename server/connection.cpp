@@ -15,6 +15,9 @@ using namespace std;
 #define LISTENPORT 4950  // the port clients will be connecting to
 #define MAXBUFLEN 100
 
+static int receive_from(int sockfd, char* buf, size_t size);
+static int send_to_address(int sockfd, const char* text);
+
 int setup_connection(int& sockfd, struct addrinfo* servinfo, int port_int)
 {
     int status;
@@ -94,20 +97,10 @@ void handle_syn_port(int sockfd, int& curr_port, int& client_port,
     }
     cout << "Accepted client." << endl;
 
-//    status = receive_from(sockfd_client, buf, MAXBUFLEN-1);
-//    if (status == -1)
-//    {
-//        perror("recvfrom SYN");
-//        return;
-//    }
-//
-//    if (strcmp(buf, "SYN") != 0)
-//        return;
-
     their_addr_v4 = (struct sockaddr_in*)&their_addr;
     inet_ntop(AF_INET, &(their_addr_v4->sin_addr), s, sizeof(s));
-//    cout << "Got SYN from " << s << ", " << their_addr_v4->sin_port << endl;
-    cout << "client: " << their_addr_v4->sin_port << " connected." << endl;
+    cout << "client: " << their_addr_v4->sin_port 
+         << " connected to parent server." << endl;
 
     curr_port = LISTENPORT + 1;
     // priority should be to find count == 1 first
@@ -187,7 +180,8 @@ void* client_thread(void* parameters)
             perror("server: ACK to first_addr");
             exit(1);
         }
-        cout << "Second client connected: " << params->addr_v4->sin_port << endl;
+        cout << "Second client connected: " << params->addr_v4->sin_port
+             << endl;
     }
 
     inet_ntop(AF_INET, &(params->addr_v4->sin_addr),
@@ -198,7 +192,8 @@ void* client_thread(void* parameters)
         memset(buf, 0, MAXBUFLEN);
         
         status = receive_from(*(params->sockfd_curr_client), buf, MAXBUFLEN-1);
-        cout << "receiving message from " << params->addr_v4->sin_port << ": " << buf << endl;
+        cout << "receiving message from " << params->addr_v4->sin_port << ": "
+             << buf << endl;
         if (status == -1)
         {
             perror("recv");
@@ -214,7 +209,8 @@ void* client_thread(void* parameters)
             if (*(params->sockfd_other_client) != -1)
             {
                 // send bye to second address
-                status = send_to_address(*(params->sockfd_other_client), "bye");
+                status = send_to_address(*(params->sockfd_other_client),
+                                         "bye");
                 if (status == -1)
                 {
                     perror("server: sendto");
@@ -245,7 +241,8 @@ void* client_thread(void* parameters)
         {
             // forward message from first_addr to second_addr
             status = send_to_address(*(params->sockfd_other_client), buf);
-            cout << "forwarding message from " << params->addr_v4->sin_port << ": " << buf << endl;
+            cout << "forwarding message from " << params->addr_v4->sin_port
+                 << ": " << buf << endl;
             if (status == -1)
             {
                 perror("server: forward to second_addr");
@@ -288,7 +285,8 @@ void handle_match_msg(int sockfd)
     first_thread_params.addr_v4 = (struct sockaddr_in*)&their_addr;
     first_thread_params.sockfd = sockfd;
     first_thread_params.other_id = second_thread;
-    cout << "First client connected: " << first_thread_params.addr_v4->sin_port << endl;
+    cout << "First client connected: "
+         << first_thread_params.addr_v4->sin_port << endl;
     pthread_create(&first_thread, NULL, &client_thread, &first_thread_params);
 
     struct client_thread_params second_thread_params;
@@ -297,7 +295,8 @@ void handle_match_msg(int sockfd)
     second_thread_params.addr_v4 = NULL;
     second_thread_params.sockfd = sockfd;
     second_thread_params.other_id = first_thread;
-    pthread_create(&second_thread, NULL, &client_thread, &second_thread_params);
+    pthread_create(&second_thread, NULL, &client_thread,
+                   &second_thread_params);
 
     void* st;
     pthread_join(first_thread, &st);

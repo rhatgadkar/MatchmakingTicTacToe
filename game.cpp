@@ -6,6 +6,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <cstdio>
+#include <cctype>
 using namespace std;
 
 sig_atomic_t Game::sigint_check = 0;
@@ -13,6 +14,7 @@ sig_atomic_t Game::sigint_check = 0;
 Game::Game()
 	: m_p1('x'), m_p2('o')
 {
+    memset(m_recv_buf, 0, MAXBUFLEN);
 }
 
 void Game::sigint_handler(int s)
@@ -36,15 +38,24 @@ void* Game::check_sigint(void* parameters)
     }
 }
 
+struct check_giveup_params
+{
+    Client* c;
+    char* recv_buf;
+};
+
 void* Game::check_giveup(void* parameters)
 {
-    Client* c = (Client*)parameters;
+    struct check_giveup_params* params;
+    params = (struct check_giveup_params*)parameters;
 
-    while (!c->receive_giveup())
+    do
     {
-    }
+        memset(params->recv_buf, 0, MAXBUFLEN);
+        params->c->receive_from_server(params->recv_buf);
+    } while(strcmp(params->recv_buf, "giveup") != 0);
 
-    if (c->is_p1())
+    if (params->c->is_p1())
         cout << "Player 2 has given up.  Player 1 wins." << endl;
     else
         cout << "Player 1 has given up.  Player 2 wins." << endl;
@@ -54,20 +65,24 @@ void* Game::check_giveup(void* parameters)
 void Game::start()
 {
     Client c;
-    
-//    pthread_t giveup_t;
-//    pthread_create(&giveup_t, NULL, &(Game::check_giveup), &c);
-//    struct sigaction sa;
-//    memset(&sa, 0, sizeof(sa));
-//    sa.sa_handler = &(Game::sigint_handler);
-//    sa.sa_flags = SA_RESTART;
-//    if (sigaction(SIGINT, &sa, NULL) == -1)
-//    {
-//        perror("sigaction");
-//        exit(1);
-//    }
-//    pthread_t thread_sigint_id;
-//    pthread_create(&thread_sigint_id, NULL, &(Game::check_sigint), &c);
+
+    pthread_t giveup_t;
+    struct check_giveup_params params;
+    params.c = &c;
+    params.recv_buf = m_recv_buf;
+    pthread_create(&giveup_t, NULL, &(Game::check_giveup), &params);
+
+    struct sigaction sa;
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = &(Game::sigint_handler);
+    sa.sa_flags = SA_RESTART;
+    if (sigaction(SIGINT, &sa, NULL) == -1)
+    {
+        perror("sigaction");
+        exit(1);
+    }
+    pthread_t thread_sigint_id;
+    pthread_create(&thread_sigint_id, NULL, &(Game::check_sigint), &c);
 
 	bool p1turn = true;
 	for (;;)
@@ -103,14 +118,20 @@ void Game::start()
                 cout << "error with send_position" << endl;
                 return;
             }
-            cout << "sent position" << endl;
         }
         // wait for other player to make move
         else
         {
-            cout << "waiting for position" << endl;
-            input = c.receive_position();
-            cout << "input: " << input << endl;
+            for (;;)
+            {
+                if (m_recv_buf[0] == 0)
+                    continue;
+                if (isdigit(m_recv_buf[0]) && m_recv_buf[0] != '0')
+                {
+                    input = m_recv_buf[0] - '0';
+                    break;
+                }
+            }
             if (p1turn && !m_board.insert(m_p1.getSymbol(), input))
             {
                 cout << "error with receive_position" << endl;
