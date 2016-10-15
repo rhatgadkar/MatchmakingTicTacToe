@@ -9,33 +9,10 @@
 #include <cctype>
 using namespace std;
 
-sig_atomic_t Game::sigint_check = 0;
-
 Game::Game()
 	: m_p1('x'), m_p2('o')
 {
     memset(m_recv_buf, 0, MAXBUFLEN);
-}
-
-void Game::sigint_handler(int s)
-{
-    Game::sigint_check = 1;
-    cout << "got SIGINT" << endl;
-}
-
-void* Game::check_sigint(void* parameters)
-{
-    Client* c = (Client*)parameters;
-
-    for (;;)
-    {
-        if (Game::sigint_check)
-        {
-            c->send_giveup();
-            cout << "You have given up" << endl;
-            exit(0);
-        }
-    }
 }
 
 struct check_giveup_params
@@ -71,18 +48,6 @@ void Game::start()
     params.c = &c;
     params.recv_buf = m_recv_buf;
     pthread_create(&giveup_t, NULL, &(Game::check_giveup), &params);
-
-    struct sigaction sa;
-    memset(&sa, 0, sizeof(sa));
-    sa.sa_handler = &(Game::sigint_handler);
-    sa.sa_flags = SA_RESTART;
-    if (sigaction(SIGINT, &sa, NULL) == -1)
-    {
-        perror("sigaction");
-        exit(1);
-    }
-    pthread_t thread_sigint_id;
-    pthread_create(&thread_sigint_id, NULL, &(Game::check_sigint), &c);
 
 	bool p1turn = true;
 	for (;;)

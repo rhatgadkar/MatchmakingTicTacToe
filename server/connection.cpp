@@ -198,6 +198,33 @@ void* client_thread(void* parameters)
         {
             perror("recv");
         }
+        if (status == 0)
+        {
+            if (*(params->sockfd_other_client) == -1)
+            {
+                cout << "Received 'bye', closing connection to "
+                     << addr_str << ", "
+                     << params->addr_v4->sin_port
+                     << endl;
+                pthread_cancel(params->other_id);
+                return NULL;
+            }
+            else
+            {
+                cout << "Received 'giveup'" << endl;
+
+                // send giveup to second address
+                status = send_to_address(*(params->sockfd_other_client),
+                                         "giveup");
+                if (status == -1)
+                {
+                    perror("server: sendto");
+                    exit(1);
+                }
+                pthread_cancel(params->other_id);
+                return NULL;
+            }
+        }
         
         if (strcmp(buf, "bye") == 0)
         {
@@ -321,7 +348,7 @@ int receive_from(int sockfd, char* buf, size_t size)
     numbytes = recv(sockfd, buf, size, 0);
     if (numbytes == -1)
         return -1;
-    return 0;
+    return numbytes;
 }
 
 int send_to_address(int sockfd, const char* text)

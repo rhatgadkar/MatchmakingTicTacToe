@@ -13,32 +13,9 @@
 #include <signal.h>
 using namespace std;
 
-sig_atomic_t Client::sigint_check = 0;
-
-void Client::sigint_handler(int s)
-{
-    Client::sigint_check = 1;
-    cout << "got SIGINT" << endl;
-}
-
 void Client::sigint_ignore_handler(int s)
 {
     cout << "got SIGINT" << endl;
-}
-
-void* Client::check_sigint(void* parameters)
-{
-    Client* c = (Client*)parameters;
-
-    for (;;)
-    {
-        if (Client::sigint_check)
-        {
-            c->send_bye();
-            cout << "You have quit searching" << endl;
-            exit(0);
-        }
-    }
 }
 
 Client::Client()
@@ -48,6 +25,15 @@ Client::Client()
 
     int res;
     char buf[MAXBUFLEN];
+
+    struct sigaction sa;
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = &(Client::sigint_ignore_handler);
+    if (sigaction(SIGINT, &sa, NULL) == -1)
+    {
+        perror("sigaction");
+        exit(1);
+    }    
 
     // connect to parent server
     res = create_socket_server(SERVERPORT);
@@ -74,25 +60,19 @@ Client::Client()
     memset(buf, 0, MAXBUFLEN);
     handle_syn_ack(buf);
 
+        sa.sa_handler = SIG_DFL;
+        if (sigaction(SIGINT, &sa, NULL) == -1)
+        {
+            perror("sigaction");
+            exit(1);
+        }
+
     // get assigned player-1 or player-2
     if (strcmp(buf, "player-1") == 0)
     {
         cout << "You are player 1." << endl;
         m_is_p1 = true;
         cout << "Waiting for player 2 to connect..." << endl;
-
-        // check if SIGINT for quit searching
-        struct sigaction sa;
-        memset(&sa, 0, sizeof(sa));
-        sa.sa_handler = &(Client::sigint_handler);
-        sa.sa_flags = SA_RESTART;
-        if (sigaction(SIGINT, &sa, NULL) == -1)
-        {
-            perror("sigaction");
-            exit(1);
-        }
-        pthread_t thread_sigint_id;
-        pthread_create(&thread_sigint_id, NULL, &(Client::check_sigint), this);
 
         do
         {
@@ -136,15 +116,6 @@ Client::~Client()
 
 int Client::create_socket_server(const char* port)
 {
-    struct sigaction sa;
-    memset(&sa, 0, sizeof(sa));
-    sa.sa_handler = &(Client::sigint_ignore_handler);
-    if (sigaction(SIGINT, &sa, NULL) == -1)
-    {
-        perror("sigaction");
-        exit(1);
-    }
-
     struct addrinfo hints;
     int rv;
 
@@ -184,7 +155,7 @@ int Client::create_socket_server(const char* port)
         cerr << "client: failed to create socket" << endl;
         return 2;
     }
-    
+
     return 0;
 }
 
@@ -219,7 +190,7 @@ void Client::handle_syn_ack(char resp[MAXBUFLEN])
         perror("recvfrom ACK");
         exit(1);
     }
-    
+
     cout << "Received ACK from server." << endl;
     memcpy(resp, buf, MAXBUFLEN);
 }
