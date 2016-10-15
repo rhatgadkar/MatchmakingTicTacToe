@@ -3,6 +3,7 @@
 
 #include "board.h"
 #include "player.h"
+#include "client.h"
 #include <signal.h>
 
 class Game
@@ -19,6 +20,7 @@ private:
     static void* check_sigint(void* parameters);
     static void sigint_handler(int s);
     static sig_atomic_t sigint_check;
+    char m_recv_buf[MAXBUFLEN];
 };
 
 #endif

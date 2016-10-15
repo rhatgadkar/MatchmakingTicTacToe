@@ -96,7 +96,7 @@ Client::Client()
 
         do
         {
-            res = receive_from_server(buf, MAXBUFLEN);
+            res = receive_from_server(buf);
             if (res == -1)
             {
                 perror("recvfrom ACK");
@@ -209,42 +209,18 @@ void* Client::timer_countdown(void* parameters)
 
 void Client::handle_syn_ack(char resp[MAXBUFLEN])
 {
-//    struct sigaction sa;
-//    memset(&sa, 0, sizeof(sa));
-//    sa.sa_handler = &(Client::sigint_ignore_handler);
-//    if (sigaction(SIGINT, &sa, NULL) == -1)
-//    {
-//        perror("sigaction");
-//        exit(1);
-//    }
-//
     int res;
     char buf[MAXBUFLEN];
-//    int got_ack;
-//
+
     memset(buf, 0, MAXBUFLEN);
-//    got_ack = 0;
     
-//    // send initial SYN and make sure receive ACK from server within certain
-//    // time.  if not receive ACK within 15 seconds, exit client.
-//    res = send_to_server("SYN");
-//    if (res == -1)
-//    {
-//        perror("client: SYN");
-//        exit(1);
-//    }
-//    cout << "Sent SYN to server, waiting for ACK..." << endl;
-//    pthread_t thread_timer;
-//    pthread_create(&thread_timer, NULL, &(Client::timer_countdown), &got_ack);
-//
-    res = receive_from_server(buf, MAXBUFLEN);
+    res = receive_from_server(buf);
     if (res == -1)
     {
         perror("recvfrom ACK");
         exit(1);
     }
     
-//    got_ack = 1;
     cout << "Received ACK from server." << endl;
     memcpy(resp, buf, MAXBUFLEN);
 }
@@ -258,7 +234,6 @@ bool Client::send_position(int pos)
     buf[0] = pos + '0';
     
     res = send_to_server(buf);
-//    cout << "sent: " << buf << endl;
     if (res == -1)
         return false;
     return true;
@@ -284,34 +259,6 @@ bool Client::send_bye()
     return true;
 }
 
-int Client::receive_position()
-{
-    int res;
-    char buf[MAXBUFLEN];
-
-    memset(buf, 0, MAXBUFLEN);
-
-//    cout << "waiting to receive pos" << endl;
-    res = receive_from_server(buf, MAXBUFLEN);
-//    cout << "received: " << buf << " , result: " << res << endl;
-    if (res == -1)
-        return -1;
-    return (buf[0] - '0');
-}
-
-bool Client::receive_giveup()
-{
-    int res;
-    char buf[MAXBUFLEN];
-
-    memset(buf, 0, MAXBUFLEN);
-
-    res = receive_from_server(buf, MAXBUFLEN);
-    if (res == -1 || strcmp(buf, "giveup") != 0)
-        return false;
-    return true;
-}
-
 int Client::send_to_server(const char* text)
 {
     int numbytes;
@@ -321,13 +268,11 @@ int Client::send_to_server(const char* text)
     return 0;
 }
 
-int Client::receive_from_server(char* buf, size_t size)
+bool Client::receive_from_server(char* buf)
 {
     int numbytes;
-//    cout << "trying to receive from server" << endl;
-    numbytes = recv(m_sockfd, buf, size, 0);
-//    cout << "received from server: " << buf << " , return: " << numbytes << endl;
+    numbytes = recv(m_sockfd, buf, MAXBUFLEN, 0);
     if (numbytes == -1)
-        return -1;
-    return 0;
+        return false;
+    return true;
 }

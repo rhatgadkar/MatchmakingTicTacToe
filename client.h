@@ -15,10 +15,9 @@ public:
     Client();
     ~Client();
     bool send_position(int pos);
-    int receive_position();
     bool is_p1() { return m_is_p1; }
     bool send_giveup();
-    bool receive_giveup();
+    bool receive_from_server(char* buf);
 private:
     // variables
     bool m_is_p1;
@@ -32,7 +31,6 @@ private:
     int create_socket_server(const char* port);
     void handle_syn_ack(char resp[MAXBUFLEN]);  // return port of child server
     int send_to_server(const char* text);
-    int receive_from_server(char* buf, size_t size);
     static void* check_sigint(void* parameters);
     static void sigint_handler(int s);
     static void sigint_ignore_handler(int s);
