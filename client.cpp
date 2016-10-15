@@ -130,7 +130,6 @@ Client::~Client()
             exit(1);
         }
 
-        close(m_sockfd);
         freeaddrinfo(m_servinfo);
     }
 }
