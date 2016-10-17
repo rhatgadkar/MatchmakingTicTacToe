@@ -11,8 +11,8 @@
 int setup_connection(int& sockfd, struct addrinfo* servinfo, int port_int);
 
 void handle_syn_port(int sockfd, int& curr_port, int& client_port,
-                     std::map<int, int>& ports_used, int& sockfd_client);
+                     int* shm_ports_used, int& sockfd_client);
 
-void handle_match_msg(int sockfd);
+void handle_match_msg(int sockfd, int* shm_iter);
 
 #endif  // CONNECTION_H

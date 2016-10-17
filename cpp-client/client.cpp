@@ -13,10 +13,10 @@
 #include <signal.h>
 using namespace std;
 
-void Client::sigint_ignore_handler(int s)
-{
-    cout << "got SIGINT" << endl;
-}
+//void Client::sigint_ignore_handler(int s)
+//{
+//    cout << "got SIGINT" << endl;
+//}
 
 Client::Client()
 {
@@ -26,7 +26,7 @@ Client::Client()
     int res;
     char buf[MAXBUFLEN];
 
-    struct sigaction sa;
+/*    struct sigaction sa;
     memset(&sa, 0, sizeof(sa));
     sa.sa_handler = &(Client::sigint_ignore_handler);
     if (sigaction(SIGINT, &sa, NULL) == -1)
@@ -34,7 +34,7 @@ Client::Client()
         perror("sigaction");
         exit(1);
     }    
-
+*/
     // connect to parent server
     res = create_socket_server(SERVERPORT);
     if (res != 0)
@@ -50,7 +50,7 @@ Client::Client()
     freeaddrinfo(m_servinfo);
 
     // connect to child server
-    sleep(2);
+    sleep(1);
     res = create_socket_server(buf);
     if (res != 0)
     {
@@ -60,13 +60,13 @@ Client::Client()
     memset(buf, 0, MAXBUFLEN);
     handle_syn_ack(buf);
 
-        sa.sa_handler = SIG_DFL;
+/*        sa.sa_handler = SIG_DFL;
         if (sigaction(SIGINT, &sa, NULL) == -1)
         {
             perror("sigaction");
             exit(1);
         }
-
+*/
     // get assigned player-1 or player-2
     if (strcmp(buf, "player-1") == 0)
     {

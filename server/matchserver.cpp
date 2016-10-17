@@ -10,11 +10,14 @@
 #include <sys/wait.h>
 #include <netdb.h>
 #include "connection.h"
+#include <sys/shm.h>
+#include <sys/ipc.h>
 using namespace std;
 
 const char* file = "file.txt";
 
 map<int, int> ports_used;
+int* shm_ports_used;
 
 void sigchld_handler(int s)
 {
@@ -23,6 +26,7 @@ void sigchld_handler(int s)
     int status;
     char buf[MAXBUFLEN];
     int port;
+    int* shm_iter;
     
     while(waitpid(-1, NULL, WNOHANG) > 0)
     {
@@ -40,7 +44,11 @@ void sigchld_handler(int s)
         }
         close(fd);
         port = (int)strtol(buf, (char**)NULL, 10);
-        ports_used.erase(port);
+
+        shm_iter = shm_ports_used;
+        for (size_t k = 0; k < port - LISTENPORT; k++)
+            shm_iter++;
+        *shm_iter = 0;;
     }
 }
 
@@ -59,7 +67,35 @@ void create_match_server(int curr_port)
         int sockfd;
         int status;
         struct addrinfo* servinfo;
- 
+
+        //--------------------
+
+        int shmid;
+        key_t key;
+        int* shm_iter;
+
+        key = 5678;
+
+        shmid = shmget(key, 4096, IPC_CREAT | 0666);
+        if (shmid == -1)
+        {
+            perror("shmget");
+            exit(1);
+        }
+
+        shm_ports_used = (int*)shmat(shmid, 0, 0);
+        if (shm_ports_used == (int*)-1)
+        {
+            perror("shmat");
+            exit(1);
+        }
+
+        shm_iter = shm_ports_used;
+        for (size_t k = 0; k < curr_port - LISTENPORT; k++)
+            shm_iter++;
+
+        //-------------------
+
         status = setup_connection(sockfd, servinfo, curr_port);
         if (status != 0)
         {
@@ -72,7 +108,9 @@ void create_match_server(int curr_port)
         char str_curr_port[MAXBUFLEN];
         sprintf(str_curr_port, "%d", curr_port);
 
-        handle_match_msg(sockfd);
+        cout << "before handle_match_msg" << endl;
+        handle_match_msg(sockfd, shm_iter);
+        cout << "after handle_match_msg" << endl;
 
         cout << "Clients have exited." << endl;
         fd = open(file, O_WRONLY | O_TRUNC);
@@ -96,6 +134,34 @@ int main()
     int sockfd;
     int sockfd_client;
     struct addrinfo* servinfo;
+
+    //--------------------
+
+    int shmid;
+    key_t key;
+    int* shm_iter;
+
+    key = 5678;
+
+    shmid = shmget(key, 4096, IPC_CREAT | 0666);
+    if (shmid == -1)
+    {
+        perror("shmget");
+        exit(1);
+    }
+
+    shm_ports_used = (int*)shmat(shmid, 0, 0);
+    if (shm_ports_used == (int*)-1)
+    {
+        perror("shmat");
+        exit(1);
+    }
+
+    shm_iter = shm_ports_used;
+    for (size_t k = 0; k < 1000; k++)
+        *shm_iter++ = 0;
+
+    //-------------------
 
     status = setup_connection(sockfd, servinfo, LISTENPORT);
     if (status != 0)
@@ -121,11 +187,14 @@ int main()
 
     for (;;)
     {
-        handle_syn_port(sockfd, curr_port, client_port, ports_used,
+        handle_syn_port(sockfd, curr_port, client_port, shm_ports_used,
                         sockfd_client);
 
         close(sockfd_client);
-        if (ports_used[curr_port] == 1)
+        shm_iter = shm_ports_used;
+        for (size_t k = 0; k < curr_port - LISTENPORT; k++)
+            shm_iter++;
+        if (*shm_iter == 0)
             create_match_server(curr_port);
     }
     

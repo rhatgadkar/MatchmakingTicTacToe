@@ -1,8 +1,8 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
-#define SERVERIP "54.183.217.40"
-//#define SERVERIP "127.0.0.1"
+//#define SERVERIP "54.183.217.40"
+#define SERVERIP "127.0.0.1"
 #define SERVERPORT "4950"
 #define MAXBUFLEN 100
 
@@ -29,7 +29,7 @@ private:
     int create_socket_server(const char* port);
     void handle_syn_ack(char resp[MAXBUFLEN]);  // return port of child server
     int send_to_server(const char* text);
-    static void sigint_ignore_handler(int s);
+//    static void sigint_ignore_handler(int s);
 };
 
 #endif  // CLIENT_H

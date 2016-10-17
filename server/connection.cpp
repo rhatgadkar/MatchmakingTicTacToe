@@ -74,7 +74,7 @@ int setup_connection(int& sockfd, struct addrinfo* servinfo, int port_int)
 }
 
 void handle_syn_port(int sockfd, int& curr_port, int& client_port,
-                     map<int, int>& ports_used, int& sockfd_client)
+                     int* shm_ports_used, int& sockfd_client)
 {
     int status;
     struct sockaddr their_addr;
@@ -83,6 +83,7 @@ void handle_syn_port(int sockfd, int& curr_port, int& client_port,
     char buf[MAXBUFLEN];
     char s[INET_ADDRSTRLEN];
     char port[MAXBUFLEN];
+    int* shm_iter;
 
     addr_len = sizeof(their_addr);
     memset(buf, 0, MAXBUFLEN);
@@ -103,30 +104,39 @@ void handle_syn_port(int sockfd, int& curr_port, int& client_port,
          << " connected to parent server." << endl;
 
     curr_port = LISTENPORT + 1;
+    shm_iter = shm_ports_used;
+    for (size_t k = 0; k < curr_port - LISTENPORT; k++)
+        shm_iter++;
     // priority should be to find count == 1 first
     for (; curr_port <= client_port; curr_port++)
     {
-        if (ports_used[curr_port] == 1)
+        shm_iter = shm_ports_used;
+        for (size_t k = 0; k < curr_port - LISTENPORT; k++)
+            shm_iter++;
+        if (*shm_iter == 1)
         {
             if (curr_port == client_port)
                 client_port++;
             break;
         }
     }
-    if (ports_used[curr_port] != 1)
+    if (*shm_iter != 1)
     {
         curr_port = LISTENPORT + 1;
         for (; curr_port <= client_port; curr_port++)
         {
-            if (ports_used[curr_port] == 0)
+            shm_iter = shm_ports_used;
+            for (size_t k = 0; k < curr_port - LISTENPORT; k++)
+                shm_iter++;
+            if (*shm_iter == 0)
             {
-                ports_used[curr_port] = 1;
+//                *shm_iter = 1;
                 break;
             }
         }
     }
-    else
-        ports_used[curr_port] = 2;
+//    else
+//        *shm_iter = 2;
 
     sprintf(port, "%d", curr_port);
     status = send_to_address(sockfd_client, port);
@@ -143,6 +153,7 @@ struct client_thread_params
     struct sockaddr_in* addr_v4;
     int sockfd;
     pthread_t other_id;
+    int* shm_iter;
 };
 
 void* client_thread(void* parameters)
@@ -157,7 +168,7 @@ void* client_thread(void* parameters)
     char buf[MAXBUFLEN];
     char addr_str[INET_ADDRSTRLEN];
 
-    if (*(params->sockfd_curr_client) == -1)
+    if (*(params->sockfd_curr_client) == -1 && *(params->shm_iter) == 1)
     {
         struct sockaddr their_addr;
         socklen_t addr_len = sizeof(their_addr);
@@ -165,6 +176,8 @@ void* client_thread(void* parameters)
         cout << "Waiting for second client to connect..." << endl;
         *(params->sockfd_curr_client) = accept(params->sockfd, &their_addr,
                                                &addr_len);
+        *(params->shm_iter) = *(params->shm_iter) + 1;
+        cout << "*shm_iter: " << *(params->shm_iter) << endl;
 
         params->addr_v4 = (struct sockaddr_in*)&their_addr;
         // send ACK to client 2 (player 2)
@@ -281,7 +294,7 @@ void* client_thread(void* parameters)
     return NULL;
 }
 
-void handle_match_msg(int sockfd)
+void handle_match_msg(int sockfd, int* shm_iter)
 {
     int status;
 
@@ -291,10 +304,15 @@ void handle_match_msg(int sockfd)
     int sockfd_client_1 = -1;
     int sockfd_client_2 = -1;
 
-    if (sockfd_client_1 == -1)
+cout << "before accept sockfd_client_1" << endl;
+    if (sockfd_client_1 == -1 && *shm_iter == 0)
     {
         sockfd_client_1 = accept(sockfd, &their_addr, &addr_len);
+        // TODO: update ports_used map until after accepting from child server.
+        (*shm_iter)++;
+        cout << "*shm_iter: " << *shm_iter << endl;
     }
+cout << "after accept sockfd_client_1" << endl;
     // send ACK to client 1 (player 1)
     status = send_to_address(sockfd_client_1, "player-1");
     if (status == -1)
@@ -312,6 +330,7 @@ void handle_match_msg(int sockfd)
     first_thread_params.addr_v4 = (struct sockaddr_in*)&their_addr;
     first_thread_params.sockfd = sockfd;
     first_thread_params.other_id = second_thread;
+    first_thread_params.shm_iter = shm_iter;
     cout << "First client connected: "
          << first_thread_params.addr_v4->sin_port << endl;
     pthread_create(&first_thread, NULL, &client_thread, &first_thread_params);
@@ -322,6 +341,7 @@ void handle_match_msg(int sockfd)
     second_thread_params.addr_v4 = NULL;
     second_thread_params.sockfd = sockfd;
     second_thread_params.other_id = first_thread;
+    second_thread_params.shm_iter = shm_iter;
     pthread_create(&second_thread, NULL, &client_thread,
                    &second_thread_params);
 
