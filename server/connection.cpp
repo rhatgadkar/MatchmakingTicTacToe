@@ -5,7 +5,6 @@
 #include <cstring>
 #include <cstdio>
 #include <iostream>
-#include <map>
 #include <cstdlib>
 #include <unistd.h>
 #include <pthread.h>
@@ -104,15 +103,11 @@ void handle_syn_port(int sockfd, int& curr_port, int& client_port,
          << " connected to parent server." << endl;
 
     curr_port = LISTENPORT + 1;
-    shm_iter = shm_ports_used;
-    for (size_t k = 0; k < curr_port - LISTENPORT; k++)
-        shm_iter++;
+    port_to_shm_iter(curr_port, &shm_iter, shm_ports_used);
     // priority should be to find count == 1 first
     for (; curr_port <= client_port; curr_port++)
     {
-        shm_iter = shm_ports_used;
-        for (size_t k = 0; k < curr_port - LISTENPORT; k++)
-            shm_iter++;
+        port_to_shm_iter(curr_port, &shm_iter, shm_ports_used);
         if (*shm_iter == 1)
         {
             if (curr_port == client_port)
@@ -125,18 +120,11 @@ void handle_syn_port(int sockfd, int& curr_port, int& client_port,
         curr_port = LISTENPORT + 1;
         for (; curr_port <= client_port; curr_port++)
         {
-            shm_iter = shm_ports_used;
-            for (size_t k = 0; k < curr_port - LISTENPORT; k++)
-                shm_iter++;
+            port_to_shm_iter(curr_port, &shm_iter, shm_ports_used);
             if (*shm_iter == 0)
-            {
-//                *shm_iter = 1;
                 break;
-            }
         }
     }
-//    else
-//        *shm_iter = 2;
 
     sprintf(port, "%d", curr_port);
     status = send_to_address(sockfd_client, port);
@@ -177,7 +165,6 @@ void* client_thread(void* parameters)
         *(params->sockfd_curr_client) = accept(params->sockfd, &their_addr,
                                                &addr_len);
         *(params->shm_iter) = *(params->shm_iter) + 1;
-        cout << "*shm_iter: " << *(params->shm_iter) << endl;
 
         params->addr_v4 = (struct sockaddr_in*)&their_addr;
         // send ACK to client 2 (player 2)
@@ -304,15 +291,11 @@ void handle_match_msg(int sockfd, int* shm_iter)
     int sockfd_client_1 = -1;
     int sockfd_client_2 = -1;
 
-cout << "before accept sockfd_client_1" << endl;
     if (sockfd_client_1 == -1 && *shm_iter == 0)
     {
         sockfd_client_1 = accept(sockfd, &their_addr, &addr_len);
-        // TODO: update ports_used map until after accepting from child server.
         (*shm_iter)++;
-        cout << "*shm_iter: " << *shm_iter << endl;
     }
-cout << "after accept sockfd_client_1" << endl;
     // send ACK to client 1 (player 1)
     status = send_to_address(sockfd_client_1, "player-1");
     if (status == -1)
@@ -378,4 +361,11 @@ int send_to_address(int sockfd, const char* text)
     if (numbytes == -1)
         return -1;
     return 0;
+}
+
+void port_to_shm_iter(int port, int** shm_iter, int* shm_ports_used)
+{
+    *shm_iter = shm_ports_used;
+    for (size_t k = 0; k < port - LISTENPORT; k++)
+        (*shm_iter)++;
 }

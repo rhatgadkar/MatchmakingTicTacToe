@@ -15,4 +15,6 @@ void handle_syn_port(int sockfd, int& curr_port, int& client_port,
 
 void handle_match_msg(int sockfd, int* shm_iter);
 
+void port_to_shm_iter(int port, int** shm_iter, int* shm_ports_used);
+
 #endif  // CONNECTION_H

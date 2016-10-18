@@ -2,7 +2,6 @@
 #include <cstdlib>
 #include <cstdio>
 #include <unistd.h>
-#include <map>
 #include <signal.h>
 #include <fcntl.h>
 #include <iostream>
@@ -16,7 +15,6 @@ using namespace std;
 
 const char* file = "file.txt";
 
-map<int, int> ports_used;
 int* shm_ports_used;
 
 void sigchld_handler(int s)
@@ -52,6 +50,29 @@ void sigchld_handler(int s)
     }
 }
 
+void initialize_shm()
+{
+    int shmid;
+    key_t key;
+    int* shm_iter;
+
+    key = 5678;
+
+    shmid = shmget(key, 4096, IPC_CREAT | 0666);
+    if (shmid == -1)
+    {
+        perror("shmget");
+        exit(1);
+    }
+
+    shm_ports_used = (int*)shmat(shmid, 0, 0);
+    if (shm_ports_used == (int*)-1)
+    {
+        perror("shmat");
+        exit(1);
+    }
+}
+
 void create_match_server(int curr_port)
 {
     pid_t child_pid;
@@ -68,33 +89,9 @@ void create_match_server(int curr_port)
         int status;
         struct addrinfo* servinfo;
 
-        //--------------------
-
-        int shmid;
-        key_t key;
+        initialize_shm();
         int* shm_iter;
-
-        key = 5678;
-
-        shmid = shmget(key, 4096, IPC_CREAT | 0666);
-        if (shmid == -1)
-        {
-            perror("shmget");
-            exit(1);
-        }
-
-        shm_ports_used = (int*)shmat(shmid, 0, 0);
-        if (shm_ports_used == (int*)-1)
-        {
-            perror("shmat");
-            exit(1);
-        }
-
-        shm_iter = shm_ports_used;
-        for (size_t k = 0; k < curr_port - LISTENPORT; k++)
-            shm_iter++;
-
-        //-------------------
+        port_to_shm_iter(curr_port, &shm_iter, shm_ports_used);
 
         status = setup_connection(sockfd, servinfo, curr_port);
         if (status != 0)
@@ -135,33 +132,11 @@ int main()
     int sockfd_client;
     struct addrinfo* servinfo;
 
-    //--------------------
-
-    int shmid;
-    key_t key;
+    initialize_shm();
     int* shm_iter;
-
-    key = 5678;
-
-    shmid = shmget(key, 4096, IPC_CREAT | 0666);
-    if (shmid == -1)
-    {
-        perror("shmget");
-        exit(1);
-    }
-
-    shm_ports_used = (int*)shmat(shmid, 0, 0);
-    if (shm_ports_used == (int*)-1)
-    {
-        perror("shmat");
-        exit(1);
-    }
-
     shm_iter = shm_ports_used;
     for (size_t k = 0; k < 1000; k++)
         *shm_iter++ = 0;
-
-    //-------------------
 
     status = setup_connection(sockfd, servinfo, LISTENPORT);
     if (status != 0)
@@ -191,9 +166,7 @@ int main()
                         sockfd_client);
 
         close(sockfd_client);
-        shm_iter = shm_ports_used;
-        for (size_t k = 0; k < curr_port - LISTENPORT; k++)
-            shm_iter++;
+        port_to_shm_iter(curr_port, &shm_iter, shm_ports_used);
         if (*shm_iter == 0)
             create_match_server(curr_port);
     }
