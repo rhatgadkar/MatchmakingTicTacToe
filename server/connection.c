@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <time.h>
 #include "connection.h"
 
 #define LISTENPORT 4950  // the port clients will be connecting to
@@ -70,7 +71,7 @@ int setup_connection(int* sockfd, struct addrinfo* servinfo, int port_int)
     return 0;
 }
 
-void handle_syn_port(int sockfd, int* curr_port, int* client_port,
+int handle_syn_port(int sockfd, int* curr_port, int* client_port,
                      int* shm_ports_used, int* sockfd_client)
 {
     int status;
@@ -91,7 +92,7 @@ void handle_syn_port(int sockfd, int* curr_port, int* client_port,
     if (*sockfd_client == -1)
     {
         perror("accept");
-        return;
+        return -1;
     }
     printf("Accepted client.\n");
 
@@ -100,6 +101,7 @@ void handle_syn_port(int sockfd, int* curr_port, int* client_port,
     printf("client: %s:%hu connected to parent server.\n", s,
            their_addr_v4->sin_port);
 
+    int old_client_port = *client_port;
     *curr_port = LISTENPORT + 1;
     port_to_shm_iter(*curr_port, &shm_iter, shm_ports_used);
     // priority should be to find count == 1 first
@@ -127,9 +129,14 @@ void handle_syn_port(int sockfd, int* curr_port, int* client_port,
     sprintf(port, "%d", *curr_port);
     status = send_to_address(*sockfd_client, port);
     if (status == -1)
+    {
         perror("sendto ACK");
+        *client_port = old_client_port;
+        return -1;
+    }
 
     printf("Sent ACK to use port: %s\n", port);
+    return 0;
 }
 
 struct client_thread_params
@@ -160,8 +167,9 @@ void* client_thread(void* parameters)
         socklen_t addr_len = sizeof(their_addr);
 
         printf("Waiting for second client to connect...\n");
-        *(params->sockfd_curr_client) = accept(params->sockfd, &their_addr,
-                                               &addr_len);
+        while (*(params->sockfd_curr_client) == -1)
+            *(params->sockfd_curr_client) = accept(params->sockfd, &their_addr,
+                                                   &addr_len);
         *(params->shm_iter) = *(params->shm_iter) + 1;
 
         params->addr_v4 = (struct sockaddr_in*)&their_addr;
@@ -170,13 +178,15 @@ void* client_thread(void* parameters)
         if (status == -1)
         {
             perror("server: ACK to second_addr");
-            exit(1);
+            pthread_cancel(params->other_id);
+            return NULL;
         }
         status = send_to_address(*(params->sockfd_other_client), "player-2");
         if (status == -1)
         {
             perror("server: ACK to first_addr");
-            exit(1);
+            pthread_cancel(params->other_id);
+            return NULL;
         }
         inet_ntop(AF_INET, &(params->addr_v4->sin_addr),
                   addr_str, sizeof(addr_str));
@@ -220,10 +230,7 @@ void* client_thread(void* parameters)
                 status = send_to_address(*(params->sockfd_other_client),
                                          "giveup");
                 if (status == -1)
-                {
                     perror("server: sendto");
-                    exit(1);
-                }
                 pthread_cancel(params->other_id);
                 return NULL;
             }
@@ -240,10 +247,7 @@ void* client_thread(void* parameters)
                 status = send_to_address(*(params->sockfd_other_client),
                                          "bye");
                 if (status == -1)
-                {
                     perror("server: sendto");
-                    exit(1);
-                }
             }
             pthread_cancel(params->other_id);
             return NULL;
@@ -255,10 +259,7 @@ void* client_thread(void* parameters)
             // send giveup to second address
             status = send_to_address(*(params->sockfd_other_client), "giveup");
             if (status == -1)
-            {
                 perror("server: sendto");
-                exit(1);
-            }
             pthread_cancel(params->other_id);
             return NULL;
         }
@@ -274,11 +275,36 @@ void* client_thread(void* parameters)
             if (status == -1)
             {
                 perror("server: forward to second_addr");
-                exit(1);
+                pthread_cancel(params->other_id);
+                return NULL;
             }
         }
     }
     pthread_cancel(params->other_id);
+    return NULL;
+}
+
+struct timer_params
+{
+    int seconds;
+    int* got_ack;
+};
+
+void* timer_countdown(void* parameters)
+{
+    time_t start;
+    time_t end;
+    struct timer_params* params = (struct timer_params*)parameters;
+
+    time(&start);
+    do
+    {
+        time(&end);
+        if (*(params->got_ack))
+            return NULL;
+    } while(difftime(end, start) < params->seconds);
+    printf("Closing child server.\n");
+    exit(0);
     return NULL;
 }
 
@@ -294,7 +320,15 @@ void handle_match_msg(int sockfd, int* shm_iter)
 
     if (sockfd_client_1 == -1 && *shm_iter == 0)
     {
-        sockfd_client_1 = accept(sockfd, &their_addr, &addr_len);
+        pthread_t timer_thread;
+        int got_ack = 0;
+        struct timer_params params;
+        params.seconds = 15;
+        params.got_ack = &got_ack;
+        pthread_create(&timer_thread, NULL, &timer_countdown, &params);
+        while (sockfd_client_1 == -1)
+            sockfd_client_1 = accept(sockfd, &their_addr, &addr_len);
+        got_ack = 1;
         (*shm_iter)++;
     }
     // send ACK to client 1 (player 1)
@@ -302,7 +336,7 @@ void handle_match_msg(int sockfd, int* shm_iter)
     if (status == -1)
     {
         perror("server: ACK to first_addr");
-        exit(1);
+        return;
     }
 
     pthread_t first_thread;

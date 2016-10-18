@@ -162,10 +162,12 @@ int main()
 
     for (;;)
     {
-        handle_syn_port(sockfd, &curr_port, &client_port, shm_ports_used,
-                        &sockfd_client);
-
+        status = handle_syn_port(sockfd, &curr_port, &client_port,
+                                 shm_ports_used, &sockfd_client);
         close(sockfd_client);
+        if (status == -1)
+            continue;
+
         port_to_shm_iter(curr_port, &shm_iter, shm_ports_used);
         if (*shm_iter == 0)
             create_match_server(curr_port);
