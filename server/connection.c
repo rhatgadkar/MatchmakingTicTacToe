@@ -2,15 +2,13 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <sys/socket.h>
-#include <cstring>
-#include <cstdio>
-#include <iostream>
-#include <map>
-#include <cstdlib>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <time.h>
 #include "connection.h"
-using namespace std;
 
 #define LISTENPORT 4950  // the port clients will be connecting to
 #define MAXBUFLEN 100
@@ -18,7 +16,7 @@ using namespace std;
 static int receive_from(int sockfd, char* buf, size_t size);
 static int send_to_address(int sockfd, const char* text);
 
-int setup_connection(int& sockfd, struct addrinfo* servinfo, int port_int)
+int setup_connection(int* sockfd, struct addrinfo* servinfo, int port_int)
 {
     int status;
     struct addrinfo hints, *p;
@@ -32,39 +30,39 @@ int setup_connection(int& sockfd, struct addrinfo* servinfo, int port_int)
 
     if ((status = getaddrinfo(NULL, port, &hints, &servinfo)) != 0)
     {
-        cerr << "getaddrinfo: " << gai_strerror(status) << endl;
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status));
         return 1;
     }
 
     // loop through all the results and bind to the first we can
     for (p = servinfo; p != NULL; p = p->ai_next)
     {
-        if ((sockfd = socket(p->ai_family, p->ai_socktype,
+        if ((*sockfd = socket(p->ai_family, p->ai_socktype,
                              p->ai_protocol)) == -1)
         {
             continue;
         }
         int yes = 1;
-        if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes,
+        if (setsockopt(*sockfd, SOL_SOCKET, SO_REUSEADDR, &yes,
                        sizeof(int)) == -1)
         {
             perror("setsockopt");
             exit(1);
         }
-        if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1)
+        if (bind(*sockfd, p->ai_addr, p->ai_addrlen) == -1)
         {
-            close(sockfd);
+            close(*sockfd);
             continue;
         }
         break;
     }
     if (p == NULL)
     {
-        cerr << "Failed to bind socket" << endl;
+        fprintf(stderr, "Failed to bind socket.\n");
         return 2;
     }
 
-    if ((listen(sockfd, BACKLOG)) == -1)
+    if ((listen(*sockfd, BACKLOG)) == -1)
     {
         perror("listen");
         return 2;
@@ -73,8 +71,8 @@ int setup_connection(int& sockfd, struct addrinfo* servinfo, int port_int)
     return 0;
 }
 
-void handle_syn_port(int sockfd, int& curr_port, int& client_port,
-                     map<int, int>& ports_used, int& sockfd_client)
+int handle_syn_port(int sockfd, int* curr_port, int* client_port,
+                     int* shm_ports_used, int* sockfd_client)
 {
     int status;
     struct sockaddr their_addr;
@@ -83,57 +81,62 @@ void handle_syn_port(int sockfd, int& curr_port, int& client_port,
     char buf[MAXBUFLEN];
     char s[INET_ADDRSTRLEN];
     char port[MAXBUFLEN];
+    int* shm_iter;
 
     addr_len = sizeof(their_addr);
     memset(buf, 0, MAXBUFLEN);
     memset(s, 0, INET_ADDRSTRLEN);
     their_addr_v4 = NULL;
     
-    sockfd_client = accept(sockfd, &their_addr, &addr_len);
-    if (sockfd_client == -1)
+    *sockfd_client = accept(sockfd, &their_addr, &addr_len);
+    if (*sockfd_client == -1)
     {
         perror("accept");
-        return;
+        return -1;
     }
-    cout << "Accepted client." << endl;
+    printf("Accepted client.\n");
 
     their_addr_v4 = (struct sockaddr_in*)&their_addr;
     inet_ntop(AF_INET, &(their_addr_v4->sin_addr), s, sizeof(s));
-    cout << "client: " << their_addr_v4->sin_port 
-         << " connected to parent server." << endl;
+    printf("client: %s:%hu connected to parent server.\n", s,
+           their_addr_v4->sin_port);
 
-    curr_port = LISTENPORT + 1;
+    int old_client_port = *client_port;
+    *curr_port = LISTENPORT + 1;
+    port_to_shm_iter(*curr_port, &shm_iter, shm_ports_used);
     // priority should be to find count == 1 first
-    for (; curr_port <= client_port; curr_port++)
+    for (; *curr_port <= *client_port; (*curr_port)++)
     {
-        if (ports_used[curr_port] == 1)
+        port_to_shm_iter(*curr_port, &shm_iter, shm_ports_used);
+        if (*shm_iter == 1)
         {
-            if (curr_port == client_port)
-                client_port++;
+            if (*curr_port == *client_port)
+                (*client_port)++;
             break;
         }
     }
-    if (ports_used[curr_port] != 1)
+    if (*shm_iter != 1)
     {
-        curr_port = LISTENPORT + 1;
-        for (; curr_port <= client_port; curr_port++)
+        *curr_port = LISTENPORT + 1;
+        for (; *curr_port <= *client_port; (*curr_port)++)
         {
-            if (ports_used[curr_port] == 0)
-            {
-                ports_used[curr_port] = 1;
+            port_to_shm_iter(*curr_port, &shm_iter, shm_ports_used);
+            if (*shm_iter == 0)
                 break;
-            }
         }
     }
-    else
-        ports_used[curr_port] = 2;
 
-    sprintf(port, "%d", curr_port);
-    status = send_to_address(sockfd_client, port);
+    sprintf(port, "%d", *curr_port);
+    status = send_to_address(*sockfd_client, port);
     if (status == -1)
+    {
         perror("sendto ACK");
+        *client_port = old_client_port;
+        return -1;
+    }
 
-    cout << "Sent ACK to use port: " << port << endl;
+    printf("Sent ACK to use port: %s\n", port);
+    return 0;
 }
 
 struct client_thread_params
@@ -143,6 +146,7 @@ struct client_thread_params
     struct sockaddr_in* addr_v4;
     int sockfd;
     pthread_t other_id;
+    int* shm_iter;
 };
 
 void* client_thread(void* parameters)
@@ -157,14 +161,16 @@ void* client_thread(void* parameters)
     char buf[MAXBUFLEN];
     char addr_str[INET_ADDRSTRLEN];
 
-    if (*(params->sockfd_curr_client) == -1)
+    if (*(params->sockfd_curr_client) == -1 && *(params->shm_iter) == 1)
     {
         struct sockaddr their_addr;
         socklen_t addr_len = sizeof(their_addr);
 
-        cout << "Waiting for second client to connect..." << endl;
-        *(params->sockfd_curr_client) = accept(params->sockfd, &their_addr,
-                                               &addr_len);
+        printf("Waiting for second client to connect...\n");
+        while (*(params->sockfd_curr_client) == -1)
+            *(params->sockfd_curr_client) = accept(params->sockfd, &their_addr,
+                                                   &addr_len);
+        *(params->shm_iter) = *(params->shm_iter) + 1;
 
         params->addr_v4 = (struct sockaddr_in*)&their_addr;
         // send ACK to client 2 (player 2)
@@ -172,28 +178,37 @@ void* client_thread(void* parameters)
         if (status == -1)
         {
             perror("server: ACK to second_addr");
-            exit(1);
+            pthread_cancel(params->other_id);
+            return NULL;
         }
         status = send_to_address(*(params->sockfd_other_client), "player-2");
         if (status == -1)
         {
             perror("server: ACK to first_addr");
-            exit(1);
+            pthread_cancel(params->other_id);
+            return NULL;
         }
-        cout << "Second client connected: " << params->addr_v4->sin_port
-             << endl;
+        inet_ntop(AF_INET, &(params->addr_v4->sin_addr),
+                  addr_str, sizeof(addr_str));
+        printf("Second client connected: %s:%hu\n", addr_str,
+               params->addr_v4->sin_port);
+    }
+    else
+    {
+        inet_ntop(AF_INET, &(params->addr_v4->sin_addr),
+                  addr_str, sizeof(addr_str));
+        printf("First client connected: %s:%hu\n", addr_str,
+               params->addr_v4->sin_port);
     }
 
-    inet_ntop(AF_INET, &(params->addr_v4->sin_addr),
-              addr_str, sizeof(addr_str));
 
     for (;;)
     {
         memset(buf, 0, MAXBUFLEN);
         
         status = receive_from(*(params->sockfd_curr_client), buf, MAXBUFLEN-1);
-        cout << "receiving message from " << params->addr_v4->sin_port << ": "
-             << buf << endl;
+        printf("Receiving message from %s:%hu: %s\n", addr_str,
+               params->addr_v4->sin_port, buf);
         if (status == -1)
         {
             perror("recv");
@@ -202,25 +217,20 @@ void* client_thread(void* parameters)
         {
             if (*(params->sockfd_other_client) == -1)
             {
-                cout << "Received 'bye', closing connection to "
-                     << addr_str << ", "
-                     << params->addr_v4->sin_port
-                     << endl;
+                printf("Received 'bye', closing connection to %s:%hu\n",
+                       addr_str, params->addr_v4->sin_port);
                 pthread_cancel(params->other_id);
                 return NULL;
             }
             else
             {
-                cout << "Received 'giveup'" << endl;
+                printf("Received 'giveup'\n");
 
                 // send giveup to second address
                 status = send_to_address(*(params->sockfd_other_client),
                                          "giveup");
                 if (status == -1)
-                {
                     perror("server: sendto");
-                    exit(1);
-                }
                 pthread_cancel(params->other_id);
                 return NULL;
             }
@@ -228,10 +238,8 @@ void* client_thread(void* parameters)
         
         if (strcmp(buf, "bye") == 0)
         {
-            cout << "Received 'bye', closing connection to "
-                 << addr_str << ", "
-                 << params->addr_v4->sin_port
-                 << endl;
+            printf("Received 'bye', closing connection to %s:%hu\n",
+                   addr_str, params->addr_v4->sin_port);
             
             if (*(params->sockfd_other_client) != -1)
             {
@@ -239,25 +247,19 @@ void* client_thread(void* parameters)
                 status = send_to_address(*(params->sockfd_other_client),
                                          "bye");
                 if (status == -1)
-                {
                     perror("server: sendto");
-                    exit(1);
-                }
             }
             pthread_cancel(params->other_id);
             return NULL;
         }
         else if (strcmp(buf, "giveup") == 0)
         {
-            cout << "Received 'giveup'" << endl;
+            printf("Received 'giveup'\n");
 
             // send giveup to second address
             status = send_to_address(*(params->sockfd_other_client), "giveup");
             if (status == -1)
-            {
                 perror("server: sendto");
-                exit(1);
-            }
             pthread_cancel(params->other_id);
             return NULL;
         }
@@ -268,12 +270,13 @@ void* client_thread(void* parameters)
         {
             // forward message from first_addr to second_addr
             status = send_to_address(*(params->sockfd_other_client), buf);
-            cout << "forwarding message from " << params->addr_v4->sin_port
-                 << ": " << buf << endl;
+            printf("Forwarding message from %s:%hu: %s\n", addr_str,
+                   params->addr_v4->sin_port, buf);
             if (status == -1)
             {
                 perror("server: forward to second_addr");
-                exit(1);
+                pthread_cancel(params->other_id);
+                return NULL;
             }
         }
     }
@@ -281,7 +284,31 @@ void* client_thread(void* parameters)
     return NULL;
 }
 
-void handle_match_msg(int sockfd)
+struct timer_params
+{
+    int seconds;
+    int* got_ack;
+};
+
+void* timer_countdown(void* parameters)
+{
+    time_t start;
+    time_t end;
+    struct timer_params* params = (struct timer_params*)parameters;
+
+    time(&start);
+    do
+    {
+        time(&end);
+        if (*(params->got_ack))
+            return NULL;
+    } while(difftime(end, start) < params->seconds);
+    printf("Closing child server.\n");
+    exit(0);
+    return NULL;
+}
+
+void handle_match_msg(int sockfd, int* shm_iter)
 {
     int status;
 
@@ -291,16 +318,25 @@ void handle_match_msg(int sockfd)
     int sockfd_client_1 = -1;
     int sockfd_client_2 = -1;
 
-    if (sockfd_client_1 == -1)
+    if (sockfd_client_1 == -1 && *shm_iter == 0)
     {
-        sockfd_client_1 = accept(sockfd, &their_addr, &addr_len);
+        pthread_t timer_thread;
+        int got_ack = 0;
+        struct timer_params params;
+        params.seconds = 15;
+        params.got_ack = &got_ack;
+        pthread_create(&timer_thread, NULL, &timer_countdown, &params);
+        while (sockfd_client_1 == -1)
+            sockfd_client_1 = accept(sockfd, &their_addr, &addr_len);
+        got_ack = 1;
+        (*shm_iter)++;
     }
     // send ACK to client 1 (player 1)
     status = send_to_address(sockfd_client_1, "player-1");
     if (status == -1)
     {
         perror("server: ACK to first_addr");
-        exit(1);
+        return;
     }
 
     pthread_t first_thread;
@@ -312,8 +348,7 @@ void handle_match_msg(int sockfd)
     first_thread_params.addr_v4 = (struct sockaddr_in*)&their_addr;
     first_thread_params.sockfd = sockfd;
     first_thread_params.other_id = second_thread;
-    cout << "First client connected: "
-         << first_thread_params.addr_v4->sin_port << endl;
+    first_thread_params.shm_iter = shm_iter;
     pthread_create(&first_thread, NULL, &client_thread, &first_thread_params);
 
     struct client_thread_params second_thread_params;
@@ -322,6 +357,7 @@ void handle_match_msg(int sockfd)
     second_thread_params.addr_v4 = NULL;
     second_thread_params.sockfd = sockfd;
     second_thread_params.other_id = first_thread;
+    second_thread_params.shm_iter = shm_iter;
     pthread_create(&second_thread, NULL, &client_thread,
                    &second_thread_params);
 
@@ -329,14 +365,14 @@ void handle_match_msg(int sockfd)
     pthread_join(first_thread, &st);
     pthread_cancel(second_thread);
     if (st == PTHREAD_CANCELED)
-        cout << "Thread 1 was canceled" << endl;
+        printf("Thread 1 was canceled\n");
     else
-        cout << "Thread 1 was not canceled" << endl;
+        printf("Thread 1 was not canceled\n");
     pthread_join(second_thread, &st);
     if (st == PTHREAD_CANCELED)
-        cout << "Thread 2 was canceled" << endl;
+        printf("Thread 2 was canceled\n");
     else
-        cout << "Thread 2 was not canceled" << endl;
+        printf("Thread 2 was not canceled\n");
 
     close(sockfd_client_1);
     close(sockfd_client_2);
@@ -358,4 +394,12 @@ int send_to_address(int sockfd, const char* text)
     if (numbytes == -1)
         return -1;
     return 0;
+}
+
+void port_to_shm_iter(int port, int** shm_iter, int* shm_ports_used)
+{
+    *shm_iter = shm_ports_used;
+    int k;
+    for (k = 0; k < port - LISTENPORT; k++)
+        (*shm_iter)++;
 }

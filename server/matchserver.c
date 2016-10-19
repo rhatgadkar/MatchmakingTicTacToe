@@ -1,20 +1,20 @@
-#include <cstring>
-#include <cstdlib>
-#include <cstdio>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <unistd.h>
-#include <map>
 #include <signal.h>
 #include <fcntl.h>
-#include <iostream>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <netdb.h>
 #include "connection.h"
-using namespace std;
+#include <sys/shm.h>
+#include <sys/ipc.h>
 
+#define SHM_SIZE 4096
 const char* file = "file.txt";
 
-map<int, int> ports_used;
+int* shm_ports_used;
 
 void sigchld_handler(int s)
 {
@@ -23,6 +23,7 @@ void sigchld_handler(int s)
     int status;
     char buf[MAXBUFLEN];
     int port;
+    int* shm_iter;
     
     while(waitpid(-1, NULL, WNOHANG) > 0)
     {
@@ -40,7 +41,35 @@ void sigchld_handler(int s)
         }
         close(fd);
         port = (int)strtol(buf, (char**)NULL, 10);
-        ports_used.erase(port);
+
+        shm_iter = shm_ports_used;
+        int k;
+        for (k = 0; k < port - LISTENPORT; k++)
+            shm_iter++;
+        *shm_iter = 0;;
+    }
+}
+
+void initialize_shm()
+{
+    int shmid;
+    key_t key;
+    int* shm_iter;
+
+    key = 5678;
+
+    shmid = shmget(key, SHM_SIZE, IPC_CREAT | 0666);
+    if (shmid == -1)
+    {
+        perror("shmget");
+        exit(1);
+    }
+
+    shm_ports_used = (int*)shmat(shmid, 0, 0);
+    if (shm_ports_used == (int*)-1)
+    {
+        perror("shmat");
+        exit(1);
     }
 }
 
@@ -59,11 +88,16 @@ void create_match_server(int curr_port)
         int sockfd;
         int status;
         struct addrinfo* servinfo;
- 
-        status = setup_connection(sockfd, servinfo, curr_port);
+
+        initialize_shm();
+        int* shm_iter;
+        port_to_shm_iter(curr_port, &shm_iter, shm_ports_used);
+
+        status = setup_connection(&sockfd, servinfo, curr_port);
         if (status != 0)
         {
-            cout << "hmm" << endl;
+            printf("Child server at port: %d is already running.\n",
+                   curr_port);
             exit(1);
         }
         
@@ -72,9 +106,9 @@ void create_match_server(int curr_port)
         char str_curr_port[MAXBUFLEN];
         sprintf(str_curr_port, "%d", curr_port);
 
-        handle_match_msg(sockfd);
+        handle_match_msg(sockfd, shm_iter);
 
-        cout << "Clients have exited." << endl;
+        printf("Child server at port: %d has closed.\n", curr_port);
         fd = open(file, O_WRONLY | O_TRUNC);
         memset(&lock_w, 0, sizeof(lock_w));
         lock_w.l_type = F_WRLCK;
@@ -97,10 +131,17 @@ int main()
     int sockfd_client;
     struct addrinfo* servinfo;
 
-    status = setup_connection(sockfd, servinfo, LISTENPORT);
+    initialize_shm();
+    int* shm_iter;
+    shm_iter = shm_ports_used;
+    int k;
+    for (k = 0; k < 1000; k++)
+        *shm_iter++ = 0;
+
+    status = setup_connection(&sockfd, servinfo, LISTENPORT);
     if (status != 0)
     {
-        cout << "something went wrong" << endl;
+        printf("Parent server cannot start.\n");
         return status;
     }
 
@@ -121,11 +162,14 @@ int main()
 
     for (;;)
     {
-        handle_syn_port(sockfd, curr_port, client_port, ports_used,
-                        sockfd_client);
-
+        status = handle_syn_port(sockfd, &curr_port, &client_port,
+                                 shm_ports_used, &sockfd_client);
         close(sockfd_client);
-        if (ports_used[curr_port] == 1)
+        if (status == -1)
+            continue;
+
+        port_to_shm_iter(curr_port, &shm_iter, shm_ports_used);
+        if (*shm_iter == 0)
             create_match_server(curr_port);
     }
     

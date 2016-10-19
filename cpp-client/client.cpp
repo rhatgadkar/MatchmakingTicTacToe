@@ -10,13 +10,7 @@
 #include <cstdlib>
 #include <netinet/in.h>
 #include <unistd.h>
-#include <signal.h>
 using namespace std;
-
-void Client::sigint_ignore_handler(int s)
-{
-    cout << "got SIGINT" << endl;
-}
 
 Client::Client()
 {
@@ -25,15 +19,6 @@ Client::Client()
 
     int res;
     char buf[MAXBUFLEN];
-
-    struct sigaction sa;
-    memset(&sa, 0, sizeof(sa));
-    sa.sa_handler = &(Client::sigint_ignore_handler);
-    if (sigaction(SIGINT, &sa, NULL) == -1)
-    {
-        perror("sigaction");
-        exit(1);
-    }    
 
     // connect to parent server
     res = create_socket_server(SERVERPORT);
@@ -50,7 +35,7 @@ Client::Client()
     freeaddrinfo(m_servinfo);
 
     // connect to child server
-    sleep(2);
+    sleep(1);
     res = create_socket_server(buf);
     if (res != 0)
     {
@@ -58,14 +43,8 @@ Client::Client()
         exit(1);
     }
     memset(buf, 0, MAXBUFLEN);
+    cout << "connected to child server" << endl;
     handle_syn_ack(buf);
-
-        sa.sa_handler = SIG_DFL;
-        if (sigaction(SIGINT, &sa, NULL) == -1)
-        {
-            perror("sigaction");
-            exit(1);
-        }
 
     // get assigned player-1 or player-2
     if (strcmp(buf, "player-1") == 0)
@@ -163,16 +142,16 @@ void* Client::timer_countdown(void* parameters)
 {
     time_t start;
     time_t end;
-    int* got_ack = (int*)parameters;
+    struct timer_params* params = (struct timer_params*)parameters;
 
     time(&start);
     do
     {
         time(&end);
-        if (*got_ack)
+        if (*(params->got_ack))
             return NULL;
-    } while(difftime(end, start) < 15);
-    cout << "Did not receive ACK in under 15 seconds.  Exiting." << endl;
+    } while(difftime(end, start) < params->seconds);
+    cout << "Connection failed.  Try again." << endl;
     exit(0);
     return NULL;
 }
@@ -183,13 +162,23 @@ void Client::handle_syn_ack(char resp[MAXBUFLEN])
     char buf[MAXBUFLEN];
 
     memset(buf, 0, MAXBUFLEN);
-    
-    res = receive_from_server(buf);
+
+    pthread_t timer_thread;
+    int got_ack = 0;
+
+    struct timer_params params;
+    params.seconds = 15;
+    params.got_ack = &got_ack;
+
+    pthread_create(&timer_thread, NULL, &(Client::timer_countdown), &params);
+
+    res = receive_from_server(buf);  // should possibly be aborted by timer
     if (res == -1)
     {
         perror("recvfrom ACK");
         exit(1);
     }
+    got_ack = 1;
 
     cout << "Received ACK from server." << endl;
     memcpy(resp, buf, MAXBUFLEN);
@@ -238,7 +227,7 @@ int Client::send_to_server(const char* text)
     return 0;
 }
 
-bool Client::receive_from_server(char* buf)
+int Client::receive_from_server(char* buf)
 {
     int numbytes;
     numbytes = recv(m_sockfd, buf, MAXBUFLEN, 0);
