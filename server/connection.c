@@ -323,7 +323,7 @@ void handle_match_msg(int sockfd, int* shm_iter)
         pthread_t timer_thread;
         int got_ack = 0;
         struct timer_params params;
-        params.seconds = 15;
+        params.seconds = 30;
         params.got_ack = &got_ack;
         pthread_create(&timer_thread, NULL, &timer_countdown, &params);
         while (sockfd_client_1 == -1)

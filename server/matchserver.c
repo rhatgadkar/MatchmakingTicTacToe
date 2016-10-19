@@ -119,7 +119,7 @@ void create_match_server(int curr_port)
         close(fd);
 
         close(sockfd);
-        freeaddrinfo(servinfo);
+//        freeaddrinfo(servinfo);
         exit(0);
     }
 }
