@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cctype>
+#include <time.h>
 using namespace std;
 
 Game::Game()
@@ -15,11 +16,11 @@ Game::Game()
     memset(m_recv_buf, 0, MAXBUFLEN);
 }
 
-struct check_giveup_params
-{
-    Client* c;
-    char* recv_buf;
-};
+//struct check_giveup_params
+//{
+//    Client* c;
+//    char* recv_buf;
+//};
 
 void* Game::check_giveup(void* parameters)
 {
@@ -37,6 +38,25 @@ void* Game::check_giveup(void* parameters)
     else
         cout << "Player 1 has given up.  Player 2 wins." << endl;
     exit(0);
+}
+
+void* Game::timer_countdown(void* parameters)
+{
+    time_t start;
+    time_t end;
+    struct timer_params* params = (struct timer_params*)parameters;
+
+    time(&start);
+    do
+    {
+        time(&end);
+        if (*(params->got_move))
+            return NULL;
+    } while(difftime(end, start) < params->seconds);
+    cout << "You have not played a move in " << params->seconds
+         << " seconds.  " << "You have given up." << endl;
+    exit(0);
+    return NULL;
 }
 
 void Game::start()
@@ -67,6 +87,15 @@ void Game::start()
         // insert at position
         if ((p1turn && c.is_p1()) || (!p1turn && !c.is_p1()))
         {
+            pthread_t timer_thread;
+            int got_move = 0;
+
+            struct timer_params params_timer;
+            params_timer.seconds = 60;
+            params_timer.got_move = &got_move;
+
+            pthread_create(&timer_thread, NULL, &(Game::timer_countdown),
+                           &params_timer);
             for (;;)
             {
                 cout << "Enter position (1-9): ";
@@ -78,6 +107,8 @@ void Game::start()
                     continue;
                 break;
             }
+            got_move = 1;
+
             if (!c.send_position(input))
             {
                 cout << "error with send_position" << endl;
