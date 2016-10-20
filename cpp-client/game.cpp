@@ -47,8 +47,9 @@ void* Game::timer_countdown(void* parameters)
         if (*(params->got_move))
             return NULL;
     } while(difftime(end, start) < params->seconds);
-    cout << "You have not played a move in " << params->seconds
-         << " seconds.  " << "You have given up." << endl;
+//    cout << "You have not played a move in " << params->seconds
+//         << " seconds.  " << "You have given up." << endl;
+    cout << params->msg << endl;
     exit(0);
     return NULL;
 }
@@ -87,6 +88,8 @@ void Game::start()
             struct timer_params params_timer;
             params_timer.seconds = 60;
             params_timer.got_move = &got_move;
+            params_timer.msg =
+                "You have not played a move in 60 seconds. You have given up.";
 
             pthread_create(&timer_thread, NULL, &(Game::timer_countdown),
                            &params_timer);
@@ -112,6 +115,18 @@ void Game::start()
         // wait for other player to make move
         else
         {
+            // TODO: add timer here. If timer expire, cnxn loss
+            pthread_t rcv_timer_thread;
+            int got_move = 0;
+
+            struct timer_params rcv_params_timer;
+            rcv_params_timer.seconds = 90;
+            rcv_params_timer.got_move = &got_move;
+            rcv_params_timer.msg =
+                "A move has not been received in 90 seconds. Closing connection.";
+
+            pthread_create(&rcv_timer_thread, NULL, &(Game::timer_countdown),
+                           &rcv_params_timer);
             for (;;)
             {
                 if (m_recv_buf[0] == 0)
@@ -123,6 +138,8 @@ void Game::start()
 					break;
                 }
             }
+            got_move = 1;
+
             if (p1turn && !m_board.insert(m_p1.getSymbol(), input))
             {
                 cout << "error with receive_position with input: " << input

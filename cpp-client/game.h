@@ -4,6 +4,7 @@
 #include "board.h"
 #include "player.h"
 #include "client.h"
+#include <string>
 
 class Game
 {
@@ -24,6 +25,7 @@ private:
     {
         int seconds;
         int* got_move;
+        std::string msg;
     };
     static void* check_giveup(void* parameters);
     static void* timer_countdown(void* parameters);

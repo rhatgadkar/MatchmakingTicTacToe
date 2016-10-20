@@ -139,6 +139,39 @@ int handle_syn_port(int sockfd, int* curr_port, int* client_port,
     return 0;
 }
 
+struct timer_closechild_params
+{
+    int sockfd_other_client;
+    pthread_t other_id;
+    int seconds;
+    int* got_ack;
+};
+
+void* timer_closechild(void* parameters)
+{
+    int status;
+    time_t start;
+    time_t end;
+    struct timer_closechild_params* params;
+    params = (struct timer_closechild_params*)parameters;
+
+    time(&start);
+    do
+    {
+        time(&end);
+        if (*(params->got_ack))
+            return NULL;
+    } while(difftime(end, start) < params->seconds);
+    printf("Not receiving anything. Closing child server.\n");
+    // send bye to second address
+    status = send_to_address(params->sockfd_other_client, "bye");
+    if (status == -1)
+        perror("server: sendto");
+    pthread_cancel(params->other_id);
+    exit(0);
+    return NULL;
+}
+
 struct client_thread_params
 {
     int* sockfd_curr_client;
@@ -206,7 +239,18 @@ void* client_thread(void* parameters)
     {
         memset(buf, 0, MAXBUFLEN);
         
+        // TODO: add timer for this receive check. if expire -> send bye
+        pthread_t timer_closechild_thread;
+        int got_ack = 0;
+        struct timer_closechild_params closechild_params;
+        closechild_params.seconds = 120;
+        closechild_params.got_ack = &got_ack;
+        closechild_params.sockfd_other_client = *(params->sockfd_curr_client);
+        closechild_params.other_id = params->other_id;
+        pthread_create(&timer_closechild_thread, NULL, &timer_closechild,
+                       &closechild_params);
         status = receive_from(*(params->sockfd_curr_client), buf, MAXBUFLEN-1);
+        got_ack = 1;
         printf("Receiving message from %s:%hu: %s\n", addr_str,
                params->addr_v4->sin_port, buf);
         if (status == -1)
