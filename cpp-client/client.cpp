@@ -35,7 +35,7 @@ Client::Client()
     freeaddrinfo(m_servinfo);
 
     // connect to child server
-    sleep(1);
+    sleep(1);  // wait for child server to establish before create socket
     res = create_socket_server(buf);
     if (res != 0)
     {
@@ -77,8 +77,6 @@ Client::Client()
 
 Client::~Client()
 {
-    int res;
-
     if (m_p != NULL)
     {
         cout << "Client is exiting.  Closing server." << endl;
@@ -179,6 +177,7 @@ void Client::handle_syn_ack(char resp[MAXBUFLEN])
         exit(1);
     }
     got_ack = 1;
+	sleep(1);  // wait for timer_thread to exit
 
     cout << "Received ACK from server." << endl;
     memcpy(resp, buf, MAXBUFLEN);
