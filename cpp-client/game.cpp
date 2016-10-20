@@ -16,12 +16,6 @@ Game::Game()
     memset(m_recv_buf, 0, MAXBUFLEN);
 }
 
-//struct check_giveup_params
-//{
-//    Client* c;
-//    char* recv_buf;
-//};
-
 void* Game::check_giveup(void* parameters)
 {
     struct check_giveup_params* params;
@@ -29,8 +23,8 @@ void* Game::check_giveup(void* parameters)
 
     do
     {
-        memset(params->recv_buf, 0, MAXBUFLEN);
         params->c->receive_from_server(params->recv_buf);
+
     } while(strcmp(params->recv_buf, "giveup") != 0);
 
     if (params->c->is_p1())
@@ -125,17 +119,20 @@ void Game::start()
                 if (isdigit(m_recv_buf[0]) && m_recv_buf[0] != '0')
                 {
                     input = m_recv_buf[0] - '0';
-                    break;
+                    memset(m_recv_buf, 0, MAXBUFLEN);
+					break;
                 }
             }
             if (p1turn && !m_board.insert(m_p1.getSymbol(), input))
             {
-                cout << "error with receive_position" << endl;
+                cout << "error with receive_position with input: " << input
+					 << endl;
                 return;
             }
             if (!p1turn && !m_board.insert(m_p2.getSymbol(), input))
             {
-                cout << "error with receive_position" << endl;
+                cout << "error with receive_position with input: " << input
+					 << endl;
                 return;
             }
         }
