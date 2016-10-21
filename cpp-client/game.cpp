@@ -47,8 +47,6 @@ void* Game::timer_countdown(void* parameters)
         if (*(params->got_move))
             return NULL;
     } while(difftime(end, start) < params->seconds);
-//    cout << "You have not played a move in " << params->seconds
-//         << " seconds.  " << "You have given up." << endl;
     cout << params->msg << endl;
     if (params->c != NULL)
         params->c->send_bye();
@@ -92,6 +90,7 @@ void Game::start()
             params_timer.got_move = &got_move;
             params_timer.msg =
                 "You have not played a move in 60 seconds. You have given up.";
+            params_timer.c = NULL;
 
             pthread_create(&timer_thread, NULL, &(Game::timer_countdown),
                            &params_timer);
@@ -117,7 +116,6 @@ void Game::start()
         // wait for other player to make move
         else
         {
-            // TODO: add timer here. If timer expire, cnxn loss
             pthread_t rcv_timer_thread;
             int got_move = 0;
 

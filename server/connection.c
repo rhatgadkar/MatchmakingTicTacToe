@@ -239,7 +239,6 @@ void* client_thread(void* parameters)
     {
         memset(buf, 0, MAXBUFLEN);
         
-        // TODO: add timer for this receive check. if expire -> send bye
         pthread_t timer_closechild_thread;
         int got_ack = 0;
         struct timer_closechild_params closechild_params;
