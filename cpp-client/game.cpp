@@ -50,6 +50,8 @@ void* Game::timer_countdown(void* parameters)
 //    cout << "You have not played a move in " << params->seconds
 //         << " seconds.  " << "You have given up." << endl;
     cout << params->msg << endl;
+    if (params->c != NULL)
+        params->c->send_bye();
     exit(0);
     return NULL;
 }
@@ -124,6 +126,7 @@ void Game::start()
             rcv_params_timer.got_move = &got_move;
             rcv_params_timer.msg =
                 "A move has not been received in 90 seconds. Closing connection.";
+            rcv_params_timer.c = &c;
 
             pthread_create(&rcv_timer_thread, NULL, &(Game::timer_countdown),
                            &rcv_params_timer);

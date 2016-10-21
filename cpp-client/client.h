@@ -16,6 +16,7 @@ public:
     bool send_position(int pos);
     bool is_p1() { return m_is_p1; }
     bool send_giveup();
+    bool send_bye();
     int receive_from_server(char* buf);
 private:
     // variables
@@ -29,7 +30,6 @@ private:
         int* got_ack;
     };
     // functions
-    bool send_bye();
     static void* timer_countdown(void* parameters);
     static void* receive_thread(void* parameters);
     int create_socket_server(const char* port);
