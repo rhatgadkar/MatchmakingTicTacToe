@@ -72,7 +72,10 @@ Client::Client()
         m_is_p1 = false;
     }
     else
-        cout << "hmm.  error." << endl;
+    {
+        cout << "Try connecting again." << endl;
+        exit(0);
+    }
 }
 
 Client::~Client()
@@ -177,7 +180,7 @@ void Client::handle_syn_ack(char resp[MAXBUFLEN])
         exit(1);
     }
     got_ack = 1;
-	sleep(1);  // wait for timer_thread to exit
+    pthread_join(timer_thread, NULL);
 
     cout << "Received ACK from server." << endl;
     memcpy(resp, buf, MAXBUFLEN);
