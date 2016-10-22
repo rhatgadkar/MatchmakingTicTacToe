@@ -106,6 +106,7 @@ void Game::start()
                 break;
             }
             got_move = 1;
+            pthread_join(timer_thread, NULL);
 
             if (!c.send_position(input))
             {
@@ -140,6 +141,7 @@ void Game::start()
                 }
             }
             got_move = 1;
+            pthread_join(rcv_timer_thread, NULL);
 
             if (p1turn && !m_board.insert(m_p1.getSymbol(), input))
             {

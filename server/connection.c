@@ -239,17 +239,18 @@ void* client_thread(void* parameters)
     {
         memset(buf, 0, MAXBUFLEN);
         
-        pthread_t timer_closechild_thread;
-        int got_ack = 0;
-        struct timer_closechild_params closechild_params;
-        closechild_params.seconds = 120;
-        closechild_params.got_ack = &got_ack;
-        closechild_params.sockfd_other_client = *(params->sockfd_curr_client);
-        closechild_params.other_id = params->other_id;
-        pthread_create(&timer_closechild_thread, NULL, &timer_closechild,
-                       &closechild_params);
+//        pthread_t timer_closechild_thread;
+//        int got_ack = 0;
+//        struct timer_closechild_params closechild_params;
+//        closechild_params.seconds = 120;
+//        closechild_params.got_ack = &got_ack;
+//        closechild_params.sockfd_other_client = *(params->sockfd_curr_client);
+//        closechild_params.other_id = params->other_id;
+//        pthread_create(&timer_closechild_thread, NULL, &timer_closechild,
+//                       &closechild_params);
         status = receive_from(*(params->sockfd_curr_client), buf, MAXBUFLEN-1);
-        got_ack = 1;
+//        got_ack = 1;
+//        pthread_join(timer_closechild_thread, NULL);
         printf("Receiving message from %s:%hu: %s\n", addr_str,
                params->addr_v4->sin_port, buf);
         if (status == -1)
@@ -372,6 +373,7 @@ void handle_match_msg(int sockfd, int* shm_iter)
         while (sockfd_client_1 == -1)
             sockfd_client_1 = accept(sockfd, &their_addr, &addr_len);
         got_ack = 1;
+        pthread_join(timer_thread, NULL);
         (*shm_iter)++;
     }
     // send ACK to client 1 (player 1)
