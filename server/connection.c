@@ -180,6 +180,8 @@ struct client_thread_params
     int sockfd;
     pthread_t other_id;
     int* shm_iter;
+    struct client_thread_params* other_params;
+    pthread_t timer_closechild_id;
 };
 
 void* client_thread(void* parameters)
@@ -239,18 +241,19 @@ void* client_thread(void* parameters)
     {
         memset(buf, 0, MAXBUFLEN);
         
-//        pthread_t timer_closechild_thread;
-//        int got_ack = 0;
-//        struct timer_closechild_params closechild_params;
-//        closechild_params.seconds = 120;
-//        closechild_params.got_ack = &got_ack;
-//        closechild_params.sockfd_other_client = *(params->sockfd_curr_client);
-//        closechild_params.other_id = params->other_id;
-//        pthread_create(&timer_closechild_thread, NULL, &timer_closechild,
-//                       &closechild_params);
+        pthread_t timer_closechild_thread;
+        params->timer_closechild_id = timer_closechild_thread;
+        int got_ack = 0;
+        struct timer_closechild_params closechild_params;
+        closechild_params.seconds = 120;
+        closechild_params.got_ack = &got_ack;
+        closechild_params.sockfd_other_client = *(params->sockfd_curr_client);
+        closechild_params.other_id = params->other_id;
+        pthread_create(&timer_closechild_thread, NULL, &timer_closechild,
+                       &closechild_params);
         status = receive_from(*(params->sockfd_curr_client), buf, MAXBUFLEN-1);
-//        got_ack = 1;
-//        pthread_join(timer_closechild_thread, NULL);
+        got_ack = 1;
+        pthread_join(timer_closechild_thread, NULL);
         printf("Receiving message from %s:%hu: %s\n", addr_str,
                params->addr_v4->sin_port, buf);
         if (status == -1)
@@ -263,8 +266,7 @@ void* client_thread(void* parameters)
             {
                 printf("Received 'bye', closing connection to %s:%hu\n",
                        addr_str, params->addr_v4->sin_port);
-                pthread_cancel(params->other_id);
-                return NULL;
+                break;
             }
             else
             {
@@ -275,8 +277,7 @@ void* client_thread(void* parameters)
                                          "giveup");
                 if (status == -1)
                     perror("server: sendto");
-                pthread_cancel(params->other_id);
-                return NULL;
+                break;
             }
         }
         
@@ -293,8 +294,7 @@ void* client_thread(void* parameters)
                 if (status == -1)
                     perror("server: sendto");
             }
-            pthread_cancel(params->other_id);
-            return NULL;
+            break;
         }
         else if (strcmp(buf, "giveup") == 0)
         {
@@ -304,8 +304,7 @@ void* client_thread(void* parameters)
             status = send_to_address(*(params->sockfd_other_client), "giveup");
             if (status == -1)
                 perror("server: sendto");
-            pthread_cancel(params->other_id);
-            return NULL;
+            break;
         }
         else if (*(params->sockfd_other_client) == -1)
         {
@@ -319,11 +318,12 @@ void* client_thread(void* parameters)
             if (status == -1)
             {
                 perror("server: forward to second_addr");
-                pthread_cancel(params->other_id);
-                return NULL;
+                break;
             }
         }
     }
+    pthread_cancel(params->timer_closechild_id);
+    pthread_cancel(params->other_params->timer_closechild_id);
     pthread_cancel(params->other_id);
     return NULL;
 }
@@ -394,8 +394,6 @@ void handle_match_msg(int sockfd, int* shm_iter)
     first_thread_params.sockfd = sockfd;
     first_thread_params.other_id = second_thread;
     first_thread_params.shm_iter = shm_iter;
-    pthread_create(&first_thread, NULL, &client_thread, &first_thread_params);
-
     struct client_thread_params second_thread_params;
     second_thread_params.sockfd_curr_client = &sockfd_client_2;
     second_thread_params.sockfd_other_client = &sockfd_client_1;
@@ -403,6 +401,11 @@ void handle_match_msg(int sockfd, int* shm_iter)
     second_thread_params.sockfd = sockfd;
     second_thread_params.other_id = first_thread;
     second_thread_params.shm_iter = shm_iter;
+    first_thread_params.other_params = &second_thread_params;
+    second_thread_params.other_params = &first_thread_params;
+
+    pthread_create(&first_thread, NULL, &client_thread, &first_thread_params);
+
     pthread_create(&second_thread, NULL, &client_thread,
                    &second_thread_params);
 
