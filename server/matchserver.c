@@ -10,16 +10,20 @@
 #include "connection.h"
 #include <sys/shm.h>
 #include <sys/ipc.h>
+//#include <sys/msg.h>
+#include <mqueue.h>
 
 #define SHM_SIZE 4096
 const char* file = "file.txt";
 
 int* shm_ports_used;
+//int msqid;
+mqd_t msgq;
 
 void sigchld_handler(int s)
 {
-    int fd;
-    struct flock lock_r;
+//    int fd;
+//    struct flock lock_r;
     int status;
     char buf[MAXBUFLEN];
     int port;
@@ -27,7 +31,7 @@ void sigchld_handler(int s)
     
     while(waitpid(-1, NULL, WNOHANG) > 0)
     {
-        fd = open(file, O_RDONLY);
+/*        fd = open(file, O_RDONLY);
         memset(&lock_r, 0, sizeof(lock_r));
         lock_r.l_type = F_RDLCK;
         fcntl(fd, F_SETLKW, &lock_r);
@@ -40,13 +44,28 @@ void sigchld_handler(int s)
             return;
         }
         close(fd);
+*/
+/*        status = msgrcv(msqid, buf, MAXBUFLEN, 0, 0);
+        if (status < 0)
+        {
+            perror("msgrcv");
+            exit(1);
+        }
+*/
+        status = mq_receive(msgq, buf, 8, NULL);
+        if (status == -1)
+        {
+            perror("mq_receive");
+            exit(1);
+        }
+
         port = (int)strtol(buf, (char**)NULL, 10);
 
         shm_iter = shm_ports_used;
         int k;
         for (k = 0; k < port - LISTENPORT; k++)
             shm_iter++;
-        *shm_iter = 0;;
+        *shm_iter = 0;
     }
 }
 
@@ -101,15 +120,15 @@ void create_match_server(int curr_port)
             exit(1);
         }
         
-        int fd;
-        struct flock lock_w;
+//        int fd;
+//        struct flock lock_w;
         char str_curr_port[MAXBUFLEN];
         sprintf(str_curr_port, "%d", curr_port);
 
         handle_match_msg(sockfd, shm_iter);
 
         printf("Child server at port: %d has closed.\n", curr_port);
-        fd = open(file, O_WRONLY | O_TRUNC);
+/*        fd = open(file, O_WRONLY | O_TRUNC);
         memset(&lock_w, 0, sizeof(lock_w));
         lock_w.l_type = F_WRLCK;
         fcntl(fd, F_SETLKW, &lock_w);
@@ -117,6 +136,37 @@ void create_match_server(int curr_port)
         if (status == -1)
             perror("write port file");
         close(fd);
+*/
+/*        key_t key = 1234;
+        msqid = msgget(key, 0666);
+        if (msqid < 0)
+        {
+            perror("msgget");
+            exit(1);
+        }
+        status = msgsnd(msqid, str_curr_port, strlen(str_curr_port), 0);
+        if (status < 0)
+        {
+            perror("msgsnd");
+            exit(1);
+        }
+*/
+        struct mq_attr attr;
+        attr.mq_maxmsg = 20;
+        attr.mq_msgsize = 8;
+        attr.mq_curmsgs = 0;
+        msgq = mq_open("msg-queue", O_RDONLY | O_CREAT, 0666, &attr);
+        if (msgq == -1)
+        {
+            perror("mq_open");
+            exit(1);
+        }
+        status = mq_send(msgq, str_curr_port, strlen(str_curr_port), 0);
+        if (status == -1)
+        {
+            perror("mq_send");
+            exit(1);
+        }
 
         close(sockfd);
 //        freeaddrinfo(servinfo);
@@ -157,6 +207,24 @@ int main()
     if (sigaction(SIGCHLD, &sa, NULL) == -1)
     {
         perror("sigaction");
+        exit(1);
+    }
+/*    key_t key = 1234;
+    msqid = msgget(key, 0666 | IPC_CREAT);
+    if (msqid < 0)
+    {
+        perror("msgget");
+        exit(1);
+    }
+*/
+    struct mq_attr attr;
+    attr.mq_maxmsg = 20;
+    attr.mq_msgsize = 8;
+    attr.mq_curmsgs = 0;
+    msgq = mq_open("msg-queue", O_RDONLY | O_CREAT, 0666, &attr);
+    if (msgq == -1)
+    {
+        perror("mq_open");
         exit(1);
     }
 
