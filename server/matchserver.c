@@ -10,15 +10,14 @@
 #include "connection.h"
 #include <sys/shm.h>
 #include <sys/ipc.h>
-//#include <sys/msg.h>
-#include <mqueue.h>
 
 #define SHM_SIZE 4096
+
 const char* file = "file.txt";
 
+#define FIFO_NAME "fifo"
+
 int* shm_ports_used;
-//int msqid;
-mqd_t msgq;
 
 void sigchld_handler(int s)
 {
@@ -28,6 +27,8 @@ void sigchld_handler(int s)
     char buf[MAXBUFLEN];
     int port;
     int* shm_iter;
+
+    int fifo_fd = open(FIFO_NAME, O_RDONLY);
     
     while(waitpid(-1, NULL, WNOHANG) > 0)
     {
@@ -52,12 +53,19 @@ void sigchld_handler(int s)
             exit(1);
         }
 */
-        status = mq_receive(msgq, buf, 8, NULL);
+ /*       status = mq_receive(msgq, buf, 8, NULL);
         if (status == -1)
         {
             perror("mq_receive");
             exit(1);
         }
+*/
+        memset(buf, 0, MAXBUFLEN);
+        status = read(fifo_fd, buf, 4);
+        if (status == -1)
+            perror("sigchld read");
+
+        close(fifo_fd);
 
         port = (int)strtol(buf, (char**)NULL, 10);
 
@@ -151,7 +159,7 @@ void create_match_server(int curr_port)
             exit(1);
         }
 */
-        struct mq_attr attr;
+/*        struct mq_attr attr;
         attr.mq_maxmsg = 20;
         attr.mq_msgsize = 8;
         attr.mq_curmsgs = 0;
@@ -167,6 +175,13 @@ void create_match_server(int curr_port)
             perror("mq_send");
             exit(1);
         }
+*/
+        int fifo_fd = open(FIFO_NAME, O_WRONLY);
+        status = write(fifo_fd, str_curr_port, 4);
+        if (status == -1)
+            perror("create_match_server write");
+
+        close(fifo_fd);
 
         close(sockfd);
 //        freeaddrinfo(servinfo);
@@ -200,6 +215,8 @@ int main()
 
     client_port = LISTENPORT + 1;
 
+    mknod(FIFO_NAME, S_IFIFO | 0666, 0);
+
     struct sigaction sa;
     memset(&sa, 0, sizeof(sa));
     sa.sa_handler = &sigchld_handler;
@@ -217,7 +234,7 @@ int main()
         exit(1);
     }
 */
-    struct mq_attr attr;
+/*    struct mq_attr attr;
     attr.mq_maxmsg = 20;
     attr.mq_msgsize = 8;
     attr.mq_curmsgs = 0;
@@ -227,6 +244,7 @@ int main()
         perror("mq_open");
         exit(1);
     }
+*/
 
     for (;;)
     {
