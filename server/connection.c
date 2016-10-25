@@ -142,15 +142,15 @@ int handle_syn_port(int sockfd, int* curr_port, int* client_port,
     return 0;
 }
 
-struct timer_closechild_params
+/*struct timer_closechild_params
 {
     int sockfd_other_client;
     pthread_t other_id;
     int seconds;
     int* got_ack;
 };
-
-void* timer_closechild(void* parameters)
+*/
+/*void* timer_closechild(void* parameters)
 {
     int status;
     time_t start;
@@ -174,7 +174,7 @@ void* timer_closechild(void* parameters)
     exit(0);
     return NULL;
 }
-
+*/
 struct client_thread_params
 {
     int* sockfd_curr_client;
@@ -251,6 +251,15 @@ void* client_thread(void* parameters)
             perror("recv");
 			break;
         }
+        if (status == 1)
+        {
+            printf("Not receiving anything. Closing child server.\n");
+            // send bye to second address
+            status = send_to_address(*params->sockfd_other_client, "bye");
+            if (status == -1)
+                perror("server: sendto");
+            break;
+        }
         if (status == 0)
         {
             if (*(params->sockfd_other_client) == -1)
@@ -313,7 +322,6 @@ void* client_thread(void* parameters)
             }
         }
     }
-//    pthread_cancel(params->other_id);
 	params->thread_canceled = 1;
 	return NULL;
 }
@@ -438,7 +446,7 @@ int receive_from(int sockfd, char* buf, int time)
 		return -1;
 	}
 	else if (rv == 0)
-		return 0;  // timeout
+		return 1;  // timeout
 	else
 	{
 		numbytes = recv(sockfd, buf, MAXBUFLEN - 1, 0);
