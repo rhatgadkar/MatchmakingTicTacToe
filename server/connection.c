@@ -399,19 +399,6 @@ void handle_match_msg(int sockfd, int* shm_iter)
     pthread_create(&second_thread, NULL, &client_thread,
                    &second_thread_params);
 
-/*    void* st;
-    pthread_join(first_thread, &st);
-    pthread_cancel(second_thread);
-//    if (st == PTHREAD_CANCELED)
-//        printf("Thread 1 was canceled\n");
-//    else
-//        printf("Thread 1 was not canceled\n");
-    pthread_join(second_thread, &st);
-//    if (st == PTHREAD_CANCELED)
-//        printf("Thread 2 was canceled\n");
-//    else
-//        printf("Thread 2 was not canceled\n");
-*/
 	while (second_thread_params.thread_canceled == 0 &&
 		   first_thread_params.thread_canceled == 0)
 		;
