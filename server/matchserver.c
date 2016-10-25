@@ -11,11 +11,12 @@
 #include <sys/shm.h>
 #include <sys/ipc.h>
 
+#define FIFO_NAME "fifo"
 #define SHM_SIZE 4096
 
 const char* file = "file.txt";
 
-#define FIFO_NAME "fifo"
+int fifo_fd;
 
 int* shm_ports_used;
 
@@ -28,7 +29,6 @@ void sigchld_handler(int s)
     int port;
     int* shm_iter;
 
-    int fifo_fd = open(FIFO_NAME, O_RDONLY);
     
     while(waitpid(-1, NULL, WNOHANG) > 0)
     {
@@ -65,10 +65,8 @@ void sigchld_handler(int s)
         if (status == -1)
             perror("sigchld read");
 
-        close(fifo_fd);
-
         port = (int)strtol(buf, (char**)NULL, 10);
-
+printf("clearing port: %d\n", port);
         shm_iter = shm_ports_used;
         int k;
         for (k = 0; k < port - LISTENPORT; k++)
@@ -128,8 +126,8 @@ void create_match_server(int curr_port)
             exit(1);
         }
         
-//        int fd;
-//        struct flock lock_w;
+        int fd;
+        struct flock lock_w;
         char str_curr_port[MAXBUFLEN];
         sprintf(str_curr_port, "%d", curr_port);
 
@@ -176,12 +174,19 @@ void create_match_server(int curr_port)
             exit(1);
         }
 */
-        int fifo_fd = open(FIFO_NAME, O_WRONLY);
+		mkfifo(FIFO_NAME, S_IFIFO | 0666);
+        fifo_fd = open(FIFO_NAME, O_WRONLY);
+		if (fifo_fd == -1)
+		{
+			perror("open fifo in child");
+			exit(1);
+		}
+printf("writing port: %s\n", str_curr_port);
         status = write(fifo_fd, str_curr_port, 4);
         if (status == -1)
             perror("create_match_server write");
 
-        close(fifo_fd);
+		close(fifo_fd);
 
         close(sockfd);
 //        freeaddrinfo(servinfo);
@@ -215,7 +220,17 @@ int main()
 
     client_port = LISTENPORT + 1;
 
-    mknod(FIFO_NAME, S_IFIFO | 0666, 0);
+    if ((mkfifo(FIFO_NAME, S_IFIFO | 0666)) == -1)
+	{
+		perror("parent mkfifo");
+		exit(1);
+	}
+    fifo_fd = open(FIFO_NAME, O_RDONLY | O_NDELAY);
+	if (fifo_fd == -1)
+	{
+		perror("open fifo in parent");
+		exit(1);
+	}
 
     struct sigaction sa;
     memset(&sa, 0, sizeof(sa));

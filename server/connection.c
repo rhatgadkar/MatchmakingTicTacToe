@@ -1,4 +1,5 @@
 #include <sys/types.h>
+#include <fcntl.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <sys/socket.h>
@@ -8,12 +9,14 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <time.h>
+#include <sys/select.h>
+#include <sys/time.h>
 #include "connection.h"
 
 #define LISTENPORT 4950  // the port clients will be connecting to
 #define MAXBUFLEN 100
 
-static int receive_from(int sockfd, char* buf, size_t size);
+static int receive_from(int sockfd, char* buf, int time);
 static int send_to_address(int sockfd, const char* text);
 
 int setup_connection(int* sockfd, struct addrinfo* servinfo, int port_int)
@@ -180,8 +183,7 @@ struct client_thread_params
     int sockfd;
     pthread_t other_id;
     int* shm_iter;
-    struct client_thread_params* other_params;
-    pthread_t timer_closechild_id;
+	int thread_canceled;
 };
 
 void* client_thread(void* parameters)
@@ -241,24 +243,13 @@ void* client_thread(void* parameters)
     {
         memset(buf, 0, MAXBUFLEN);
         
-        pthread_t timer_closechild_thread;
-        params->timer_closechild_id = timer_closechild_thread;
-        int got_ack = 0;
-        struct timer_closechild_params closechild_params;
-        closechild_params.seconds = 120;
-        closechild_params.got_ack = &got_ack;
-        closechild_params.sockfd_other_client = *(params->sockfd_curr_client);
-        closechild_params.other_id = params->other_id;
-        pthread_create(&timer_closechild_thread, NULL, &timer_closechild,
-                       &closechild_params);
-        status = receive_from(*(params->sockfd_curr_client), buf, MAXBUFLEN-1);
-        got_ack = 1;
-        pthread_join(timer_closechild_thread, NULL);
+        status = receive_from(*(params->sockfd_curr_client), buf, 120);
         printf("Receiving message from %s:%hu: %s\n", addr_str,
                params->addr_v4->sin_port, buf);
         if (status == -1)
         {
             perror("recv");
+			break;
         }
         if (status == 0)
         {
@@ -322,10 +313,9 @@ void* client_thread(void* parameters)
             }
         }
     }
-    pthread_cancel(params->timer_closechild_id);
-    pthread_cancel(params->other_params->timer_closechild_id);
-    pthread_cancel(params->other_id);
-    return NULL;
+//    pthread_cancel(params->other_id);
+	params->thread_canceled = 1;
+	return NULL;
 }
 
 struct timer_params
@@ -394,6 +384,7 @@ void handle_match_msg(int sockfd, int* shm_iter)
     first_thread_params.sockfd = sockfd;
     first_thread_params.other_id = second_thread;
     first_thread_params.shm_iter = shm_iter;
+	first_thread_params.thread_canceled = 0;
     struct client_thread_params second_thread_params;
     second_thread_params.sockfd_curr_client = &sockfd_client_2;
     second_thread_params.sockfd_other_client = &sockfd_client_1;
@@ -401,35 +392,83 @@ void handle_match_msg(int sockfd, int* shm_iter)
     second_thread_params.sockfd = sockfd;
     second_thread_params.other_id = first_thread;
     second_thread_params.shm_iter = shm_iter;
-    first_thread_params.other_params = &second_thread_params;
-    second_thread_params.other_params = &first_thread_params;
+	second_thread_params.thread_canceled = 0;
 
     pthread_create(&first_thread, NULL, &client_thread, &first_thread_params);
 
     pthread_create(&second_thread, NULL, &client_thread,
                    &second_thread_params);
 
-    void* st;
+/*    void* st;
     pthread_join(first_thread, &st);
     pthread_cancel(second_thread);
-    if (st == PTHREAD_CANCELED)
-        printf("Thread 1 was canceled\n");
-    else
-        printf("Thread 1 was not canceled\n");
+//    if (st == PTHREAD_CANCELED)
+//        printf("Thread 1 was canceled\n");
+//    else
+//        printf("Thread 1 was not canceled\n");
     pthread_join(second_thread, &st);
-    if (st == PTHREAD_CANCELED)
-        printf("Thread 2 was canceled\n");
-    else
-        printf("Thread 2 was not canceled\n");
+//    if (st == PTHREAD_CANCELED)
+//        printf("Thread 2 was canceled\n");
+//    else
+//        printf("Thread 2 was not canceled\n");
+*/
+	while (second_thread_params.thread_canceled == 0 &&
+		   first_thread_params.thread_canceled == 0)
+		;
+	if (second_thread_params.thread_canceled)
+	{
+		pthread_join(second_thread, NULL);
+		pthread_cancel(first_thread);
+		pthread_join(first_thread, NULL);
+	}
+	else
+	{
+		pthread_join(first_thread, NULL);
+		pthread_cancel(second_thread);
+		pthread_join(second_thread, NULL);
+	}
 
     close(sockfd_client_1);
     close(sockfd_client_2);
 }
 
-int receive_from(int sockfd, char* buf, size_t size)
+int receive_from(int sockfd, char* buf, int time)
 {
-    int numbytes;
-    numbytes = recv(sockfd, buf, size, 0);
+    fd_set set;
+	struct timeval timeout;
+	FD_ZERO(&set);
+	FD_SET(sockfd, &set);
+	timeout.tv_sec = time;
+	timeout.tv_usec = 0;
+	
+	int numbytes;
+	int rv;
+
+	rv = select(sockfd + 1, &set, NULL, NULL, &timeout);
+	if (rv == -1)
+	{
+		perror("select");
+		return -1;
+	}
+	else if (rv == 0)
+		return 0;  // timeout
+	else
+	{
+		numbytes = recv(sockfd, buf, MAXBUFLEN - 1, 0);
+		if (numbytes == -1)
+		{
+			perror("read");
+			return -1;
+		}
+		else if (numbytes == 0)
+			return 0;  // disconnect
+		else
+		{
+			return numbytes;  // read successful
+		}
+	}
+
+    numbytes = recv(sockfd, buf, MAXBUFLEN - 1, 0);
     if (numbytes == -1)
         return -1;
     return numbytes;
