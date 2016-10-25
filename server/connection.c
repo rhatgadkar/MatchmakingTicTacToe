@@ -18,6 +18,8 @@
 
 static int receive_from(int sockfd, char* buf, int time);
 static int send_to_address(int sockfd, const char* text);
+static int accept_timer(int sockfd, struct sockaddr* their_addr,
+                        socklen_t* addr_len, int time);
 
 int setup_connection(int* sockfd, struct addrinfo* servinfo, int port_int)
 {
@@ -142,39 +144,6 @@ int handle_syn_port(int sockfd, int* curr_port, int* client_port,
     return 0;
 }
 
-/*struct timer_closechild_params
-{
-    int sockfd_other_client;
-    pthread_t other_id;
-    int seconds;
-    int* got_ack;
-};
-*/
-/*void* timer_closechild(void* parameters)
-{
-    int status;
-    time_t start;
-    time_t end;
-    struct timer_closechild_params* params;
-    params = (struct timer_closechild_params*)parameters;
-
-    time(&start);
-    do
-    {
-        time(&end);
-        if (*(params->got_ack))
-            return NULL;
-    } while(difftime(end, start) < params->seconds);
-    printf("Not receiving anything. Closing child server.\n");
-    // send bye to second address
-    status = send_to_address(params->sockfd_other_client, "bye");
-    if (status == -1)
-        perror("server: sendto");
-    pthread_cancel(params->other_id);
-    exit(0);
-    return NULL;
-}
-*/
 struct client_thread_params
 {
     int* sockfd_curr_client;
@@ -326,30 +295,6 @@ void* client_thread(void* parameters)
 	return NULL;
 }
 
-struct timer_params
-{
-    int seconds;
-    int* got_ack;
-};
-
-void* timer_countdown(void* parameters)
-{
-    time_t start;
-    time_t end;
-    struct timer_params* params = (struct timer_params*)parameters;
-
-    time(&start);
-    do
-    {
-        time(&end);
-        if (*(params->got_ack))
-            return NULL;
-    } while(difftime(end, start) < params->seconds);
-    printf("Closing child server.\n");
-    exit(0);
-    return NULL;
-}
-
 void handle_match_msg(int sockfd, int* shm_iter)
 {
     int status;
@@ -362,16 +307,12 @@ void handle_match_msg(int sockfd, int* shm_iter)
 
     if (sockfd_client_1 == -1 && *shm_iter == 0)
     {
-        pthread_t timer_thread;
-        int got_ack = 0;
-        struct timer_params params;
-        params.seconds = 30;
-        params.got_ack = &got_ack;
-        pthread_create(&timer_thread, NULL, &timer_countdown, &params);
-        while (sockfd_client_1 == -1)
-            sockfd_client_1 = accept(sockfd, &their_addr, &addr_len);
-        got_ack = 1;
-        pthread_join(timer_thread, NULL);
+        sockfd_client_1 = accept_timer(sockfd, &their_addr, &addr_len, 30);
+        if (sockfd_client_1 == 1)
+        {
+            printf("Closing child server.\n");
+            return;
+        }
         (*shm_iter)++;
     }
     // send ACK to client 1 (player 1)
@@ -425,6 +366,42 @@ void handle_match_msg(int sockfd, int* shm_iter)
 
     close(sockfd_client_1);
     close(sockfd_client_2);
+}
+
+int accept_timer(int sockfd, struct sockaddr* their_addr, socklen_t* addr_len,
+                 int time)
+{
+    fd_set set;
+	struct timeval timeout;
+	FD_ZERO(&set);
+	FD_SET(sockfd, &set);
+	timeout.tv_sec = time;
+	timeout.tv_usec = 0;
+	
+	int client_sockfd;
+	int rv;
+
+	rv = select(sockfd + 1, &set, NULL, NULL, &timeout);
+	if (rv == -1)
+	{
+		perror("select");
+		return -1;
+	}
+	else if (rv == 0)
+		return 1;  // timeout
+	else
+	{
+		client_sockfd = accept(sockfd, their_addr, addr_len);
+		if (client_sockfd == -1)
+		{
+			perror("accept");
+			return -1;
+		}
+		else
+		{
+			return client_sockfd;  // accept successful
+		}
+	}
 }
 
 int receive_from(int sockfd, char* buf, int time)
