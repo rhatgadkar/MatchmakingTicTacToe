@@ -458,7 +458,5 @@ int send_to_address(int sockfd, const char* text)
 void port_to_shm_iter(int port, int** shm_iter, int* shm_ports_used)
 {
     *shm_iter = shm_ports_used;
-    int k;
-    for (k = 0; k < port - LISTENPORT; k++)
-        (*shm_iter)++;
+    (*shm_iter) += (port - LISTENPORT - 1);
 }

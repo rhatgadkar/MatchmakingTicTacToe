@@ -36,10 +36,7 @@ void sigchld_handler(int s)
         port = (int)strtol(buf, (char**)NULL, 10);
         
         printf("clearing port: %d\n", port);
-        shm_iter = shm_ports_used;
-        int k;
-        for (k = 0; k < port - LISTENPORT; k++)
-            shm_iter++;
+        port_to_shm_iter(port, &shm_iter, shm_ports_used);
         *shm_iter = 0;
     }
 }
