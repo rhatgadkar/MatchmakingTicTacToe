@@ -34,10 +34,13 @@ void sigchld_handler(int s)
             perror("sigchld read");
 
         port = (int)strtol(buf, (char**)NULL, 10);
-        
-        printf("clearing port: %d\n", port);
-        port_to_shm_iter(port, &shm_iter, shm_ports_used);
-        *shm_iter = 0;
+
+        if (port != 0)
+        {
+            printf("clearing port: %d\n", port);
+            port_to_shm_iter(port, &shm_iter, shm_ports_used);
+            *shm_iter = 0;
+        }
     }
 }
 
