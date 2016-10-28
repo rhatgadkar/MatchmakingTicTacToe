@@ -34,6 +34,7 @@ private:
     static void* receive_thread(void* parameters);
     int create_socket_server(const char* port);
     void handle_syn_ack(char resp[MAXBUFLEN]);  // return port of child server
+    void get_num_ppl();
     int send_to_server(const char* text);
 };
 

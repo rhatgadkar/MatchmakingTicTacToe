@@ -106,6 +106,23 @@ int handle_syn_port(int sockfd, int* curr_port, int* client_port,
     printf("client: %s:%hu connected to parent server.\n", s,
            their_addr_v4->sin_port);
 
+    // send number of people online to client
+    int num_ppl = 0;
+    char num_ppl_str[MAXBUFLEN];
+    shm_iter = shm_ports_used;
+    int k;
+    for (k = 0; k < 1000; k++)
+        num_ppl += (*shm_iter++);
+    sprintf(num_ppl_str, "%d", num_ppl);
+    status = send_to_address(*sockfd_client, num_ppl_str);
+    if (status == -1)
+    {
+        perror("sendto num_ppl");
+        return -1;
+    }
+
+    sleep(1);
+
     int old_client_port = *client_port;
     *curr_port = LISTENPORT + 1;
     port_to_shm_iter(*curr_port, &shm_iter, shm_ports_used);

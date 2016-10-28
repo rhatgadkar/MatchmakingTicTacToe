@@ -28,6 +28,7 @@ Client::Client()
         exit(1);
     }
     memset(buf, 0, MAXBUFLEN);
+    get_num_ppl();
     handle_syn_ack(buf);
 
     // close connection to parent server
@@ -161,18 +162,17 @@ void Client::handle_syn_ack(char resp[MAXBUFLEN])
 {
     int res;
     char buf[MAXBUFLEN];
-
-    memset(buf, 0, MAXBUFLEN);
-
     pthread_t timer_thread;
-    int got_ack = 0;
+    int got_ack;
 
     struct timer_params params;
     params.seconds = 15;
     params.got_ack = &got_ack;
 
-    pthread_create(&timer_thread, NULL, &(Client::timer_countdown), &params);
+    memset(buf, 0, MAXBUFLEN);
 
+    got_ack = 0;
+    pthread_create(&timer_thread, NULL, &(Client::timer_countdown), &params);
     res = receive_from_server(buf);  // should possibly be aborted by timer
     if (res == -1)
     {
@@ -184,6 +184,33 @@ void Client::handle_syn_ack(char resp[MAXBUFLEN])
 
     cout << "Received ACK from server." << endl;
     memcpy(resp, buf, MAXBUFLEN);
+}
+
+void Client::get_num_ppl()
+{
+    int res;
+    char buf[MAXBUFLEN];
+    pthread_t timer_thread;
+    int got_ack;
+
+    struct timer_params params;
+    params.seconds = 15;
+    params.got_ack = &got_ack;
+
+    memset(buf, 0, MAXBUFLEN);
+
+    got_ack = 0;
+    pthread_create(&timer_thread, NULL, &(Client::timer_countdown), &params);
+    res = receive_from_server(buf);  // should possibly be aborted by timer
+    if (res == -1)
+    {
+        perror("recvfrom num_ppl");
+        exit(1);
+    }
+    got_ack = 1;
+    pthread_join(timer_thread, NULL);
+
+    cout << "Number of people online: " << buf << endl;
 }
 
 bool Client::send_position(int pos)
