@@ -237,7 +237,7 @@ void* client_thread(void* parameters)
             perror("recv");
 			break;
         }
-        if (status == 1)
+        if (status == -2)
         {
             printf("Not receiving anything. Closing child server.\n");
             // send bye to second address
@@ -440,7 +440,7 @@ int receive_from(int sockfd, char* buf, int time)
 		return -1;
 	}
 	else if (rv == 0)
-		return 1;  // timeout
+		return -2;  // timeout
 	else
 	{
 		numbytes = recv(sockfd, buf, MAXBUFLEN - 1, 0);
