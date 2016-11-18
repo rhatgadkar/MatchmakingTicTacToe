@@ -174,7 +174,7 @@ public final class TicTacToe {
 					System.out.println("Player 2 wins.");
 				this.board.draw();
                 c.sendWin(input);
-				return;
+				System.exit(0);
 			}
 			
 			p1turn = !p1turn;
