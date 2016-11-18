@@ -102,6 +102,11 @@ public final class Client {
 	public void sendBye() {
 		sendToServer("bye");
 	}
+
+    public void sendWin(int pos) {
+        String a = "w" + Integer.toString(pos);
+        sendToServer(a);
+    }
 	
 	private String handleSynAck() {
 		final TimerThread.Msg msg = new TimerThread.Msg();
