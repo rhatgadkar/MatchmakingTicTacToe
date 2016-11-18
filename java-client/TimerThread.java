@@ -1,5 +1,3 @@
-package tictactoe;
-
 import java.util.Date;
 
 public class TimerThread implements Runnable {

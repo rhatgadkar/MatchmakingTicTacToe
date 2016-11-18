@@ -1,5 +1,3 @@
-package tictactoe;
-
 import java.io.Console;
 
 public final class TicTacToe {
@@ -25,6 +23,9 @@ public final class TicTacToe {
 					sb.setLength("giveup".length());
 					this.recvBuf[0] = sb.toString();
 				} catch (DisconnectException e) {
+					try {
+						Thread.sleep(100);
+					} catch (InterruptedException ie) {}
 					System.out.println("Client is exiting. Closing server.");
 					System.exit(1);
 				}

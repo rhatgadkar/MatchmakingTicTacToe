@@ -1,5 +1,3 @@
-package tictactoe;
-
 @SuppressWarnings("serial")
 public class DisconnectException extends Exception {
 	public DisconnectException() {}

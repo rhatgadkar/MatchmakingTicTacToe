@@ -1,5 +1,3 @@
-package tictactoe;
-
 public final class Player {
 	private char symbol;
 	
