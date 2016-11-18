@@ -260,7 +260,5 @@ int Client::receive_from_server(char* buf)
 {
     int numbytes;
     numbytes = recv(m_sockfd, buf, MAXBUFLEN, 0);
-    if (numbytes == -1)
-        return false;
-    return true;
+    return numbytes;
 }
