@@ -24,7 +24,17 @@ void* Game::check_giveup(void* parameters)
     do
     {
         params->c->receive_from_server(params->recv_buf);
-
+        if (params->recv_buf != NULL && params->recv_buf[0] != 0 &&
+                params->recv_buf[0] == 'w')
+        {
+			if (params->c->is_p1())
+				cout << "Player 2 wins" << endl;
+			else
+				cout << "Player 1 wins" << endl;
+			params->board->draw();
+            cout << "Client is exiting.  Closing server." << endl;
+			exit(0);
+        }
     } while(strcmp(params->recv_buf, "giveup") != 0);
 
     if (params->c->is_p1())
@@ -62,6 +72,7 @@ void Game::start()
     struct check_giveup_params params;
     params.c = &c;
     params.recv_buf = m_recv_buf;
+    params.board = &m_board;
     pthread_create(&giveup_t, NULL, &(Game::check_giveup), &params);
 
 	bool p1turn = true;
@@ -113,6 +124,17 @@ void Game::start()
                 cout << "error with send_position" << endl;
                 return;
             }
+            // check if win
+            if (m_board.isWin(input))
+            {
+                if (p1turn)
+                    cout << "Player 1 wins" << endl;
+                else
+                    cout << "Player 2 wins" << endl;
+                m_board.draw();
+                c.send_win(input);
+                exit(0);
+            }
         }
         // wait for other player to make move
         else
@@ -147,27 +169,15 @@ void Game::start()
             {
                 cout << "error with receive_position with input: " << input
 					 << endl;
-                return;
+                exit(1);
             }
             if (!p1turn && !m_board.insert(m_p2.getSymbol(), input))
             {
                 cout << "error with receive_position with input: " << input
 					 << endl;
-                return;
+                exit(1);
             }
         }
-
-		// check if win
-		if (m_board.isWin(input))
-		{
-			if (p1turn)
-				cout << "Player 1 wins" << endl;
-			else
-				cout << "Player 2 wins" << endl;
-			m_board.draw();
-			return;
-		}
-
 		p1turn = !p1turn;
 	}
 }

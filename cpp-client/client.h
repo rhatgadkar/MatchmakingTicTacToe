@@ -17,6 +17,7 @@ public:
     bool is_p1() { return m_is_p1; }
     bool send_giveup();
     bool send_bye();
+    bool send_win(int pos);
     int receive_from_server(char* buf);
 private:
     // variables

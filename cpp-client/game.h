@@ -20,6 +20,7 @@ private:
     {
         Client* c;
         char* recv_buf;
+        Board* board;
     };
     struct timer_params
     {

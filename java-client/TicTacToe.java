@@ -121,6 +121,16 @@ public final class TicTacToe {
 				System.out.println(msg.gotMsg);
 				
 				c.sendPosition(input);
+                // check if win
+                if (this.board.isWin(input)) {
+                    if (p1turn)
+                        System.out.println("Player 1 wins.");
+                    else
+                        System.out.println("Player 2 wins.");
+                    this.board.draw();
+                    c.sendWin(input);
+                    System.exit(0);
+                }
 			}
 			// wait for other player to make move
 			else {
@@ -158,25 +168,13 @@ public final class TicTacToe {
 				
 				if (p1turn && !this.board.insert(this.p1.getSymbol(), input)) {
 					System.out.println("Error with receivePosition with input: " + input);
-					return;
+					System.exit(1);
 				}
 				if (!p1turn && !this.board.insert(this.p2.getSymbol(), input)) {
 					System.out.println("Error with receivePosition with input: " + input);
-					return;
+					System.exit(1);
 				}
 			}
-			
-			// check if win
-			if (this.board.isWin(input)) {
-				if (p1turn)
-					System.out.println("Player 1 wins.");
-				else
-					System.out.println("Player 2 wins.");
-				this.board.draw();
-                c.sendWin(input);
-				System.exit(0);
-			}
-			
 			p1turn = !p1turn;
 		}
 	}
