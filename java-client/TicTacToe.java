@@ -4,14 +4,18 @@ public final class TicTacToe {
 	private Board board;
 	private Player p1;
 	private Player p2;
-	private String[] recvBuf;
+    private Recv recv;
+
+    private class Recv {
+        public volatile String recvBuf;
+    }
 	
 	private class CheckGiveupThread implements Runnable {
-		private String[] recvBuf;
+        private final Recv recv;
         private Client c;
         private Board board;
-		public CheckGiveupThread(String[] recvBuf, Client c, Board board) {
-			this.recvBuf = recvBuf;
+		public CheckGiveupThread(Recv recv, Client c, Board board) {
+            this.recv = recv;
 			this.c = c;
             this.board = board;
 		}
@@ -22,25 +26,25 @@ public final class TicTacToe {
 					String test = this.c.receiveFromServer();
 					StringBuilder sb = new StringBuilder(test);
 					sb.setLength("giveup".length());
-					this.recvBuf[0] = sb.toString();
+                    this.recv.recvBuf = sb.toString();
 				} catch (DisconnectException e) {
 					System.out.println("Client is exiting. Closing server.");
 					System.exit(1);
 				}
-                if (this.recvBuf[0] != "" && this.recvBuf[0].charAt(0) == 'w') {
+                if (this.recv.recvBuf != "" && this.recv.recvBuf.charAt(0) == 'w') {
                     if (this.c.isP1()) {
                         System.out.println("Player 2 wins.");
-                        this.board.insert('o', this.recvBuf[0].charAt(1) - '0');
+                        this.board.insert('o', this.recv.recvBuf.charAt(1) - '0');
                     }
                     else {
                         System.out.println("Player 1 wins.");
-                        this.board.insert('x', this.recvBuf[0].charAt(1) - '0');
+                        this.board.insert('x', this.recv.recvBuf.charAt(1) - '0');
                     }
                     this.board.draw();
 					System.out.println("Client is exiting. Closing server.");
 					System.exit(0);
                 }
-			} while (!this.recvBuf[0].equals("giveup"));
+            } while (!this.recv.recvBuf.equals("giveup"));
 			if (this.c.isP1())
 				System.out.println("Player 2 has given up. Player 1 wins.");
 			else
@@ -58,14 +62,14 @@ public final class TicTacToe {
 		this.board = new Board();
 		this.p1 = new Player('x');
 		this.p2 = new Player('o');
-		this.recvBuf = new String[1];
-		this.recvBuf[0] = "";
+        this.recv = new Recv();
+        this.recv.recvBuf = "";
 	}
 	
 	public void start() {
 		Client c = new Client();
-		
-		Runnable giveupThread = new CheckGiveupThread(this.recvBuf, c, this.board);
+
+        Runnable giveupThread = new CheckGiveupThread(this.recv, c, this.board);
 		Thread gt = new Thread(giveupThread);
 		gt.start();
 		
@@ -76,8 +80,10 @@ public final class TicTacToe {
 				System.out.println("Your turn.");
 			else if (p1turn && !c.isP1())
 				System.out.println("Player 1 turn.");
-			else
-				System.out.println("Your turn.");
+			else if (!p1turn && c.isP1())
+				System.out.println("Player 2 turn.");
+            else
+                System.out.println("Your turn.");
 			
 			this.board.draw();
 			
@@ -141,20 +147,14 @@ public final class TicTacToe {
 				t.start();
 				
 				while (true) {
-					try {
-						// TODO: The below is a "way around" some
-						// synchronization issue with this.recvBuf. It should
-						// use proper synchronization instead of sleeping.
-						Thread.sleep(100);
-					} catch (InterruptedException e) {}
-					if (this.recvBuf[0] == "")
+                    if (this.recv.recvBuf == "")
 						continue;
-					if (Character.isDigit(this.recvBuf[0].charAt(0)) &&
-							this.recvBuf[0].charAt(0) != '0')
+                    if (Character.isDigit(this.recv.recvBuf.charAt(0)) &&
+                            this.recv.recvBuf.charAt(0) != '0')
 						break;
 				}
-				input = this.recvBuf[0].charAt(0) - '0';
-				this.recvBuf[0] = "";
+                input = this.recv.recvBuf.charAt(0) - '0';
+                this.recv.recvBuf = "";
 				
 				System.out.println("input: " + input);
 				
