@@ -16,22 +16,22 @@ private:
 	Board m_board;
 	Player m_p1;
 	Player m_p2;
-    struct check_giveup_params
-    {
-        Client* c;
-        char* recv_buf;
-        Board* board;
-    };
-    struct timer_params
-    {
-        int seconds;
-        int* got_move;
-        std::string msg;
-        Client* c;
-    };
-    static void* check_giveup(void* parameters);
-    static void* timer_countdown(void* parameters);
-    char m_recv_buf[MAXBUFLEN];
+	struct check_giveup_params
+	{
+		Client* c;
+		char* recv_buf;
+		Board* board;
+	};
+	struct timer_params
+	{
+		int seconds;
+		int* got_move;
+		std::string msg;
+		Client* c;
+	};
+	static void* check_giveup(void* parameters);
+	static void* timer_countdown(void* parameters);
+	char m_recv_buf[MAXBUFLEN];
 };
 
 #endif

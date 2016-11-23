@@ -11,32 +11,32 @@
 class Client
 {
 public:
-    Client();
-    ~Client();
-    bool send_position(int pos);
-    bool is_p1() { return m_is_p1; }
-    bool send_giveup();
-    bool send_bye();
-    bool send_win(int pos);
-    int receive_from_server(char* buf);
+	Client();
+	~Client();
+	bool send_position(int pos);
+	bool is_p1() { return m_is_p1; }
+	bool send_giveup();
+	bool send_bye();
+	bool send_win(int pos);
+	int receive_from_server(char* buf);
 private:
-    // variables
-    bool m_is_p1;
-    struct addrinfo* m_p;
-    struct addrinfo* m_servinfo;
-    int m_sockfd;
-    struct timer_params
-    {
-        int seconds;
-        int* got_ack;
-    };
-    // functions
-    static void* timer_countdown(void* parameters);
-    static void* receive_thread(void* parameters);
-    int create_socket_server(const char* port);
-    void handle_syn_ack(char resp[MAXBUFLEN]);  // return port of child server
-    void get_num_ppl();
-    int send_to_server(const char* text);
+	// variables
+	bool m_is_p1;
+	struct addrinfo* m_p;
+	struct addrinfo* m_servinfo;
+	int m_sockfd;
+	struct timer_params
+	{
+		int seconds;
+		int* got_ack;
+	};
+	// functions
+	static void* timer_countdown(void* parameters);
+	static void* receive_thread(void* parameters);
+	int create_socket_server(const char* port);
+	void handle_syn_ack(char resp[MAXBUFLEN]);  // return port of child server
+	void get_num_ppl();
+	int send_to_server(const char* text);
 };
 
 #endif  // CLIENT_H
