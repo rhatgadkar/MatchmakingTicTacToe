@@ -15,18 +15,18 @@ public final class Board {
 		char symbol;
 	}
 	private Coordinate grid[][];
-	
+
 	public Board() {
 		this.grid = new Coordinate[Board.ROWS][Board.COLS];
 		clear();
 	}
 
-    public char getSymbolAtCoord(int row, int col) {
-        if (row >= Board.ROWS || row < 0 || col >= Board.COLS || col < 0)
-            return 0;
-        return grid[row][col].symbol;
-    }
-	
+	public char getSymbolAtCoord(int row, int col) {
+		if (row >= Board.ROWS || row < 0 || col >= Board.COLS || col < 0)
+			return 0;
+		return grid[row][col].symbol;
+	}
+
 	public void clear() {
 		for (int r = 0; r < Board.ROWS; r++) {
 			for (int c = 0; c < Board.COLS; c++) {
@@ -35,7 +35,7 @@ public final class Board {
 			}
 		}
 	}
-	
+
 	public boolean insert(char c, int pos) {
 		Coordinate loc = getPos(pos);
 		if (loc == null || loc.symbol != '.')
@@ -43,18 +43,18 @@ public final class Board {
 		loc.symbol = c;
 		return true;
 	}
-	
+
 	public boolean isWin(int pos) {
 		final Coordinate curr = getPos(pos);
 		if (curr == null)
 			return false;
-		
+
 		// check vertical
 		final Coordinate top2 = getPos(pos - 6);
 		final Coordinate top1 = getPos(pos - 3);
 		final Coordinate bot1 = getPos(pos + 3);
 		final Coordinate bot2 = getPos(pos + 6);
-		
+
 		if (top2 != null && top1 != null && top2.symbol == curr.symbol &&
 				top1.symbol == curr.symbol)
 			return true;
@@ -64,7 +64,7 @@ public final class Board {
 		if (top1 != null && bot1 != null && top1.symbol == curr.symbol &&
 				bot1.symbol == curr.symbol)
 			return true;
-		
+
 		// check horizontal
 		if (pos == 1 || pos == 4 || pos == 7) {
 			final Coordinate right1 = getPos(pos + 1);
@@ -89,7 +89,7 @@ public final class Board {
 					&& left2.symbol == curr.symbol)
 				return true;
 		}
-		
+
 		// check diagonal
 		if (pos == 5 || pos == 1 || pos == 9 || pos == 3 || pos == 7) {
 			final Coordinate pos1 = getPos(1);
@@ -97,7 +97,7 @@ public final class Board {
 			final Coordinate pos3 = getPos(3);
 			final Coordinate pos7 = getPos(7);
 			final Coordinate pos5 = getPos(5);
-			
+
 			if (pos == 5) {
 				if (pos1 != null && pos9 != null && pos1.symbol == curr.symbol
 						&& pos9.symbol == curr.symbol)
@@ -127,30 +127,30 @@ public final class Board {
 					return true;
 			}
 		}
-		
+
 		return false;
 	}
-	
+
 	private Coordinate getPos(int pos) {
 		switch (pos) {
-		case 1:
-			return this.grid[0][0];
-		case 2:
-			return this.grid[0][1];
-		case 3:
-			return this.grid[0][2];
-		case 4:
-			return this.grid[1][0];
-		case 5:
-			return this.grid[1][1];
-		case 6:
-			return this.grid[1][2];
-		case 7:
-			return this.grid[2][0];
-		case 8:
-			return this.grid[2][1];
-		case 9:
-			return this.grid[2][2];
+			case 1:
+				return this.grid[0][0];
+			case 2:
+				return this.grid[0][1];
+			case 3:
+				return this.grid[0][2];
+			case 4:
+				return this.grid[1][0];
+			case 5:
+				return this.grid[1][1];
+			case 6:
+				return this.grid[1][2];
+			case 7:
+				return this.grid[2][0];
+			case 8:
+				return this.grid[2][1];
+			case 9:
+				return this.grid[2][2];
 		}
 		return null;
 	}

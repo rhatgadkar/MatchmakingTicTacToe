@@ -11,15 +11,15 @@ import java.net.UnknownHostException;
 public final class Client {
 	public final static int MAXBUFLEN = 1000;
 	private final static String SERVERIP = "54.183.217.40";
-//	private final static String SERVERIP = "127.0.0.1";
+	//	private final static String SERVERIP = "127.0.0.1";
 	private final static String SERVERPORT = "4950";
-	
+
 	private Socket sock;
 	private boolean isP1;
-	
+
 	public Client() {
 		String buf = "";
-		
+
 		// connect to parent server
 		try {
 			createSocketServer(SERVERPORT);
@@ -29,7 +29,7 @@ public final class Client {
 		}
 		getNumPpl();
 		buf = handleSynAck();
-		
+
 		// close connection to parent server
 		try {
 			this.sock.close();
@@ -37,7 +37,7 @@ public final class Client {
 			System.err.println("Could not close connection to parent server. Exiting.");
 			System.exit(1);
 		}
-		
+
 		// connect to child server
 		try {
 			Thread.sleep(1000);
@@ -54,7 +54,7 @@ public final class Client {
 		System.out.println("Connected to child server.");
 		buf = "";
 		buf = handleSynAck();
-        buf = TicTacToe.stringToLength(buf, "player-1".length());
+		buf = TicTacToe.stringToLength(buf, "player-1".length());
 
 		// get assigned player-1 or player-2
 		if (buf.equals("player-1")) {
@@ -65,7 +65,7 @@ public final class Client {
 				buf = "";
 				try {
 					buf = receiveFromServer();
-                    buf = TicTacToe.stringToLength(buf, "player-2".length());
+					buf = TicTacToe.stringToLength(buf, "player-2".length());
 				} catch (DisconnectException e) {
 					System.err.println("Child server exited.");
 					System.exit(1);
@@ -82,28 +82,28 @@ public final class Client {
 			System.exit(0);
 		}
 	}
-	
+
 	public void sendPosition(int pos) {
 		sendToServer(Integer.toString(pos));
 	}
-	
+
 	public boolean isP1() {
 		return this.isP1;
 	}
-	
+
 	public void sendGiveup() {
 		sendToServer("giveup");
 	}
-	
+
 	public void sendBye() {
 		sendToServer("bye");
 	}
 
-    public void sendWin(int pos) {
-        String a = "w" + Integer.toString(pos);
-        sendToServer(a);
-    }
-	
+	public void sendWin(int pos) {
+		String a = "w" + Integer.toString(pos);
+		sendToServer(a);
+	}
+
 	private String handleSynAck() {
 		final TimerThread.Msg msg = new TimerThread.Msg();
 		msg.gotMsg = false;
@@ -127,9 +127,9 @@ public final class Client {
 		}
 		return ack;
 	}
-	
+
 	private void createSocketServer(String port) throws Exception {
-        port = TicTacToe.stringToLength(port, SERVERPORT.length());
+		port = TicTacToe.stringToLength(port, SERVERPORT.length());
 		try {
 			this.sock = new Socket(SERVERIP, Integer.parseInt(port));
 		} catch (UnknownHostException e) {
@@ -143,7 +143,7 @@ public final class Client {
 			throw new Exception();
 		}
 	}
-	
+
 	private void getNumPpl() {
 		final TimerThread.Msg msg = new TimerThread.Msg();
 		msg.gotMsg = false;
@@ -165,20 +165,20 @@ public final class Client {
 			System.exit(0);
 		}
 	}
-	
+
 	private void sendToServer(String msg) {
 		try {
 			OutputStream os = this.sock.getOutputStream();
-	        OutputStreamWriter osw = new OutputStreamWriter(os);
-	        BufferedWriter bw = new BufferedWriter(osw);
-	        bw.write(msg);
-	        bw.flush();
+			OutputStreamWriter osw = new OutputStreamWriter(os);
+			BufferedWriter bw = new BufferedWriter(osw);
+			bw.write(msg);
+			bw.flush();
 		} catch (IOException e) {
 			System.err.println("Error send message.");
 			System.exit(1);
 		}
 	}
-	
+
 	public String receiveFromServer() throws DisconnectException {
 		char message[] = new char[Client.MAXBUFLEN];
 		try {

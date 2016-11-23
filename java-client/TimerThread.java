@@ -4,7 +4,7 @@ public class TimerThread implements Runnable {
 	public static class Msg {
 		public volatile boolean gotMsg;
 	}
-	
+
 	private Msg msg;
 	private int seconds;
 	public TimerThread(Msg msg, int seconds) {
