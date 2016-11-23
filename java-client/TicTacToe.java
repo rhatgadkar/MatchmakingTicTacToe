@@ -1,6 +1,12 @@
 import java.io.Console;
 
 public final class TicTacToe {
+    public static String stringToLength(String input, int length) {
+        StringBuilder sb = new StringBuilder(input);
+        sb.setLength(length);
+        return sb.toString();
+    }
+
 	private Board board;
 	private Player p1;
 	private Player p2;
@@ -24,9 +30,7 @@ public final class TicTacToe {
 			do {
 				try {
 					String test = this.c.receiveFromServer();
-					StringBuilder sb = new StringBuilder(test);
-					sb.setLength("giveup".length());
-                    this.recv.recvBuf = sb.toString();
+                    this.recv.recvBuf = TicTacToe.stringToLength(test, "giveup".length());
 				} catch (DisconnectException e) {
 					System.out.println("Client is exiting. Closing server.");
 					System.exit(1);
@@ -124,8 +128,7 @@ public final class TicTacToe {
 					System.err.println("Could not join timer thread.");
 					System.exit(1);
 				}
-				System.out.println(msg.gotMsg);
-				
+
 				c.sendPosition(input);
                 // check if win
                 if (this.board.isWin(input)) {
@@ -155,9 +158,7 @@ public final class TicTacToe {
 				}
                 input = this.recv.recvBuf.charAt(0) - '0';
                 this.recv.recvBuf = "";
-				
-				System.out.println("input: " + input);
-				
+
 				msg.gotMsg = true;
 				try {
 					t.join();

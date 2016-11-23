@@ -54,10 +54,8 @@ public final class Client {
 		System.out.println("Connected to child server.");
 		buf = "";
 		buf = handleSynAck();
-		StringBuilder bufsb = new StringBuilder(buf);
-		bufsb.setLength("player-1".length());
-		buf = bufsb.toString();
-		
+        buf = TicTacToe.stringToLength(buf, "player-1".length());
+
 		// get assigned player-1 or player-2
 		if (buf.equals("player-1")) {
 			System.out.println("You are player 1.");
@@ -67,9 +65,7 @@ public final class Client {
 				buf = "";
 				try {
 					buf = receiveFromServer();
-					bufsb = new StringBuilder(buf);
-					bufsb.setLength("player-2".length());
-					buf = bufsb.toString();
+                    buf = TicTacToe.stringToLength(buf, "player-2".length());
 				} catch (DisconnectException e) {
 					System.err.println("Child server exited.");
 					System.exit(1);
@@ -133,9 +129,7 @@ public final class Client {
 	}
 	
 	private void createSocketServer(String port) throws Exception {
-		StringBuilder sb = new StringBuilder(port);
-		sb.setLength(SERVERPORT.length());
-		port = sb.toString();
+        port = TicTacToe.stringToLength(port, SERVERPORT.length());
 		try {
 			this.sock = new Socket(SERVERIP, Integer.parseInt(port));
 		} catch (UnknownHostException e) {
