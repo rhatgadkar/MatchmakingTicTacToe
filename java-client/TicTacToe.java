@@ -1,6 +1,14 @@
+import java.awt.Dimension;
+import java.awt.Toolkit;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
 import java.io.Console;
 
-public final class TicTacToe {
+@SuppressWarnings("serial")
+public final class TicTacToe extends JPanel {
+    public final static int HEIGHT = 500;
+    public final static int WIDTH = 500;
+
     public static String stringToLength(String input, int length) {
         StringBuilder sb = new StringBuilder(input);
         sb.setLength(length);
@@ -11,6 +19,7 @@ public final class TicTacToe {
 	private Player p1;
 	private Player p2;
     private Recv recv;
+    private Display display;
 
     private class Recv {
         public volatile String recvBuf;
@@ -20,10 +29,12 @@ public final class TicTacToe {
         private final Recv recv;
         private Client c;
         private Board board;
-		public CheckGiveupThread(Recv recv, Client c, Board board) {
+        private Display display;
+		public CheckGiveupThread(Recv recv, Client c, Board board, Display display) {
             this.recv = recv;
 			this.c = c;
             this.board = board;
+            this.display = display;
 		}
 		@Override
 		public void run() {
@@ -44,7 +55,7 @@ public final class TicTacToe {
                         System.out.println("Player 1 wins.");
                         this.board.insert('x', this.recv.recvBuf.charAt(1) - '0');
                     }
-                    this.board.draw();
+                    this.display.doRepaint();
 					System.out.println("Client is exiting. Closing server.");
 					System.exit(0);
                 }
@@ -58,7 +69,18 @@ public final class TicTacToe {
 	}
 	
 	public static void main(String[] args) {
+        JFrame window = new JFrame("Matchmaking TicTacToe");
 		TicTacToe game = new TicTacToe();
+        window.setContentPane(game);
+
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        window.setSize(TicTacToe.WIDTH, TicTacToe.HEIGHT);
+        window.setLocation((screenSize.width - TicTacToe.WIDTH) / 2,
+                (screenSize.height - TicTacToe.HEIGHT) / 2);
+        window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        window.setResizable(false);
+        window.setVisible(true);
+
 		game.start();
 	}
 	
@@ -68,12 +90,18 @@ public final class TicTacToe {
 		this.p2 = new Player('o');
         this.recv = new Recv();
         this.recv.recvBuf = "";
+
+        setLayout(null);
+        this.display = new Display(this.board);
+        this.display.setPreferredSize(new Dimension(Display.WIDTH, Display.HEIGHT));
+        this.display.setBounds(0, 0, Display.WIDTH, Display.HEIGHT);
+        add(this.display);
 	}
 	
 	public void start() {
 		Client c = new Client();
 
-        Runnable giveupThread = new CheckGiveupThread(this.recv, c, this.board);
+        Runnable giveupThread = new CheckGiveupThread(this.recv, c, this.board, this.display);
 		Thread gt = new Thread(giveupThread);
 		gt.start();
 		
@@ -89,7 +117,7 @@ public final class TicTacToe {
             else
                 System.out.println("Your turn.");
 			
-			this.board.draw();
+            this.display.doRepaint();
 			
 			int input;
 			// insert at position
@@ -136,7 +164,7 @@ public final class TicTacToe {
                         System.out.println("Player 1 wins.");
                     else
                         System.out.println("Player 2 wins.");
-                    this.board.draw();
+                    this.display.doRepaint();
                     c.sendWin(input);
                     System.exit(0);
                 }

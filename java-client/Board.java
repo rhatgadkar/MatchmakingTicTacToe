@@ -20,14 +20,12 @@ public final class Board {
 		this.grid = new Coordinate[Board.ROWS][Board.COLS];
 		clear();
 	}
-	
-	public void draw() {
-		for (int r = 0; r < Board.ROWS; r++) {
-			for (int c = 0; c < Board.COLS; c++)
-				System.out.print(this.grid[r][c].symbol);
-			System.out.println();
-		}
-	}
+
+    public char getSymbolAtCoord(int row, int col) {
+        if (row >= Board.ROWS || row < 0 || col >= Board.COLS || col < 0)
+            return 0;
+        return grid[row][col].symbol;
+    }
 	
 	public void clear() {
 		for (int r = 0; r < Board.ROWS; r++) {
