@@ -6,8 +6,8 @@ import java.io.Console;
 
 @SuppressWarnings("serial")
 public final class TicTacToe extends JPanel {
-	public final static int HEIGHT = 500;
-	public final static int WIDTH = 500;
+	public final static int HEIGHT = 350;
+	public final static int WIDTH = 350;
 
 	public static String stringToLength(String input, int length) {
 		StringBuilder sb = new StringBuilder(input);

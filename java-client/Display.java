@@ -23,6 +23,11 @@ public class Display extends JPanel {
 	public void paintComponent(Graphics g) {
 		g.setColor(Color.lightGray);
 		g.fillRect(0, 0, Display.WIDTH, Display.HEIGHT);
+		g.setColor(Color.BLACK);
+		g.drawLine(100, 0, 100, Display.HEIGHT);
+		g.drawLine(200, 0, 200, Display.HEIGHT);
+		g.drawLine(0, 100, Display.WIDTH, 100);
+		g.drawLine(0, 200, Display.WIDTH, 200);
 		
 		for (int tileRow = 0; tileRow < Board.ROWS; tileRow++) {
 			for (int tileCol = 0; tileCol < Board.COLS; tileCol++) {
@@ -30,10 +35,13 @@ public class Display extends JPanel {
 				int y = tileRow * (Display.HEIGHT / Board.ROWS);
 				char symbol = this.board.getSymbolAtCoord(tileRow, tileCol);
 				g.setColor(Color.BLACK);
-				if (symbol == 'x')
-					g.fillRect(x + 20, y + 20, 50, 50);
+				if (symbol == 'x') {
+					// g.drawRect(x + 20, y + 20, 50, 50);
+					g.drawLine(x + 20, y + 20, x + 20 + 50, y + 20 + 50);
+					g.drawLine(x + 20, y + 20 + 50, x + 20 + 50, y + 20);
+				}
 				else if (symbol == 'o')
-					g.fillOval(x + 20, y + 20, 50, 50);
+					g.drawOval(x + 20, y + 20, 50, 50);
 			}
 		}
 	}
