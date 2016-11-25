@@ -165,6 +165,9 @@ public final class TicTacToe extends JPanel {
 					else
 						System.out.println("Player 2 wins.");
 					this.display.doRepaint();
+					try {
+						Thread.sleep(100);
+					} catch (Exception e) {}
 					c.sendWin(input);
 					System.exit(0);
 				}
