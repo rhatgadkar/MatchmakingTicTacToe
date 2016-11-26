@@ -1,12 +1,15 @@
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 @SuppressWarnings("serial")
 public final class TicTacToe extends JPanel {
-	public final static int HEIGHT = 350;
-	public final static int WIDTH = 350;
+	public final static int HEIGHT = 400;
+	public final static int WIDTH = 400;
+
+	public static volatile boolean win = false;
 
 	public static String stringToLength(String input, int length) {
 		StringBuilder sb = new StringBuilder(input);
@@ -38,32 +41,43 @@ public final class TicTacToe extends JPanel {
 		@Override
 		public void run() {
 			do {
+				if (TicTacToe.win)
+					return;
 				try {
 					String test = this.c.receiveFromServer();
 					this.recv.recvBuf = TicTacToe.stringToLength(test, "giveup".length());
 				} catch (DisconnectException e) {
-					System.out.println("Client is exiting. Closing server.");
+					JOptionPane.showMessageDialog(null, "Disconnect.", "Disconnect.",
+							JOptionPane.DEFAULT_OPTION);
 					System.exit(1);
 				}
-				if (this.recv.recvBuf != "" && this.recv.recvBuf.charAt(0) == 'w') {
+				if (this.recv.recvBuf != "" && this.recv.recvBuf.charAt(0) == 'w' && !TicTacToe.win) {
+					TicTacToe.win = true;
 					if (this.c.isP1()) {
-						System.out.println("Player 2 wins.");
 						this.board.insert('o', this.recv.recvBuf.charAt(1) - '0');
+						this.display.doRepaint();
+						JOptionPane.showMessageDialog(null, "Player 2 wins.", "Player 2 wins.",
+								JOptionPane.DEFAULT_OPTION);
 					}
 					else {
-						System.out.println("Player 1 wins.");
 						this.board.insert('x', this.recv.recvBuf.charAt(1) - '0');
+						this.display.doRepaint();
+						JOptionPane.showMessageDialog(null, "Player 1 wins.", "Player 1 wins.",
+								JOptionPane.DEFAULT_OPTION);
 					}
-					this.display.doRepaint();
-					System.out.println("Client is exiting. Closing server.");
 					System.exit(0);
 				}
 			} while (!this.recv.recvBuf.equals("giveup"));
-			if (this.c.isP1())
-				System.out.println("Player 2 has given up. Player 1 wins.");
-			else
-				System.out.println("Player 1 has given up. Player 2 wins.");
-			System.exit(0);
+			if (!TicTacToe.win) {
+				TicTacToe.win = true;
+				if (this.c.isP1())
+					JOptionPane.showMessageDialog(null, "Player 2 has given up. Player 1 wins.",
+							"Player 2 has given up. Player 1 wins.", JOptionPane.DEFAULT_OPTION);
+				else
+					JOptionPane.showMessageDialog(null, "Player 1 has given up. Player 2 wins.",
+							"Player 1 has given up. Player 2 wins.", JOptionPane.DEFAULT_OPTION);
+				System.exit(0);
+			}
 		}
 	}
 
@@ -144,20 +158,21 @@ public final class TicTacToe extends JPanel {
 					System.exit(1);
 				}
 
-				c.sendPosition(input);
 				// check if win
-				if (this.board.isWin(input)) {
-					if (p1turn)
-						System.out.println("Player 1 wins.");
-					else
-						System.out.println("Player 2 wins.");
+				if (this.board.isWin(input) && !TicTacToe.win) {
+					TicTacToe.win = true;
 					this.display.doRepaint();
-					try {
-						Thread.sleep(100);
-					} catch (Exception e) {}
 					c.sendWin(input);
+					if (p1turn)
+						JOptionPane.showMessageDialog(null, "Player 1 wins.", "Player 1 wins.",
+								JOptionPane.DEFAULT_OPTION);
+					else
+						JOptionPane.showMessageDialog(null, "Player 2 wins.", "Player 2 wins.",
+								JOptionPane.DEFAULT_OPTION);
 					System.exit(0);
 				}
+				else
+					c.sendPosition(input);
 			}
 			// wait for other player to make move
 			else {
@@ -186,11 +201,11 @@ public final class TicTacToe extends JPanel {
 				}
 
 				if (p1turn && !this.board.insert(this.p1.getSymbol(), input)) {
-					System.out.println("Error with receivePosition with input: " + input);
+					System.err.println("Error with receivePosition with input: " + input);
 					System.exit(1);
 				}
 				if (!p1turn && !this.board.insert(this.p2.getSymbol(), input)) {
-					System.out.println("Error with receivePosition with input: " + input);
+					System.err.println("Error with receivePosition with input: " + input);
 					System.exit(1);
 				}
 			}
