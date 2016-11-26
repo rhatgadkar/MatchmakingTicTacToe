@@ -2,7 +2,6 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import java.io.Console;
 
 @SuppressWarnings("serial")
 public final class TicTacToe extends JPanel {
@@ -129,24 +128,12 @@ public final class TicTacToe extends JPanel {
 				Thread t = new Thread(timer);
 				t.start();
 
-				while (true) {
-					Console console = System.console();
-					if (console == null)
-						System.out.println("console is null");
-					String inputStr = "";
-					while (true) {
-						try {
-							inputStr = console.readLine("Enter position (1-9): ");
-							input = Integer.parseInt(inputStr);
-							break;
-						} catch (Exception e) {}
-					}
-
-					if (p1turn && !this.board.insert(this.p1.getSymbol(), input))
-						continue;
-					if (!p1turn && !this.board.insert(this.p2.getSymbol(), input))
-						continue;
-					break;
+				input = -1;
+				if (p1turn) {
+					input = this.display.getInput(this.p1.getSymbol());
+				}
+				if (!p1turn) {
+					input = this.display.getInput(this.p2.getSymbol());
 				}
 
 				msg.gotMsg = true;
