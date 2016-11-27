@@ -3,6 +3,7 @@ import java.awt.Toolkit;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JLabel;
 
 @SuppressWarnings("serial")
 public final class TicTacToe extends JPanel {
@@ -22,6 +23,8 @@ public final class TicTacToe extends JPanel {
 	private Player p2;
 	private Recv recv;
 	private Display display;
+	private JLabel turnfield;
+	private JLabel playerfield;
 
 	private class Recv {
 		public volatile String recvBuf;
@@ -54,13 +57,13 @@ public final class TicTacToe extends JPanel {
 				if (this.recv.recvBuf != "" && this.recv.recvBuf.charAt(0) == 'w' && !TicTacToe.win) {
 					TicTacToe.win = true;
 					if (this.c.isP1()) {
-						this.board.insert('o', this.recv.recvBuf.charAt(1) - '0');
+						this.board.insert(Player.P2_SYMBOL, this.recv.recvBuf.charAt(1) - '0');
 						this.display.doRepaint();
 						JOptionPane.showMessageDialog(null, "Player 2 wins.", "Player 2 wins.",
 								JOptionPane.DEFAULT_OPTION);
 					}
 					else {
-						this.board.insert('x', this.recv.recvBuf.charAt(1) - '0');
+						this.board.insert(Player.P1_SYMBOL, this.recv.recvBuf.charAt(1) - '0');
 						this.display.doRepaint();
 						JOptionPane.showMessageDialog(null, "Player 1 wins.", "Player 1 wins.",
 								JOptionPane.DEFAULT_OPTION);
@@ -99,20 +102,40 @@ public final class TicTacToe extends JPanel {
 
 	public TicTacToe() {
 		this.board = new Board();
-		this.p1 = new Player('x');
-		this.p2 = new Player('o');
+		this.p1 = new Player(Player.P1_SYMBOL);
+		this.p2 = new Player(Player.P2_SYMBOL);
 		this.recv = new Recv();
 		this.recv.recvBuf = "";
 
 		setLayout(null);
 		this.display = new Display(this.board);
 		this.display.setPreferredSize(new Dimension(Display.WIDTH, Display.HEIGHT));
-		this.display.setBounds(0, 0, Display.WIDTH, Display.HEIGHT);
+		this.display.setBounds(0, 70, Display.WIDTH, Display.HEIGHT);
+		this.turnfield = new JLabel();
+		this.turnfield.setBounds(0, 0, 100, 50);
+		this.playerfield = new JLabel();
+		this.playerfield.setBounds(150, 0, 200, 50);
 		add(this.display);
+		add(this.turnfield);
+		add(this.playerfield);
 	}
 
 	public void start() {
-		Client c = new Client();
+		this.playerfield.setText("Searching for opponent...");
+
+		Client c;
+		while (true) {
+			try {
+				c = new Client();
+				break;
+			} catch (Exception e) {
+			}
+		}
+
+		if (c.isP1())
+			this.playerfield.setText("You are player 1 (" + Player.P1_SYMBOL + ").");
+		else
+			this.playerfield.setText("You are player 2 (" + Player.P2_SYMBOL + ").");
 
 		Runnable giveupThread = new CheckGiveupThread(this.recv, c, this.board, this.display);
 		Thread gt = new Thread(giveupThread);
@@ -122,13 +145,13 @@ public final class TicTacToe extends JPanel {
 		while (true) {
 			// draw board
 			if (p1turn && c.isP1())
-				System.out.println("Your turn.");
+				this.turnfield.setText("Your turn.");
 			else if (p1turn && !c.isP1())
-				System.out.println("Player 1 turn.");
+				this.turnfield.setText("Player 1 turn.");
 			else if (!p1turn && c.isP1())
-				System.out.println("Player 2 turn.");
+				this.turnfield.setText("Player 2 turn.");
 			else
-				System.out.println("Your turn.");
+				this.turnfield.setText("Your turn.");
 
 			this.display.doRepaint();
 

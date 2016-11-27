@@ -17,7 +17,7 @@ public final class Client {
 	private Socket sock;
 	private boolean isP1;
 
-	public Client() {
+	public Client() throws Exception {
 		String buf = "";
 
 		// connect to parent server
@@ -58,9 +58,7 @@ public final class Client {
 
 		// get assigned player-1 or player-2
 		if (buf.equals("player-1")) {
-			System.out.println("You are player 1.");
 			this.isP1 = true;
-			System.out.println("Waiting for player 2 to connect...");
 			do {
 				buf = "";
 				try {
@@ -71,15 +69,13 @@ public final class Client {
 					System.exit(1);
 				}
 			} while (!buf.equals("player-2"));
-			System.out.println("Player 2 has connected. Starting game.");
 		}
 		else if (buf.equals("player-2")) {
-			System.out.println("You are player 2.");
 			this.isP1 = false;
 		}
 		else {
-			System.out.println("Try connecting again: " + buf);
-			System.exit(0);
+			// TODO: test below
+			throw new Exception();
 		}
 	}
 
