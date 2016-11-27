@@ -74,7 +74,7 @@ public final class Client {
 			this.isP1 = false;
 		}
 		else {
-			// TODO: test below
+			sendBye();
 			throw new Exception();
 		}
 	}
