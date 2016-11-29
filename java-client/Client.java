@@ -25,6 +25,7 @@ public final class Client {
 			createSocketServer(SERVERPORT);
 		} catch (Exception e) {
 			System.err.println("Could not create socket to parent server. Exiting.");
+			e.printStackTrace();
 			System.exit(1);
 		}
 		getNumPpl();
@@ -35,6 +36,7 @@ public final class Client {
 			this.sock.close();
 		} catch (IOException e) {
 			System.err.println("Could not close connection to parent server. Exiting.");
+			e.printStackTrace();
 			System.exit(1);
 		}
 
@@ -43,12 +45,14 @@ public final class Client {
 			Thread.sleep(1000);
 		} catch (InterruptedException e) {
 			System.err.println("Could not sleep. Exiting.");
+			e.printStackTrace();
 			System.exit(1);
 		}
 		try {
 			createSocketServer(buf);
 		} catch (Exception e) {
 			System.err.println("Could not create socket to child server. Exiting.");
+			e.printStackTrace();
 			System.exit(1);
 		}
 		System.out.println("Connected to child server.");
@@ -66,6 +70,7 @@ public final class Client {
 					buf = TicTacToe.stringToLength(buf, "player-2".length());
 				} catch (DisconnectException e) {
 					System.err.println("Child server exited.");
+					e.printStackTrace();
 					System.exit(1);
 				}
 			} while (!buf.equals("player-2"));
@@ -114,11 +119,13 @@ public final class Client {
 				t.join();
 			} catch (InterruptedException e) {
 				System.err.println("Could not join timer thread.");
+				e.printStackTrace();
 				System.exit(1);
 			}
 			System.out.println("Receieved ACK from server.");
 		} catch (DisconnectException e) {
 			System.out.println("Server disconnected. Exiting.");
+			e.printStackTrace();
 			System.exit(0);
 		}
 		return ack;
@@ -153,11 +160,13 @@ public final class Client {
 				t.join();
 			} catch (InterruptedException e) {
 				System.err.println("Could not join timer thread.");
+				e.printStackTrace();
 				System.exit(1);
 			}
 			System.out.println("Number of people online: " + numPpl);
 		} catch (DisconnectException e) {
 			System.out.println("Server disconnected. Exiting.");
+			e.printStackTrace();
 			System.exit(0);
 		}
 	}
@@ -171,6 +180,7 @@ public final class Client {
 			bw.flush();
 		} catch (IOException e) {
 			System.err.println("Error send message.");
+			e.printStackTrace();
 			System.exit(1);
 		}
 	}
@@ -185,6 +195,7 @@ public final class Client {
 				throw new DisconnectException();
 		} catch (IOException e) {
 			System.err.println("Error receive message.");
+			e.printStackTrace();
 			System.exit(1);
 		}
 		return new String(message);
