@@ -25,18 +25,12 @@ private:
 	struct addrinfo* m_p;
 	struct addrinfo* m_servinfo;
 	int m_sockfd;
-	struct timer_params
-	{
-		int seconds;
-		int* got_ack;
-	};
 	// functions
-	static void* timer_countdown(void* parameters);
-	static void* receive_thread(void* parameters);
 	int create_socket_server(const char* port);
-	void handle_syn_ack(char resp[MAXBUFLEN]);  // return port of child server
-	void get_num_ppl();
+	bool handle_syn_ack(char resp[MAXBUFLEN]);  // return port of child server
+	bool get_num_ppl();
 	int send_to_server(const char* text);
+	int receive_from(char* buf, int time);
 };
 
 #endif  // CLIENT_H

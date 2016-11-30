@@ -5,11 +5,11 @@
 #include <cstring>
 #include <iostream>
 #include <cstdio>
-#include <pthread.h>
 #include <ctime>
 #include <cstdlib>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <sys/select.h>
 using namespace std;
 
 Client::Client()
@@ -17,65 +17,76 @@ Client::Client()
 	m_p = NULL;
 	m_servinfo = NULL;
 
-	int res;
-	char buf[MAXBUFLEN];
-
-	// connect to parent server
-	res = create_socket_server(SERVERPORT);
-	if (res != 0)
+	while (true)
 	{
-		cout << "Could not create socket to parent server.  Exiting" << endl;
-		exit(1);
-	}
-	memset(buf, 0, MAXBUFLEN);
-	get_num_ppl();
-	handle_syn_ack(buf);
+		int res;
+		char buf[MAXBUFLEN];
 
-	// close connection to parent server
-	close(m_sockfd);
-	freeaddrinfo(m_servinfo);
-
-	// connect to child server
-	sleep(1);  // wait for child server to establish before create socket
-	res = create_socket_server(buf);
-	if (res != 0)
-	{
-		cout << "Could not create socket to child server.  Exiting" << endl;
-		exit(1);
-	}
-	memset(buf, 0, MAXBUFLEN);
-	cout << "connected to child server" << endl;
-	handle_syn_ack(buf);
-
-	// get assigned player-1 or player-2
-	if (strcmp(buf, "player-1") == 0)
-	{
-		cout << "You are player 1." << endl;
-		m_is_p1 = true;
-		cout << "Waiting for player 2 to connect..." << endl;
-
-		do
+		// connect to parent server
+		res = create_socket_server(SERVERPORT);
+		if (res != 0)
 		{
-			res = receive_from_server(buf);
-			if (res == -1)
+			cerr << "Could not create socket to parent server.  Exiting" << endl;
+			continue;
+		}
+		memset(buf, 0, MAXBUFLEN);
+		if (!get_num_ppl())
+			continue;
+		if (!handle_syn_ack(buf))
+			continue;
+
+		// close connection to parent server
+		close(m_sockfd);
+		freeaddrinfo(m_servinfo);
+
+		// connect to child server
+		sleep(1);  // wait for child server to establish before create socket
+		res = create_socket_server(buf);
+		if (res != 0)
+		{
+			cerr << "Could not create socket to child server.  Exiting" << endl;
+			continue;
+		}
+		memset(buf, 0, MAXBUFLEN);
+		cout << "connected to child server" << endl;
+		if (!handle_syn_ack(buf))
+			continue;
+
+		// get assigned player-1 or player-2
+		if (strcmp(buf, "player-1") == 0)
+		{
+			cout << "You are player 1." << endl;
+			m_is_p1 = true;
+			cout << "Waiting for player 2 to connect..." << endl;
+
+			bool invalidres = false;
+			do
 			{
-				perror("recvfrom ACK");
-				exit(1);
-			}
-		} while (strcmp(buf, "player-2") != 0);
+				res = receive_from_server(buf);
+				if (res == -1)
+				{
+					perror("recvfrom ACK");
+					invalidres = true;
+					break;
+				}
+			} while (strcmp(buf, "player-2") != 0);
+			if (invalidres)
+				continue;
 
-		cout << "Player 2 has connected.  Starting game." << endl;
-
-	}
-	else if (strcmp(buf, "player-2") == 0)
-	{
-		cout << "You are player 2." << endl;
-		m_is_p1 = false;
-	}
-	else
-	{
-		cout << "Try connecting again." << endl;
-		exit(0);
+			cout << "Player 2 has connected.  Starting game." << endl;
+			break;
+		}
+		else if (strcmp(buf, "player-2") == 0)
+		{
+			cout << "You are player 2." << endl;
+			m_is_p1 = false;
+			break;
+		}
+		else
+		{
+			cout << "Try connecting again." << endl;
+			continue;
+		}
 	}
 }
 
@@ -140,77 +151,41 @@ int Client::create_socket_server(const char* port)
 	return 0;
 }
 
-void* Client::timer_countdown(void* parameters)
-{
-	time_t start;
-	time_t end;
-	struct timer_params* params = (struct timer_params*)parameters;
-
-	time(&start);
-	do
-	{
-		time(&end);
-		if (*(params->got_ack))
-			return NULL;
-	} while(difftime(end, start) < params->seconds);
-	cout << "Connection failed.  Try again." << endl;
-	exit(0);
-	return NULL;
-}
-
-void Client::handle_syn_ack(char resp[MAXBUFLEN])
+bool Client::handle_syn_ack(char resp[MAXBUFLEN])
 {
 	int res;
 	char buf[MAXBUFLEN];
-	pthread_t timer_thread;
-	int got_ack;
-
-	struct timer_params params;
-	params.seconds = 15;
-	params.got_ack = &got_ack;
 
 	memset(buf, 0, MAXBUFLEN);
 
-	got_ack = 0;
-	pthread_create(&timer_thread, NULL, &(Client::timer_countdown), &params);
-	res = receive_from_server(buf);  // should possibly be aborted by timer
-	if (res == -1)
+	res = receive_from(buf, 15);
+	if (res <= 0)
 	{
 		perror("recvfrom ACK");
-		exit(1);
+		return false;
 	}
-	got_ack = 1;
-	pthread_join(timer_thread, NULL);
 
 	cout << "Received ACK from server." << endl;
 	memcpy(resp, buf, MAXBUFLEN);
+	return true;
 }
 
-void Client::get_num_ppl()
+bool Client::get_num_ppl()
 {
 	int res;
 	char buf[MAXBUFLEN];
-	pthread_t timer_thread;
-	int got_ack;
-
-	struct timer_params params;
-	params.seconds = 15;
-	params.got_ack = &got_ack;
 
 	memset(buf, 0, MAXBUFLEN);
 
-	got_ack = 0;
-	pthread_create(&timer_thread, NULL, &(Client::timer_countdown), &params);
-	res = receive_from_server(buf);  // should possibly be aborted by timer
-	if (res == -1)
+	res = receive_from(buf, 15);
+	if (res <= 0)
 	{
-		perror("recvfrom num_ppl");
-		exit(1);
+		perror("get_num_ppl");
+		return false;
 	}
-	got_ack = 1;
-	pthread_join(timer_thread, NULL);
 
 	cout << "Number of people online: " << buf << endl;
+	return true;
 }
 
 bool Client::send_position(int pos)
@@ -269,6 +244,48 @@ int Client::send_to_server(const char* text)
 	if (numbytes == -1)
 		return -1;
 	return 0;
+}
+
+int Client::receive_from(char* buf, int time)
+{
+	fd_set set;
+	struct timeval timeout;
+	FD_ZERO(&set);
+	FD_SET(m_sockfd, &set);
+	timeout.tv_sec = time;
+	timeout.tv_usec = 0;
+
+	int numbytes;
+	int rv;
+
+	rv = select(m_sockfd + 1, &set, NULL, NULL, &timeout);
+	if (rv == -1)
+	{
+		perror("select");
+		return -1;
+	}
+	else if (rv == 0)
+		return -2;  // timeout
+	else
+	{
+		numbytes = recv(m_sockfd, buf, MAXBUFLEN - 1, 0);
+		if (numbytes == -1)
+		{
+			perror("read");
+			return -1;
+		}
+		else if (numbytes == 0)
+			return 0;  // disconnect
+		else
+		{
+			return numbytes;  // read successful
+		}
+	}
+
+	numbytes = recv(m_sockfd, buf, MAXBUFLEN - 1, 0);
+	if (numbytes == -1)
+		return -1;
+	return numbytes;
 }
 
 int Client::receive_from_server(char* buf)
