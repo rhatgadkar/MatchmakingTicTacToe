@@ -123,14 +123,7 @@ public final class TicTacToe extends JPanel {
 	public void start() {
 		this.playerfield.setText("Searching for opponent...");
 
-		Client c;
-		while (true) {
-			try {
-				c = new Client();
-				break;
-			} catch (Exception e) {
-			}
-		}
+		Client c = new Client();
 
 		if (c.isP1())
 			this.playerfield.setText("You are player 1 (" + Player.P1_SYMBOL + ").");
