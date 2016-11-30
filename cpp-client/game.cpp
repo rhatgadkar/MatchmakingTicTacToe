@@ -111,9 +111,9 @@ void Game::start()
 				cin >> input;
 
 				if (p1turn && !m_board.insert(m_p1.getSymbol(), input))
-				continue;
+					continue;
 				if (!p1turn && !m_board.insert(m_p2.getSymbol(), input))
-				continue;
+					continue;
 				break;
 			}
 			got_move = 1;
