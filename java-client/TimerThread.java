@@ -7,9 +7,12 @@ public class TimerThread implements Runnable {
 
 	private Msg msg;
 	private int seconds;
-	public TimerThread(Msg msg, int seconds) {
+	private String errorMsg;
+
+	public TimerThread(Msg msg, int seconds, String errorMsg) {
 		this.msg = msg;
 		this.seconds = seconds;
+		this.errorMsg = errorMsg;
 	}
 	@Override
 	public void run() {
@@ -19,8 +22,8 @@ public class TimerThread implements Runnable {
 			elapsedTime = (new Date().getTime()) - startTime;
 		}
 		if (!this.msg.gotMsg) {
-			System.out.println("Time exceeded. No message received. Exiting.");
-			System.exit(0);
+			System.out.println(this.errorMsg);
+//			System.exit(0);
 		}
 	}
 }

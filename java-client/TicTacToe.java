@@ -153,8 +153,9 @@ public final class TicTacToe extends JPanel {
 			if ((p1turn && c.isP1()) || (!p1turn && !c.isP1())) {
 				final TimerThread.Msg msg = new TimerThread.Msg();
 				msg.gotMsg = false;
-
-				Runnable timer = new TimerThread(msg, 60);
+				String errorMsg =
+					"You have not played a move in 60 seconds. You have given up.";
+				Runnable timer = new TimerThread(msg, 60, errorMsg);
 				Thread t = new Thread(timer);
 				t.start();
 
@@ -194,7 +195,9 @@ public final class TicTacToe extends JPanel {
 			else {
 				final TimerThread.Msg msg = new TimerThread.Msg();
 				msg.gotMsg = false;
-				Runnable timer = new TimerThread(msg, 90);
+				String errorMsg =
+					"A move has not been received in 90 seconds. Closing connection.";
+				Runnable timer = new TimerThread(msg, 90, errorMsg);
 				Thread t = new Thread(timer);
 				t.start();
 
