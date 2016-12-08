@@ -20,7 +20,8 @@ public final class Client {
 	public Client() {
 		String buf = "";
 
-		while (true) {
+		int retries;
+		for (retries = 0; retries < 10; retries++) {
 			// connect to parent server
 			try {
 				createSocketServer(SERVERPORT);
@@ -99,6 +100,10 @@ public final class Client {
 				sendBye();
 				continue;
 			}
+		}
+		if (retries == 10) {
+			System.out.println("Connection failed. Retries limit reached.");
+			System.exit(1);
 		}
 	}
 

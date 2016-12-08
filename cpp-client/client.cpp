@@ -17,7 +17,8 @@ Client::Client()
 	m_p = NULL;
 	m_servinfo = NULL;
 
-	while (true)
+	int retries;
+	for (retries = 0; retries < 10; retries++)
 	{
 		int res;
 		char buf[MAXBUFLEN];
@@ -87,6 +88,11 @@ Client::Client()
 			cout << "Try connecting again." << endl;
 			continue;
 		}
+	}
+	if (retries == 10)
+	{
+		cout << "Connection failed.  Retries reach limit." << endl;
+		exit(1);
 	}
 }
 
