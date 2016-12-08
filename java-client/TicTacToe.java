@@ -68,7 +68,8 @@ public final class TicTacToe extends JPanel {
 						JOptionPane.showMessageDialog(null, "Player 1 wins.", "Player 1 wins.",
 								JOptionPane.DEFAULT_OPTION);
 					}
-					System.exit(0);
+					//System.exit(0);
+					return;
 				}
 			} while (!this.recv.recvBuf.equals("giveup"));
 			if (!TicTacToe.win) {
@@ -79,7 +80,8 @@ public final class TicTacToe extends JPanel {
 				else
 					JOptionPane.showMessageDialog(null, "Player 1 has given up. Player 2 wins.",
 							"Player 1 has given up. Player 2 wins.", JOptionPane.DEFAULT_OPTION);
-				System.exit(0);
+				//System.exit(0);
+				return;
 			}
 		}
 	}
@@ -98,6 +100,7 @@ public final class TicTacToe extends JPanel {
 		window.setVisible(true);
 
 		game.start();
+		System.out.println("Exited game.start()");
 	}
 
 	public TicTacToe() {
@@ -135,7 +138,7 @@ public final class TicTacToe extends JPanel {
 		gt.start();
 
 		boolean p1turn = true;
-		while (true) {
+		while (!TicTacToe.win) {
 			// draw board
 			if (p1turn && c.isP1())
 				this.turnfield.setText("Your turn.");
@@ -186,7 +189,8 @@ public final class TicTacToe extends JPanel {
 					else
 						JOptionPane.showMessageDialog(null, "Player 2 wins.", "Player 2 wins.",
 								JOptionPane.DEFAULT_OPTION);
-					System.exit(0);
+					//System.exit(0);
+					return;
 				}
 				else
 					c.sendPosition(input);
@@ -201,13 +205,16 @@ public final class TicTacToe extends JPanel {
 				Thread t = new Thread(timer);
 				t.start();
 
-				while (true) {
+				while (!TicTacToe.win) {
 					if (this.recv.recvBuf == "")
 						continue;
 					if (Character.isDigit(this.recv.recvBuf.charAt(0)) &&
 							this.recv.recvBuf.charAt(0) != '0')
 						break;
 				}
+				if (TicTacToe.win)
+					return;
+
 				input = this.recv.recvBuf.charAt(0) - '0';
 				this.recv.recvBuf = "";
 

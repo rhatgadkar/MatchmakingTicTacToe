@@ -18,10 +18,10 @@ public class TimerThread implements Runnable {
 	public void run() {
 		long startTime = System.currentTimeMillis();
 		long elapsedTime = 0L;
-		while (!this.msg.gotMsg && (elapsedTime < this.seconds * 1000)) {
+		while (!this.msg.gotMsg && (elapsedTime < this.seconds * 1000) && !TicTacToe.win) {
 			elapsedTime = (new Date().getTime()) - startTime;
 		}
-		if (!this.msg.gotMsg) {
+		if (!this.msg.gotMsg && !TicTacToe.win) {
 			System.out.println(this.errorMsg);
 //			System.exit(0);
 		}

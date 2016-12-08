@@ -36,7 +36,7 @@ public class Display extends JPanel implements MouseListener {
 		}
 		@Override
 		public void run() {
-			while (this.msg.input == -1)
+			while (this.msg.input == -1 && !TicTacToe.win)
 				;
 		}
 	}
