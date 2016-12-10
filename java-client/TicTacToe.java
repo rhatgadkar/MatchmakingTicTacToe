@@ -50,8 +50,11 @@ public final class TicTacToe extends JPanel {
 					String test = this.c.receiveFromServer();
 					this.recv.recvBuf = TicTacToe.stringToLength(test, "giveup".length());
 				} catch (DisconnectException e) {
-					JOptionPane.showMessageDialog(null, "Disconnect.", "Disconnect.",
-							JOptionPane.DEFAULT_OPTION);
+//					JOptionPane.showMessageDialog(null, "Disconnect.", "Disconnect.",
+//							JOptionPane.DEFAULT_OPTION);
+					if (TicTacToe.win)
+						return;
+					System.out.println("Disconnect");
 					System.exit(1);
 				}
 				if (this.recv.recvBuf != "" && this.recv.recvBuf.charAt(0) == 'w' && !TicTacToe.win) {
@@ -59,14 +62,16 @@ public final class TicTacToe extends JPanel {
 					if (this.c.isP1()) {
 						this.board.insert(Player.P2_SYMBOL, this.recv.recvBuf.charAt(1) - '0');
 						this.display.doRepaint();
-						JOptionPane.showMessageDialog(null, "Player 2 wins.", "Player 2 wins.",
-								JOptionPane.DEFAULT_OPTION);
+//						JOptionPane.showMessageDialog(null, "Player 2 wins.", "Player 2 wins.",
+//								JOptionPane.DEFAULT_OPTION);
+						System.out.println("Player 2 wins.");
 					}
 					else {
 						this.board.insert(Player.P1_SYMBOL, this.recv.recvBuf.charAt(1) - '0');
 						this.display.doRepaint();
-						JOptionPane.showMessageDialog(null, "Player 1 wins.", "Player 1 wins.",
-								JOptionPane.DEFAULT_OPTION);
+//						JOptionPane.showMessageDialog(null, "Player 1 wins.", "Player 1 wins.",
+//								JOptionPane.DEFAULT_OPTION);
+						System.out.println("Player 1 wins.");
 					}
 					//System.exit(0);
 					return;
@@ -75,11 +80,13 @@ public final class TicTacToe extends JPanel {
 			if (!TicTacToe.win) {
 				TicTacToe.win = true;
 				if (this.c.isP1())
-					JOptionPane.showMessageDialog(null, "Player 2 has given up. Player 1 wins.",
-							"Player 2 has given up. Player 1 wins.", JOptionPane.DEFAULT_OPTION);
+//					JOptionPane.showMessageDialog(null, "Player 2 has given up. Player 1 wins.",
+//							"Player 2 has given up. Player 1 wins.", JOptionPane.DEFAULT_OPTION);
+					System.out.println("Player 2 has given up. Player 1 wins.");
 				else
-					JOptionPane.showMessageDialog(null, "Player 1 has given up. Player 2 wins.",
-							"Player 1 has given up. Player 2 wins.", JOptionPane.DEFAULT_OPTION);
+//					JOptionPane.showMessageDialog(null, "Player 1 has given up. Player 2 wins.",
+//							"Player 1 has given up. Player 2 wins.", JOptionPane.DEFAULT_OPTION);
+					System.out.println("Player 1 has given up. Player 2 wins.");
 				//System.exit(0);
 				return;
 			}
@@ -184,16 +191,22 @@ public final class TicTacToe extends JPanel {
 					this.display.doRepaint();
 					c.sendWin(input);
 					if (p1turn)
-						JOptionPane.showMessageDialog(null, "Player 1 wins.", "Player 1 wins.",
-								JOptionPane.DEFAULT_OPTION);
+//						JOptionPane.showMessageDialog(null, "Player 1 wins.", "Player 1 wins.",
+//								JOptionPane.DEFAULT_OPTION);
+						System.out.println("Player 1 wins.");
 					else
-						JOptionPane.showMessageDialog(null, "Player 2 wins.", "Player 2 wins.",
-								JOptionPane.DEFAULT_OPTION);
+//						JOptionPane.showMessageDialog(null, "Player 2 wins.", "Player 2 wins.",
+//								JOptionPane.DEFAULT_OPTION);
+						System.out.println("Player 2 wins.");
 					//System.exit(0);
 					return;
 				}
-				else
-					c.sendPosition(input);
+				else {
+					if (input == -1)
+						c.sendGiveup();
+					else
+						c.sendPosition(input);
+				}
 			}
 			// wait for other player to make move
 			else {
