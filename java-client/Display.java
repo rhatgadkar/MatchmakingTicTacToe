@@ -94,6 +94,7 @@ public class Display extends JPanel implements MouseListener {
 			g.fillRect(0, 0, Display.WIDTH, Display.HEIGHT);
 			g.setColor(Color.BLACK);
 			g.drawString(this.gameOverMsg, 20, Display.HEIGHT / 2);
+			g.drawString("Click to restart.", 20, Display.HEIGHT - 100);
 		}
 	}
 
@@ -124,6 +125,9 @@ public class Display extends JPanel implements MouseListener {
 					this.allowInput = false;
 				}
 			}
+		}
+		else if (TicTacToe.win && this.gameOverMsg != null) {
+			TicTacToe.win = false;
 		}
 	}
 

@@ -96,20 +96,15 @@ public final class TicTacToe extends JPanel {
 		window.setVisible(true);
 
 		while (true) {
-			TicTacToe.win = false;
-
 			TicTacToe game = new TicTacToe();
 			window.setContentPane(game);
 
 			game.start();
 			System.out.println("Exited game.start()");
-//			System.out.println(game.getDisplay().gameOverMsg);
 			game.getDisplay().doRepaint();
 
-			try {
-				Thread.sleep(5000);
-			} catch (Exception e) {
-			}
+			while (TicTacToe.win)
+				;
 		}
 	}
 
