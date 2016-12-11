@@ -10,7 +10,7 @@ public final class TicTacToe extends JPanel {
 	public final static int HEIGHT = 400;
 	public final static int WIDTH = 400;
 
-	public static volatile boolean win = false;
+	public static volatile boolean win = true;
 
 	public static String stringToLength(String input, int length) {
 		StringBuilder sb = new StringBuilder(input);
@@ -129,6 +129,13 @@ public final class TicTacToe extends JPanel {
 	}
 
 	public void start() {
+		if (TicTacToe.win) {
+			this.playerfield.setText("MatchMaking TicTacToe");
+			while (TicTacToe.win)
+				;
+			this.display.doRepaint();
+		}
+
 		this.playerfield.setText("Searching for opponent...");
 
 		Client c = new Client();
