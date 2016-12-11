@@ -24,7 +24,6 @@ public class TimerThread implements Runnable {
 		if (!this.msg.gotMsg && !TicTacToe.win) {
 			TicTacToe.win = true;
 			System.out.println(this.errorMsg);
-//			System.exit(0);
 		}
 	}
 }

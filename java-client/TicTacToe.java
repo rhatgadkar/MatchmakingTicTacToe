@@ -11,7 +11,6 @@ public final class TicTacToe extends JPanel {
 	public final static int WIDTH = 400;
 
 	public static volatile boolean win = false;
-	public static volatile String gameOverMsg;
 
 	public static String stringToLength(String input, int length) {
 		StringBuilder sb = new StringBuilder(input);
@@ -65,12 +64,12 @@ public final class TicTacToe extends JPanel {
 					if (this.c.isP1()) {
 						this.board.insert(Player.P2_SYMBOL, this.recv.recvBuf.charAt(1) - '0');
 						this.display.doRepaint();
-						TicTacToe.gameOverMsg = "Player 2 wins.";
+						this.display.gameOverMsg = "Player 2 wins.";
 					}
 					else {
 						this.board.insert(Player.P1_SYMBOL, this.recv.recvBuf.charAt(1) - '0');
 						this.display.doRepaint();
-						TicTacToe.gameOverMsg = "Player 1 wins.";
+						this.display.gameOverMsg = "Player 1 wins.";
 					}
 					return;
 				}
@@ -78,9 +77,9 @@ public final class TicTacToe extends JPanel {
 			if (!TicTacToe.win) {
 				TicTacToe.win = true;
 				if (this.c.isP1())
-					TicTacToe.gameOverMsg = "Player 2 has given up. Player 1 wins.";
+					this.display.gameOverMsg = "Player 2 has given up. Player 1 wins.";
 				else
-					TicTacToe.gameOverMsg = "Player 1 has given up. Player 2 wins.";
+					this.display.gameOverMsg = "Player 1 has given up. Player 2 wins.";
 				return;
 			}
 		}
@@ -88,9 +87,6 @@ public final class TicTacToe extends JPanel {
 
 	public static void main(String[] args) {
 		JFrame window = new JFrame("Matchmaking TicTacToe");
-		TicTacToe game = new TicTacToe();
-		window.setContentPane(game);
-
 		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 		window.setSize(TicTacToe.WIDTH, TicTacToe.HEIGHT);
 		window.setLocation((screenSize.width - TicTacToe.WIDTH) / 2,
@@ -99,9 +95,22 @@ public final class TicTacToe extends JPanel {
 		window.setResizable(false);
 		window.setVisible(true);
 
-		game.start();
-		System.out.println("Exited game.start()");
-		System.out.println(TicTacToe.gameOverMsg);
+		while (true) {
+			TicTacToe.win = false;
+
+			TicTacToe game = new TicTacToe();
+			window.setContentPane(game);
+
+			game.start();
+			System.out.println("Exited game.start()");
+//			System.out.println(game.getDisplay().gameOverMsg);
+			game.getDisplay().doRepaint();
+
+			try {
+				Thread.sleep(5000);
+			} catch (Exception e) {
+			}
+		}
 	}
 
 	public TicTacToe() {
@@ -185,15 +194,17 @@ public final class TicTacToe extends JPanel {
 					this.display.doRepaint();
 					c.sendWin(input);
 					if (p1turn)
-						TicTacToe.gameOverMsg = "Player 1 wins.";
+						this.display.gameOverMsg = "Player 1 wins.";
 					else
-						TicTacToe.gameOverMsg = "Player 2 wins.";
+						this.display.gameOverMsg = "Player 2 wins.";
 
 					return;
 				}
 				else {
-					if (input == -1)
+					if (input == -1) {
 						c.sendGiveup();
+						return;
+					}
 					else
 						c.sendPosition(input);
 				}
