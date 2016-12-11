@@ -198,6 +198,7 @@ public final class TicTacToe extends JPanel {
 					else
 						this.display.gameOverMsg = "Player 2 wins.";
 
+					c.sendBye();
 					return;
 				}
 				else {
@@ -233,6 +234,8 @@ public final class TicTacToe extends JPanel {
 						System.err.println("Could not join giveup thread.");
 						System.exit(1);
 					}
+
+					c.sendBye();
 					return;
 				}
 
