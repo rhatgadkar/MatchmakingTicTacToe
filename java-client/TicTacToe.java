@@ -169,8 +169,8 @@ public final class TicTacToe extends JPanel {
 				final TimerThread.Msg msg = new TimerThread.Msg();
 				msg.gotMsg = false;
 				String errorMsg =
-					"You have not played a move in 60 seconds. You have given up.";
-				Runnable timer = new TimerThread(msg, 60, errorMsg);
+					"You have not played a move in 30 seconds. You have given up.";
+				Runnable timer = new TimerThread(msg, 30, errorMsg, null);
 				Thread t = new Thread(timer);
 				t.start();
 
@@ -221,8 +221,8 @@ public final class TicTacToe extends JPanel {
 				final TimerThread.Msg msg = new TimerThread.Msg();
 				msg.gotMsg = false;
 				String errorMsg =
-					"A move has not been received in 90 seconds. Closing connection.";
-				Runnable timer = new TimerThread(msg, 90, errorMsg);
+					"A move has not been received in 45 seconds. Closing connection.";
+				Runnable timer = new TimerThread(msg, 45, errorMsg, this.display);
 				Thread t = new Thread(timer);
 				t.start();
 
@@ -234,14 +234,13 @@ public final class TicTacToe extends JPanel {
 						break;
 				}
 				if (TicTacToe.win) {
+					c.sendBye();
 					try {
 						gt.join();
 					} catch (InterruptedException e) {
 						System.err.println("Could not join giveup thread.");
 						System.exit(1);
 					}
-
-					c.sendBye();
 					return;
 				}
 
@@ -263,22 +262,6 @@ public final class TicTacToe extends JPanel {
 				if (!p1turn && !this.board.insert(this.p2.getSymbol(), input)) {
 					System.err.println("Error with receivePosition with input: " + input);
 					System.exit(1);
-				}
-
-				if (TicTacToe.win) {
-					try {
-						gt.join();
-					} catch (InterruptedException e) {
-						System.err.println("Could not join giveup thread.");
-						System.exit(1);
-					}
-
-						if (p1turn)
-							this.display.gameOverMsg = "Connection error with Player 2. Exited match.";
-						else
-							this.display.gameOverMsg = "Connection error with Player 1. Exited match.";
-					c.sendBye();
-					return;
 				}
 			}
 			p1turn = !p1turn;

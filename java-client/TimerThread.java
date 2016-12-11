@@ -8,11 +8,13 @@ public class TimerThread implements Runnable {
 	private Msg msg;
 	private int seconds;
 	private String errorMsg;
+	private Display display;
 
-	public TimerThread(Msg msg, int seconds, String errorMsg) {
+	public TimerThread(Msg msg, int seconds, String errorMsg, Display display) {
 		this.msg = msg;
 		this.seconds = seconds;
 		this.errorMsg = errorMsg;
+		this.display = display;
 	}
 	@Override
 	public void run() {
@@ -24,6 +26,8 @@ public class TimerThread implements Runnable {
 		if (!this.msg.gotMsg && !TicTacToe.win) {
 			TicTacToe.win = true;
 			System.out.println(this.errorMsg);
+			if (this.display != null)
+				this.display.gameOverMsg = "Connection error with other Player. Exited match.";
 		}
 	}
 }
