@@ -27,7 +27,7 @@ public class TimerThread implements Runnable {
 			TicTacToe.win = true;
 			System.out.println(this.errorMsg);
 			if (this.display != null)
-				this.display.gameOverMsg = "Connection error with other Player. Exited match.";
+				this.display.gameOverMsg = "Error with opponent. Match canceled.";
 		}
 	}
 }
