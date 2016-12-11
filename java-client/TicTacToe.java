@@ -264,6 +264,22 @@ public final class TicTacToe extends JPanel {
 					System.err.println("Error with receivePosition with input: " + input);
 					System.exit(1);
 				}
+
+				if (TicTacToe.win) {
+					try {
+						gt.join();
+					} catch (InterruptedException e) {
+						System.err.println("Could not join giveup thread.");
+						System.exit(1);
+					}
+
+						if (p1turn)
+							this.display.gameOverMsg = "Connection error with Player 2. Exited match.";
+						else
+							this.display.gameOverMsg = "Connection error with Player 1. Exited match.";
+					c.sendBye();
+					return;
+				}
 			}
 			p1turn = !p1turn;
 		}
