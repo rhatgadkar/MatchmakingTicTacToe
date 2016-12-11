@@ -205,6 +205,10 @@ public final class TicTacToe extends JPanel {
 				}
 				else {
 					if (input == -1) {
+						if (p1turn)
+							this.display.gameOverMsg = "You have not played a move. Player 2 wins.";
+						else
+							this.display.gameOverMsg = "You have not played a move. Player 1 wins.";
 						c.sendGiveup();
 						return;
 					}
