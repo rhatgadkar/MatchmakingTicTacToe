@@ -10,7 +10,7 @@ public final class TicTacToe extends JPanel {
 	public final static int HEIGHT = 400;
 	public final static int WIDTH = 400;
 
-	public static volatile boolean win = true;
+	public static volatile boolean NotInGame = true;
 
 	public static String stringToLength(String input, int length) {
 		StringBuilder sb = new StringBuilder(input);
@@ -48,19 +48,19 @@ public final class TicTacToe extends JPanel {
 		@Override
 		public void run() {
 			do {
-				if (TicTacToe.win)
+				if (TicTacToe.NotInGame)
 					return;
 				try {
 					String test = this.c.receiveFromServer();
 					this.recv.recvBuf = TicTacToe.stringToLength(test, "giveup".length());
 				} catch (DisconnectException e) {
-					if (TicTacToe.win)
+					if (TicTacToe.NotInGame)
 						return;
 					System.out.println("Disconnect");
 					System.exit(1);
 				}
-				if (this.recv.recvBuf != "" && this.recv.recvBuf.charAt(0) == 'w' && !TicTacToe.win) {
-					TicTacToe.win = true;
+				if (this.recv.recvBuf != "" && this.recv.recvBuf.charAt(0) == 'w' && !TicTacToe.NotInGame) {
+					TicTacToe.NotInGame = true;
 					if (this.c.isP1()) {
 						this.board.insert(Player.P2_SYMBOL, this.recv.recvBuf.charAt(1) - '0');
 						this.display.doRepaint();
@@ -74,8 +74,8 @@ public final class TicTacToe extends JPanel {
 					return;
 				}
 			} while (!this.recv.recvBuf.equals("giveup"));
-			if (!TicTacToe.win) {
-				TicTacToe.win = true;
+			if (!TicTacToe.NotInGame) {
+				TicTacToe.NotInGame = true;
 				if (this.c.isP1())
 					this.display.gameOverMsg = "Player 2 has given up. Player 1 wins.";
 				else
@@ -103,7 +103,7 @@ public final class TicTacToe extends JPanel {
 			System.out.println("Exited game.start()");
 			game.getDisplay().doRepaint();
 
-			while (TicTacToe.win)
+			while (TicTacToe.NotInGame)
 				;
 		}
 	}
@@ -129,9 +129,9 @@ public final class TicTacToe extends JPanel {
 	}
 
 	public void start() {
-		if (TicTacToe.win) {
+		if (TicTacToe.NotInGame) {
 			this.playerfield.setText("MatchMaking TicTacToe");
-			while (TicTacToe.win)
+			while (TicTacToe.NotInGame)
 				;
 			this.display.doRepaint();
 		}
@@ -150,7 +150,7 @@ public final class TicTacToe extends JPanel {
 		gt.start();
 
 		boolean p1turn = true;
-		while (!TicTacToe.win) {
+		while (!TicTacToe.NotInGame) {
 			// draw board
 			if (p1turn && c.isP1())
 				this.turnfield.setText("Your turn.");
@@ -191,8 +191,8 @@ public final class TicTacToe extends JPanel {
 				}
 
 				// check if win
-				if (this.board.isWin(input) && !TicTacToe.win) {
-					TicTacToe.win = true;
+				if (this.board.isWin(input) && !TicTacToe.NotInGame) {
+					TicTacToe.NotInGame = true;
 					this.display.doRepaint();
 					c.sendWin(input);
 					if (p1turn)
@@ -226,14 +226,14 @@ public final class TicTacToe extends JPanel {
 				Thread t = new Thread(timer);
 				t.start();
 
-				while (!TicTacToe.win) {
+				while (!TicTacToe.NotInGame) {
 					if (this.recv.recvBuf == "")
 						continue;
 					if (Character.isDigit(this.recv.recvBuf.charAt(0)) &&
 							this.recv.recvBuf.charAt(0) != '0')
 						break;
 				}
-				if (TicTacToe.win) {
+				if (TicTacToe.NotInGame) {
 					c.sendBye();
 					try {
 						gt.join();

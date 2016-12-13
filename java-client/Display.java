@@ -28,7 +28,7 @@ public class Display extends JPanel implements MouseListener {
 		this.acceptedInput = new InputMsg();
 		this.acceptedInput.input = -1;
 		this.symbol = 0;
-		if (TicTacToe.win)
+		if (TicTacToe.NotInGame)
 			this.gameOverMsg = "Click to start.";
 		repaint();
 	}
@@ -40,7 +40,7 @@ public class Display extends JPanel implements MouseListener {
 		}
 		@Override
 		public void run() {
-			while (this.msg.input == -1 && !TicTacToe.win)
+			while (this.msg.input == -1 && !TicTacToe.NotInGame)
 				;
 		}
 	}
@@ -129,8 +129,8 @@ public class Display extends JPanel implements MouseListener {
 				}
 			}
 		}
-		else if (TicTacToe.win && this.gameOverMsg != null) {
-			TicTacToe.win = false;
+		else if (TicTacToe.NotInGame && this.gameOverMsg != null) {
+			TicTacToe.NotInGame = false;
 			this.gameOverMsg = null;
 		}
 	}

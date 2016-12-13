@@ -20,11 +20,11 @@ public class TimerThread implements Runnable {
 	public void run() {
 		long startTime = System.currentTimeMillis();
 		long elapsedTime = 0L;
-		while (!this.msg.gotMsg && (elapsedTime < this.seconds * 1000) && !TicTacToe.win) {
+		while (!this.msg.gotMsg && (elapsedTime < this.seconds * 1000) && !TicTacToe.NotInGame) {
 			elapsedTime = (new Date().getTime()) - startTime;
 		}
-		if (!this.msg.gotMsg && !TicTacToe.win) {
-			TicTacToe.win = true;
+		if (!this.msg.gotMsg && !TicTacToe.NotInGame) {
+			TicTacToe.NotInGame = true;
 			System.out.println(this.errorMsg);
 			if (this.display != null)
 				this.display.gameOverMsg = "Error with opponent. Match canceled.";
