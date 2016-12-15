@@ -25,6 +25,7 @@ public final class TicTacToe extends JPanel {
 	private Display display;
 	private JLabel turnfield;
 	private JLabel playerfield;
+	private JLabel timerfield;
 
 	public Display getDisplay() {
 		return this.display;
@@ -123,9 +124,13 @@ public final class TicTacToe extends JPanel {
 		this.turnfield.setBounds(0, 0, 100, 50);
 		this.playerfield = new JLabel();
 		this.playerfield.setBounds(150, 0, 200, 50);
+		this.timerfield = new JLabel();
+		this.timerfield.setBounds(360, 0, 30, 50);
 		add(this.display);
 		add(this.turnfield);
 		add(this.playerfield);
+		add(this.timerfield);
+		this.timerfield.setText("");
 	}
 
 	public void start() {
@@ -170,7 +175,7 @@ public final class TicTacToe extends JPanel {
 				msg.gotMsg = false;
 				String errorMsg =
 					"You have not played a move in 30 seconds. You have given up.";
-				Runnable timer = new TimerThread(msg, 30, errorMsg, null);
+				Runnable timer = new TimerThread(msg, 30, errorMsg, null, this.timerfield);
 				Thread t = new Thread(timer);
 				t.start();
 
@@ -189,6 +194,8 @@ public final class TicTacToe extends JPanel {
 					System.err.println("Could not join timer thread.");
 					System.exit(1);
 				}
+
+				this.timerfield.setText("");
 
 				// check if win
 				if (this.board.isWin(input) && !TicTacToe.NotInGame) {
@@ -222,7 +229,7 @@ public final class TicTacToe extends JPanel {
 				msg.gotMsg = false;
 				String errorMsg =
 					"A move has not been received in 45 seconds. Closing connection.";
-				Runnable timer = new TimerThread(msg, 45, errorMsg, this.display);
+				Runnable timer = new TimerThread(msg, 45, errorMsg, this.display, null);
 				Thread t = new Thread(timer);
 				t.start();
 
