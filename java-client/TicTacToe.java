@@ -63,9 +63,9 @@ public final class TicTacToe extends JPanel {
 						return;
 					TicTacToe.NotInGame = true;
 					if (this.c.isP1())
-						this.display.gameOverMsg = "Player 2 has given up. Player 1 wins.";
+						this.display.gameOverMsg = "Player 2 has given up. You win.";
 					else
-						this.display.gameOverMsg = "Player 1 has given up. Player 2 wins.";
+						this.display.gameOverMsg = "Player 1 has given up. You win.";
 					return;
 				}
 				if (this.recv.recvBuf != "" && this.recv.recvBuf.charAt(0) == 'w' && !TicTacToe.NotInGame) {
@@ -86,9 +86,9 @@ public final class TicTacToe extends JPanel {
 			if (!TicTacToe.NotInGame) {
 				TicTacToe.NotInGame = true;
 				if (this.c.isP1())
-					this.display.gameOverMsg = "Player 2 has given up. Player 1 wins.";
+					this.display.gameOverMsg = "Player 2 has given up. You win.";
 				else
-					this.display.gameOverMsg = "Player 1 has given up. Player 2 wins.";
+					this.display.gameOverMsg = "Player 1 has given up. You win.";
 				return;
 			}
 		}
@@ -155,7 +155,7 @@ public final class TicTacToe extends JPanel {
 				return this;
 			}
 		}.init(this.display));
-		this.quitbutton.setBounds(360, 100, 20, 20);
+		this.quitbutton.setBounds(320, 100, 60, 60);
 		add(this.quitbutton);
 	}
 
