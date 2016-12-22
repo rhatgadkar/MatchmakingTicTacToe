@@ -238,14 +238,14 @@ public final class TicTacToe extends JPanel {
 				}
 				else {
 					if (input == -1) {
-						if (TicTacToe.NotInGame && this.display.gameOverMsg.equals("Click to start.")) {
+						if (TicTacToe.NotInGame && this.display.gameOverMsg != null && this.display.gameOverMsg.equals("Click to start.")) {
 							// quitbutton was triggered.
 							if (c.isP1())
 								this.display.gameOverMsg = "You have given up. Player 2 wins.";
 							else
 								this.display.gameOverMsg = "You have given up. Player 1 wins.";
 						}
-						else if (TicTacToe.NotInGame)
+						else if (TicTacToe.NotInGame && this.display.gameOverMsg != null && this.display.gameOverMsg.contains("You win"))
 							// other client triggered quitbutton - disconnectexception
 							;
 						else {
@@ -287,8 +287,12 @@ public final class TicTacToe extends JPanel {
 						Thread.sleep(10);
 					} catch (Exception e) {
 					}
-					if (this.display.gameOverMsg.equals("Click to start."))
-						this.display.gameOverMsg = "You gave up. Other player wins.";
+					if (this.display.gameOverMsg.equals("Click to start.")) {
+						if (c.isP1())
+							this.display.gameOverMsg = "You have given up. Player 2 wins.";
+						else
+							this.display.gameOverMsg = "You have given up. Player 1 wins.";
+					}
 					c.sendBye();
 					try {
 						gt.join();
