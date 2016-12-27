@@ -9,6 +9,8 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 
 public final class Client {
+	public static volatile boolean ConnectionEst = false;
+
 	public final static int MAXBUFLEN = 1000;
 	private final static String SERVERIP = "54.183.217.40";
 	//	private final static String SERVERIP = "127.0.0.1";
@@ -17,11 +19,14 @@ public final class Client {
 	private Socket sock;
 	private boolean isP1;
 
-	public Client() {
+	public void init() {
 		String buf = "";
 
 		int retries;
 		for (retries = 0; retries < 10; retries++) {
+			if (TicTacToe.NotInGame)
+				break;
+
 			// connect to parent server
 			try {
 				createSocketServer(SERVERPORT);
@@ -52,7 +57,8 @@ public final class Client {
 			} catch (InterruptedException e) {
 				System.err.println("Could not sleep. Exiting.");
 				e.printStackTrace();
-				continue;
+				break;
+//				continue;
 			}
 			try {
 				createSocketServer(buf);
@@ -82,12 +88,14 @@ public final class Client {
 				do {
 					buf = "";
 					try {
+						System.out.println("waiting to receive from server");
 						buf = receiveFromServer();
 						buf = TicTacToe.stringToLength(buf, "player-2".length());
 					} catch (DisconnectException e) {
 						System.err.println("Child server exited.");
 						e.printStackTrace();
-						continue;
+						break;
+//						continue;
 					}
 				} while (!buf.equals("player-2"));
 				break;
@@ -104,6 +112,16 @@ public final class Client {
 		if (retries == 10) {
 			System.out.println("Connection failed. Retries limit reached.");
 			System.exit(1);
+		}
+		Client.ConnectionEst = true;
+	}
+
+	public void close() {
+		if (this.sock != null) {
+			try {
+				this.sock.close();
+			} catch (IOException e) {
+			}
 		}
 	}
 
@@ -182,7 +200,8 @@ public final class Client {
 		} catch (IOException e) {
 			System.err.println("Error send message.");
 			e.printStackTrace();
-			System.exit(1);
+			return;
+//			System.exit(1);
 		}
 	}
 
@@ -212,7 +231,8 @@ public final class Client {
 		} catch (IOException e) {
 			System.err.println("Error receive message.");
 			e.printStackTrace();
-			System.exit(1);
+			throw new DisconnectException();
+//			System.exit(1);
 		}
 		return new String(message);
 	}

@@ -30,6 +30,8 @@ public final class TicTacToe extends JPanel {
 	private JLabel playerfield;
 	private JLabel timerfield;
 	private JButton quitbutton;
+	private Thread initClientThread;
+	private Client c;
 
 	public Display getDisplay() {
 		return this.display;
@@ -123,6 +125,8 @@ public final class TicTacToe extends JPanel {
 		this.p2 = new Player(Player.P2_SYMBOL);
 		this.recv = new Recv();
 		this.recv.recvBuf = "";
+		this.c = new Client();
+		this.initClientThread = new Thread(new InitClientThread(this.c));
 
 		setLayout(null);
 		this.display = new Display(this.board);
@@ -142,7 +146,17 @@ public final class TicTacToe extends JPanel {
 		this.timerfield.setText("");
 		this.quitbutton.addActionListener(new ActionListener() {
 			private Display display;
+			private Thread initClientThread;
+			private Client c;
 			public void actionPerformed(ActionEvent e) {
+				if (this.initClientThread != null) {
+					System.out.println("trying to interrupt");
+					this.initClientThread.interrupt();
+					Client.ConnectionEst = true;
+					this.c.close();
+//					this.c.sendBye();
+					System.out.println("finished interrupting");
+				}
 				if (TicTacToe.NotInGame)
 					System.exit(0);
 				else {
@@ -150,13 +164,26 @@ public final class TicTacToe extends JPanel {
 					this.display.gameOverMsg = "Click to start.";
 				}
 			}
-			private ActionListener init(Display display) {
+			private ActionListener init(Display display, Thread initClientThread, Client c) {
 				this.display = display;
+				this.initClientThread = initClientThread;
+				this.c = c;
 				return this;
 			}
-		}.init(this.display));
+		}.init(this.display, this.initClientThread, this.c));
 		this.quitbutton.setBounds(320, 100, 60, 60);
 		add(this.quitbutton);
+	}
+
+	private class InitClientThread implements Runnable {
+		private Client c;
+		public InitClientThread(Client c) {
+			this.c = c;
+		}
+		@Override
+		public void run() {
+			this.c.init();
+		}
 	}
 
 	public void start() {
@@ -169,25 +196,46 @@ public final class TicTacToe extends JPanel {
 
 		this.playerfield.setText("Searching for opponent...");
 
-		Client c = new Client();
+		this.initClientThread.start();
+		while (!Client.ConnectionEst)
+			;
+		System.out.println("cnxn est cancel");
+		Client.ConnectionEst = false;
 
-		if (c.isP1())
+		System.out.println("trying to join initClientThread");
+		try {
+			this.initClientThread.join();
+		} catch (Exception e) {
+			System.out.println("something happened");
+		}
+		System.out.println("done joining initClientThread");
+		this.initClientThread = null;
+		if (TicTacToe.NotInGame) {
+//			this.c.sendBye();
+//			this.c.close();
+			System.out.println("getting out");
+			System.out.println(this.display.gameOverMsg);
+			this.playerfield.setText("MatchMaking TicTacToe");
+			return;
+		}
+
+		if (this.c.isP1())
 			this.playerfield.setText("You are player 1 (" + Player.P1_SYMBOL + ").");
 		else
 			this.playerfield.setText("You are player 2 (" + Player.P2_SYMBOL + ").");
 
-		Runnable giveupThread = new CheckGiveupThread(this.recv, c, this.board, this.display);
+		Runnable giveupThread = new CheckGiveupThread(this.recv, this.c, this.board, this.display);
 		Thread gt = new Thread(giveupThread);
 		gt.start();
 
 		boolean p1turn = true;
 		while (!TicTacToe.NotInGame) {
 			// draw board
-			if (p1turn && c.isP1())
+			if (p1turn && this.c.isP1())
 				this.turnfield.setText("Your turn.");
-			else if (p1turn && !c.isP1())
+			else if (p1turn && !this.c.isP1())
 				this.turnfield.setText("Player 1 turn.");
-			else if (!p1turn && c.isP1())
+			else if (!p1turn && this.c.isP1())
 				this.turnfield.setText("Player 2 turn.");
 			else
 				this.turnfield.setText("Your turn.");
@@ -196,7 +244,7 @@ public final class TicTacToe extends JPanel {
 
 			int input;
 			// insert at position
-			if ((p1turn && c.isP1()) || (!p1turn && !c.isP1())) {
+			if ((p1turn && this.c.isP1()) || (!p1turn && !this.c.isP1())) {
 				final TimerThread.Msg msg = new TimerThread.Msg();
 				msg.gotMsg = false;
 				String errorMsg =
@@ -233,14 +281,14 @@ public final class TicTacToe extends JPanel {
 					else
 						this.display.gameOverMsg = "Player 2 wins.";
 
-					c.sendBye();
+					this.c.sendBye();
 					return;
 				}
 				else {
 					if (input == -1) {
 						if (TicTacToe.NotInGame && this.display.gameOverMsg != null && this.display.gameOverMsg.equals("Click to start.")) {
 							// quitbutton was triggered.
-							if (c.isP1())
+							if (this.c.isP1())
 								this.display.gameOverMsg = "You have given up. Player 2 wins.";
 							else
 								this.display.gameOverMsg = "You have given up. Player 1 wins.";
@@ -254,11 +302,11 @@ public final class TicTacToe extends JPanel {
 							else
 								this.display.gameOverMsg = "You have not played a move. Player 1 wins.";
 						}
-						c.sendGiveup();
+						this.c.sendGiveup();
 						return;
 					}
 					else
-						c.sendPosition(input);
+						this.c.sendPosition(input);
 				}
 			}
 			// wait for other player to make move
@@ -281,19 +329,18 @@ public final class TicTacToe extends JPanel {
 						break;
 				}
 				if (TicTacToe.NotInGame) {
-//					System.out.println("bro where are you");
 					// better way would be to put a lock in ActionListener for gameOverMsg.
 					try {
 						Thread.sleep(10);
 					} catch (Exception e) {
 					}
 					if (this.display.gameOverMsg.equals("Click to start.")) {
-						if (c.isP1())
+						if (this.c.isP1())
 							this.display.gameOverMsg = "You have given up. Player 2 wins.";
 						else
 							this.display.gameOverMsg = "You have given up. Player 1 wins.";
 					}
-					c.sendBye();
+					this.c.sendBye();
 					try {
 						gt.join();
 					} catch (InterruptedException e) {
