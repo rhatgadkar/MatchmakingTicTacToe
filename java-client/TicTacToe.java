@@ -154,7 +154,6 @@ public final class TicTacToe extends JPanel {
 					this.initClientThread.interrupt();
 					Client.ConnectionEst = true;
 					this.c.close();
-//					this.c.sendBye();
 					System.out.println("finished interrupting");
 				}
 				if (TicTacToe.NotInGame)
@@ -199,22 +198,17 @@ public final class TicTacToe extends JPanel {
 		this.initClientThread.start();
 		while (!Client.ConnectionEst)
 			;
-		System.out.println("cnxn est cancel");
 		Client.ConnectionEst = false;
 
 		System.out.println("trying to join initClientThread");
 		try {
 			this.initClientThread.join();
 		} catch (Exception e) {
-			System.out.println("something happened");
 		}
 		System.out.println("done joining initClientThread");
 		this.initClientThread = null;
 		if (TicTacToe.NotInGame) {
-//			this.c.sendBye();
-//			this.c.close();
 			System.out.println("getting out");
-			System.out.println(this.display.gameOverMsg);
 			this.playerfield.setText("MatchMaking TicTacToe");
 			return;
 		}

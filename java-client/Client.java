@@ -58,7 +58,6 @@ public final class Client {
 				System.err.println("Could not sleep. Exiting.");
 				e.printStackTrace();
 				break;
-//				continue;
 			}
 			try {
 				createSocketServer(buf);
@@ -88,14 +87,12 @@ public final class Client {
 				do {
 					buf = "";
 					try {
-						System.out.println("waiting to receive from server");
 						buf = receiveFromServer();
 						buf = TicTacToe.stringToLength(buf, "player-2".length());
 					} catch (DisconnectException e) {
 						System.err.println("Child server exited.");
 						e.printStackTrace();
 						break;
-//						continue;
 					}
 				} while (!buf.equals("player-2"));
 				break;
@@ -201,7 +198,6 @@ public final class Client {
 			System.err.println("Error send message.");
 			e.printStackTrace();
 			return;
-//			System.exit(1);
 		}
 	}
 
@@ -232,7 +228,6 @@ public final class Client {
 			System.err.println("Error receive message.");
 			e.printStackTrace();
 			throw new DisconnectException();
-//			System.exit(1);
 		}
 		return new String(message);
 	}
