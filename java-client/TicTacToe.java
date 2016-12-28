@@ -146,7 +146,7 @@ public final class TicTacToe extends JPanel {
 			private Display display;
 			private Client c;
 			public void actionPerformed(ActionEvent e) {
-				if (TicTacToe.NotInGame || this.c.DoInit)
+				if (TicTacToe.NotInGame || !this.c.DoneInit)
 					System.exit(0);
 				else {
 					TicTacToe.NotInGame = true;

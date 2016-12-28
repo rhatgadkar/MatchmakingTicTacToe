@@ -17,15 +17,13 @@ public final class Client {
 	private Socket sock;
 	private boolean isP1;
 
-	public boolean DoInit;
+	public boolean DoneInit;
 
 	public Client() {
-		DoInit = false;
+		DoneInit = false;
 	}
 
 	public void init() {
-		DoInit = true;
-
 		String buf = "";
 
 		int retries;
@@ -116,6 +114,7 @@ public final class Client {
 			System.out.println("Connection failed. Retries limit reached.");
 			System.exit(1);
 		}
+		DoneInit = true;
 	}
 
 	public void close() {
