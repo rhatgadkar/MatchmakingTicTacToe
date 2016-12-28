@@ -9,8 +9,6 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 
 public final class Client {
-	public static volatile boolean ConnectionEst = false;
-
 	public final static int MAXBUFLEN = 1000;
 	private final static String SERVERIP = "54.183.217.40";
 	//	private final static String SERVERIP = "127.0.0.1";
@@ -19,7 +17,15 @@ public final class Client {
 	private Socket sock;
 	private boolean isP1;
 
+	public boolean DoInit;
+
+	public Client() {
+		DoInit = false;
+	}
+
 	public void init() {
+		DoInit = true;
+
 		String buf = "";
 
 		int retries;
@@ -110,7 +116,6 @@ public final class Client {
 			System.out.println("Connection failed. Retries limit reached.");
 			System.exit(1);
 		}
-		Client.ConnectionEst = true;
 	}
 
 	public void close() {

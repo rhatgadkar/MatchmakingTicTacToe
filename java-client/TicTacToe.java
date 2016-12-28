@@ -30,7 +30,6 @@ public final class TicTacToe extends JPanel {
 	private JLabel playerfield;
 	private JLabel timerfield;
 	private JButton quitbutton;
-	private Thread initClientThread;
 	private Client c;
 
 	public Display getDisplay() {
@@ -126,7 +125,6 @@ public final class TicTacToe extends JPanel {
 		this.recv = new Recv();
 		this.recv.recvBuf = "";
 		this.c = new Client();
-		this.initClientThread = new Thread(new InitClientThread(this.c));
 
 		setLayout(null);
 		this.display = new Display(this.board);
@@ -146,43 +144,23 @@ public final class TicTacToe extends JPanel {
 		this.timerfield.setText("");
 		this.quitbutton.addActionListener(new ActionListener() {
 			private Display display;
-			private Thread initClientThread;
 			private Client c;
 			public void actionPerformed(ActionEvent e) {
-				if (this.initClientThread != null) {
-					System.out.println("trying to interrupt");
-					this.initClientThread.interrupt();
-					Client.ConnectionEst = true;
-					this.c.close();
-					System.out.println("finished interrupting");
-				}
-				if (TicTacToe.NotInGame)
+				if (TicTacToe.NotInGame || this.c.DoInit)
 					System.exit(0);
 				else {
 					TicTacToe.NotInGame = true;
 					this.display.gameOverMsg = "Click to start.";
 				}
 			}
-			private ActionListener init(Display display, Thread initClientThread, Client c) {
+			private ActionListener init(Display display, Client c) {
 				this.display = display;
-				this.initClientThread = initClientThread;
 				this.c = c;
 				return this;
 			}
-		}.init(this.display, this.initClientThread, this.c));
+		}.init(this.display, this.c));
 		this.quitbutton.setBounds(320, 100, 60, 60);
 		add(this.quitbutton);
-	}
-
-	private class InitClientThread implements Runnable {
-		private Client c;
-		public InitClientThread(Client c) {
-			this.c = c;
-		}
-		@Override
-		public void run() {
-			this.c.init();
-		}
 	}
 
 	public void start() {
@@ -194,24 +172,7 @@ public final class TicTacToe extends JPanel {
 		}
 
 		this.playerfield.setText("Searching for opponent...");
-
-		this.initClientThread.start();
-		while (!Client.ConnectionEst)
-			;
-		Client.ConnectionEst = false;
-
-		System.out.println("trying to join initClientThread");
-		try {
-			this.initClientThread.join();
-		} catch (Exception e) {
-		}
-		System.out.println("done joining initClientThread");
-		this.initClientThread = null;
-		if (TicTacToe.NotInGame) {
-			System.out.println("getting out");
-			this.playerfield.setText("MatchMaking TicTacToe");
-			return;
-		}
+		this.c.init();
 
 		if (this.c.isP1())
 			this.playerfield.setText("You are player 1 (" + Player.P1_SYMBOL + ").");
