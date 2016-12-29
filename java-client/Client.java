@@ -10,12 +10,15 @@ import java.net.UnknownHostException;
 
 public final class Client {
 	public final static int MAXBUFLEN = 1000;
-	private final static String SERVERIP = "54.183.217.40";
-	//	private final static String SERVERIP = "127.0.0.1";
+//	private final static String SERVERIP = "54.183.217.40";
+	private final static String SERVERIP = "192.168.218.140";
 	private final static String SERVERPORT = "4950";
 
 	private Socket sock;
 	private boolean isP1;
+
+	private static String USER = "a";
+	private static String PASS = "a";
 
 	public boolean DoneInit;
 
@@ -73,7 +76,7 @@ public final class Client {
 			System.out.println("Connected to child server.");
 			buf = "";
 			try {
-				buf = handleSynAck();
+				buf = handleChildSynAck();
 			} catch (Exception e) {
 				continue;
 			}
@@ -148,6 +151,23 @@ public final class Client {
 	}
 
 	private String handleSynAck() throws Exception {
+		String ack = "";
+		try {
+			ack = receiveFrom(15);
+			System.out.println("Receieved ACK from server.");
+		} catch (DisconnectException e) {
+			System.out.println("Server disconnected. Exiting.");
+			e.printStackTrace();
+			throw new Exception();
+		} catch (Exception e) {
+			throw new Exception();
+		}
+		return ack;
+	}
+
+	private String handleChildSynAck() throws Exception {
+		String login = Client.USER + "," + Client.PASS;
+		sendToServer(login);
 		String ack = "";
 		try {
 			ack = receiveFrom(15);
