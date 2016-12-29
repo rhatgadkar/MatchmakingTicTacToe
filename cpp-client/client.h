@@ -1,12 +1,13 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
-#define SERVERIP "54.183.217.40"
-//#define SERVERIP "127.0.0.1"
+//#define SERVERIP "54.183.217.40"
+#define SERVERIP "192.168.218.140"
 #define SERVERPORT "4950"
 #define MAXBUFLEN 100
 
 #include <netdb.h>
+#include <string>
 
 class Client
 {
@@ -25,9 +26,12 @@ private:
 	struct addrinfo* m_p;
 	struct addrinfo* m_servinfo;
 	int m_sockfd;
+	static const std::string USER;
+	static const std::string PASS;
 	// functions
 	int create_socket_server(const char* port);
 	bool handle_syn_ack(char resp[MAXBUFLEN]);  // return port of child server
+	bool handle_child_syn_ack(char resp[MAXBUFLEN]);
 	bool get_num_ppl();
 	int send_to_server(const char* text);
 	int receive_from(char* buf, int time);

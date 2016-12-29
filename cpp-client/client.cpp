@@ -10,7 +10,11 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <sys/select.h>
+#include <string>
 using namespace std;
+
+const string Client::USER = "b";
+const string Client::PASS = "b";
 
 Client::Client()
 {
@@ -50,7 +54,7 @@ Client::Client()
 		}
 		memset(buf, 0, MAXBUFLEN);
 		cout << "connected to child server" << endl;
-		if (!handle_syn_ack(buf))
+		if (!handle_child_syn_ack(buf))
 			continue;
 
 		// get assigned player-1 or player-2
@@ -163,6 +167,33 @@ bool Client::handle_syn_ack(char resp[MAXBUFLEN])
 	char buf[MAXBUFLEN];
 
 	memset(buf, 0, MAXBUFLEN);
+
+	res = receive_from(buf, 15);
+	if (res <= 0)
+	{
+		perror("recvfrom ACK");
+		return false;
+	}
+
+	cout << "Received ACK from server." << endl;
+	memcpy(resp, buf, MAXBUFLEN);
+	return true;
+}
+
+bool Client::handle_child_syn_ack(char resp[MAXBUFLEN])
+{
+	int res;
+	char buf[MAXBUFLEN];
+
+	memset(buf, 0, MAXBUFLEN);
+
+	string login = Client::USER + "," + Client::PASS;
+	res = send_to_server(login.c_str());
+	if (res < 0)
+	{
+		cerr << "Send login failed." << endl;
+		return false;
+	}
 
 	res = receive_from(buf, 15);
 	if (res <= 0)
