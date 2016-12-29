@@ -12,6 +12,7 @@
 #include <sys/select.h>
 #include <sys/time.h>
 #include "connection.h"
+#include "db-accessor.h"
 
 #define LISTENPORT 4950  // the port clients will be connecting to
 #define MAXBUFLEN 100
@@ -191,9 +192,38 @@ void* client_thread(void* parameters)
 
 		printf("Waiting for second client to connect...\n");
 		while (*(params->sockfd_curr_client) == -1)
+		{
 			*(params->sockfd_curr_client) = accept(params->sockfd, &their_addr,
 													&addr_len);
+			// receive login from client 2
+			char login[MAXBUFLEN];
+			char username[MAXBUFLEN];
+			char password[MAXBUFLEN];
+			
+			memset(login, 0, MAXBUFLEN);
+			memset(username, 0, MAXBUFLEN);
+			memset(password, 0, MAXBUFLEN);
+			
+			status = receive_from(*(params->sockfd_curr_client), login, 15);
+			if (status <= 0)
+			{
+				// timeout, error, or disconnect
+				printf("Did not receive login info from client 2. Waiting for new client.\n");
+				continue;
+			}
+			else
+			{
+				// receive success
+				get_login_info(login, username, password);
+				if (!is_login_valid(username, password))
+				{
+					printf("Incorrect login. Waiting for new client.\n");
+					continue;
+				}
+			}
+		}
 		*(params->shm_iter) = *(params->shm_iter) + 1;
+		printf("client 2 success\n");
 
 		params->addr_v4 = (struct sockaddr_in*)&their_addr;
 		// send ACK to client 2 (player 2)
@@ -332,6 +362,35 @@ void handle_match_msg(int sockfd, int* shm_iter)
 		}
 		(*shm_iter)++;
 	}
+
+	// receive login from client 1
+	char login[MAXBUFLEN];
+	char username[MAXBUFLEN];
+	char password[MAXBUFLEN];
+	
+	memset(login, 0, MAXBUFLEN);
+	memset(username, 0, MAXBUFLEN);
+	memset(password, 0, MAXBUFLEN);
+	
+	status = receive_from(sockfd_client_1, login, 15);
+	if (status <= 0)
+	{
+		// timeout, error, or disconnect
+		printf("Did not receive login info. Closing child server.\n");
+		return;
+	}
+	else
+	{
+		// receive success
+		get_login_info(login, username, password);
+		if (!is_login_valid(username, password))
+		{
+			printf("Incorrect login. Closing child server.\n");
+			return;
+		}
+	}
+	printf("client 1 success\n");
+
 	// send ACK to client 1 (player 1)
 	status = send_to_address(sockfd_client_1, "player-1");
 	if (status == -1)
