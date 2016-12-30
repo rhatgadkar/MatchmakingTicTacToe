@@ -87,9 +87,14 @@ Client::Client()
 			m_is_p1 = false;
 			break;
 		}
-		else
+		else if (strcmp(buf, "invalidl") == 0)
 		{
 			cout << "Invalid login credentials. Exiting." << endl;
+			exit(0);
+		}
+		else
+		{
+			cout << "User is currently in game." << endl;
 			exit(0);
 		}
 	}
