@@ -97,10 +97,10 @@ void Game::start()
 			int got_move = 0;
 
 			struct timer_params params_timer;
-			params_timer.seconds = 60;
+			params_timer.seconds = 30;
 			params_timer.got_move = &got_move;
 			params_timer.msg =
-			"You have not played a move in 60 seconds. You have given up.";
+			"You have not played a move in 30 seconds. You have given up.";
 			params_timer.c = NULL;
 
 			pthread_create(&timer_thread, NULL, &(Game::timer_countdown),
@@ -143,10 +143,10 @@ void Game::start()
 			int got_move = 0;
 
 			struct timer_params rcv_params_timer;
-			rcv_params_timer.seconds = 90;
+			rcv_params_timer.seconds = 45;
 			rcv_params_timer.got_move = &got_move;
 			rcv_params_timer.msg =
-			"A move has not been received in 90 seconds. Closing connection.";
+			"A move has not been received in 45 seconds. Closing connection.";
 			rcv_params_timer.c = &c;
 
 			pthread_create(&rcv_timer_thread, NULL, &(Game::timer_countdown),
