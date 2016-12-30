@@ -88,8 +88,8 @@ is_login_valid(char *username, char *password)
 		// add new user to tttlogin and tttrecords
 		printf("Adding new user.\n");
 		status = snprintf(cmd_str, CMD_SIZE,
-				"INSERT INTO tttlogin (username,password)\
-				VALUES ('%s','%s')",
+				"INSERT INTO tttlogin (username,password,ingame)\
+				VALUES ('%s','%s',TRUE)",
 				username, password);
 		if (status < 0)
 		{
