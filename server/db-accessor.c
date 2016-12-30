@@ -189,6 +189,90 @@ get_win_loss_record(char *username, char *win, char *loss)
 	PQfinish(conn);
 }
 
+void
+update_win_loss_record(char *username1, char rec1, char *username2, char rec2)
+{
+	PGconn *conn;
+	int status;
+	char cmd_str[CMD_SIZE];
+	PGresult *res;
+
+	conn = db_connect("dbname=mydb");
+	memset(cmd_str, 0, CMD_SIZE);
+
+	if (rec1 == 'l')
+	{
+		status = snprintf(cmd_str, CMD_SIZE,
+				"UPDATE tttrecords \
+				SET loss=loss+1 \
+				WHERE tttrecords.username='%s'",
+				username1);
+		if (status < 0)
+		{
+			fprintf(stderr, "snprintf failed\n");
+			PQfinish(conn);
+			exit(1);
+		}
+		res = exec_command(conn, cmd_str, 0);
+		PQclear(res);
+		memset(cmd_str, 0, CMD_SIZE);
+	}
+	else
+	{
+		status = snprintf(cmd_str, CMD_SIZE,
+				"UPDATE tttrecords \
+				SET win=win+1 \
+				WHERE tttrecords.username='%s'",
+				username1);
+		if (status < 0)
+		{
+			fprintf(stderr, "snprintf failed\n");
+			PQfinish(conn);
+			exit(1);
+		}
+		res = exec_command(conn, cmd_str, 0);
+		PQclear(res);
+		memset(cmd_str, 0, CMD_SIZE);
+	}
+
+	if (rec2 == 'l')
+	{
+		status = snprintf(cmd_str, CMD_SIZE,
+				"UPDATE tttrecords \
+				SET loss=loss+1 \
+				WHERE tttrecords.username='%s'",
+				username2);
+		if (status < 0)
+		{
+			fprintf(stderr, "snprintf failed\n");
+			PQfinish(conn);
+			exit(1);
+		}
+		res = exec_command(conn, cmd_str, 0);
+		PQclear(res);
+		memset(cmd_str, 0, CMD_SIZE);
+	}
+	else
+	{
+		status = snprintf(cmd_str, CMD_SIZE,
+				"UPDATE tttrecords \
+				SET win=win+1 \
+				WHERE tttrecords.username='%s'",
+				username2);
+		if (status < 0)
+		{
+			fprintf(stderr, "snprintf failed\n");
+			PQfinish(conn);
+			exit(1);
+		}
+		res = exec_command(conn, cmd_str, 0);
+		PQclear(res);
+		memset(cmd_str, 0, CMD_SIZE);
+	}
+
+	PQfinish(conn);
+}
+
 PGconn *
 db_connect(const char *conninfo)
 {
