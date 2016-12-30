@@ -258,7 +258,7 @@ void* client_thread(void* parameters)
 		if (status < 0)
 		{
 			fprintf(stderr, "snprintf failed\n");
-			return;
+			return NULL;
 		}
 
 		// send ACK to client 2 (player 2)
