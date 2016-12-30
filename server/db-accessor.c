@@ -61,7 +61,39 @@ is_login_valid(char *username, char *password)
 		PQfinish(conn);
 		return 1;
 	}
-	PQclear(res);
+	else
+	{
+		PQclear(res);
+		// add new user to tttlogin and tttrecords
+		printf("Adding new user.\n");
+		status = snprintf(cmd_str, CMD_SIZE,
+				"INSERT INTO tttlogin (username,password)\
+				VALUES ('%s','%s')",
+				username, password);
+		if (status < 0)
+		{
+			fprintf(stderr, "snprintf failed\n");
+			PQfinish(conn);
+			return 0;
+		}
+		res = exec_command(conn, cmd_str, 0);
+		PQclear(res);
+		memset(cmd_str, 0, CMD_SIZE);
+		status = snprintf(cmd_str, CMD_SIZE,
+				"INSERT INTO tttrecords (username,win,loss)\
+				VALUES ('%s',0,0)",
+				username);
+		if (status < 0)
+		{
+			fprintf(stderr, "snprintf failed\n");
+			PQfinish(conn);
+			return 0;
+		}
+		res = exec_command(conn, cmd_str, 0);
+		PQclear(res);
+		PQfinish(conn);
+		return 1;
+	}
 	PQfinish(conn);
 	return 0;
 }
