@@ -209,6 +209,7 @@ void* client_thread(void* parameters)
 			{
 				// timeout, error, or disconnect
 				printf("Did not receive login info from client 2. Waiting for new client.\n");
+				*(params->sockfd_curr_client) = -1;
 				continue;
 			}
 			else
@@ -218,6 +219,10 @@ void* client_thread(void* parameters)
 				if (!is_login_valid(username, password))
 				{
 					printf("Incorrect login. Waiting for new client.\n");
+					status = send_to_address(*(params->sockfd_curr_client), "invalidl");
+					if (status == -1)
+						perror("server: invalid to their_addr");
+					*(params->sockfd_curr_client) = -1;
 					continue;
 				}
 			}
@@ -386,6 +391,10 @@ void handle_match_msg(int sockfd, int* shm_iter)
 		if (!is_login_valid(username, password))
 		{
 			printf("Incorrect login. Closing child server.\n");
+			// send invalid to client 1 (player 1)  TODO: implement in client
+			status = send_to_address(sockfd_client_1, "invalidl");
+			if (status == -1)
+				perror("server: invalid to first_addr");
 			return;
 		}
 	}
