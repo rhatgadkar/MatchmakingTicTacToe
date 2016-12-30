@@ -89,8 +89,8 @@ Client::Client()
 		}
 		else
 		{
-			cout << "Try connecting again." << endl;
-			continue;
+			cout << "Invalid login credentials. Exiting." << endl;
+			exit(0);
 		}
 	}
 	if (retries == 10)
