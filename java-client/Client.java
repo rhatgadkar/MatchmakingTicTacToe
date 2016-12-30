@@ -7,6 +7,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import javax.swing.JOptionPane;
 
 public final class Client {
 	public final static int MAXBUFLEN = 1000;
@@ -109,8 +110,8 @@ public final class Client {
 				break;
 			}
 			else {
-				sendBye();
-				continue;
+				JOptionPane.showMessageDialog(null, "Invalid login credentials. Exiting.");
+				System.exit(0);
 			}
 		}
 		if (retries == 10) {
