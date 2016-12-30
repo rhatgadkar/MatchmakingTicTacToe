@@ -295,7 +295,7 @@ public final class TicTacToe extends JPanel {
 						else
 							this.display.gameOverMsg = "You have given up. Player 1 wins.";
 					}
-					this.c.sendBye();
+					this.c.sendGiveup();
 					try {
 						gt.join();
 					} catch (InterruptedException e) {
