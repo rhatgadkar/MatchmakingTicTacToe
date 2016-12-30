@@ -172,6 +172,7 @@ struct client_thread_params
 	int* shm_iter;
 	int thread_canceled;
 	char username[MAXBUFLEN];
+	char p1_record_str[MAXBUFLEN];
 };
 
 void* client_thread(void* parameters)
@@ -242,15 +243,36 @@ void* client_thread(void* parameters)
 		printf("client 2 success\n");
 
 		params->addr_v4 = (struct sockaddr_in*)&their_addr;
+
+		// get client 2 records
+		char p2_win[MAXBUFLEN];
+		char p2_loss[MAXBUFLEN];
+		char record_str[MAXBUFLEN];
+		memset(p2_win, 0, MAXBUFLEN);
+		memset(p2_loss, 0, MAXBUFLEN);
+		memset(record_str, 0, MAXBUFLEN);
+		get_win_loss_record(username, p2_win, p2_loss);
+		status = snprintf(record_str, MAXBUFLEN,
+				"r%s,%s", p2_win, p2_loss);
+		if (status < 0)
+		{
+			fprintf(stderr, "snprintf failed\n");
+			return;
+		}
+
 		// send ACK to client 2 (player 2)
-		status = send_to_address(*(params->sockfd_curr_client), "player-2");
+		printf("sending to client 2: %s\n", record_str);
+		status = send_to_address(*(params->sockfd_curr_client),
+								(const char *)record_str);
 		if (status == -1)
 		{
 			perror("server: ACK to second_addr");
 			pthread_cancel(params->other_id);
 			return NULL;
 		}
-		status = send_to_address(*(params->sockfd_other_client), "player-2");
+		printf("sending to client 1: %s\n", params->p1_record_str);
+		status = send_to_address(*(params->sockfd_other_client),
+								(const char *)params->p1_record_str);
 		if (status == -1)
 		{
 			perror("server: ACK to first_addr");
@@ -430,6 +452,12 @@ void handle_match_msg(int sockfd, int* shm_iter)
 		return;
 	}
 
+	char p1_win[MAXBUFLEN];
+	char p1_loss[MAXBUFLEN];
+	memset(p1_win, 0, MAXBUFLEN);
+	memset(p1_loss, 0, MAXBUFLEN);
+	get_win_loss_record(username, p1_win, p1_loss);
+
 	pthread_t first_thread;
 	pthread_t second_thread;
 
@@ -451,6 +479,14 @@ void handle_match_msg(int sockfd, int* shm_iter)
 	second_thread_params.shm_iter = shm_iter;
 	second_thread_params.thread_canceled = 0;
 	memset(second_thread_params.username, 0, MAXBUFLEN);
+	memset(second_thread_params.p1_record_str, 0, MAXBUFLEN);
+	status = snprintf(second_thread_params.p1_record_str, MAXBUFLEN,
+			"r%s,%s", p1_win, p1_loss);
+	if (status < 0)
+	{
+		fprintf(stderr, "snprintf failed\n");
+		return;
+	}
 
 	pthread_create(&first_thread, NULL, &client_thread, &first_thread_params);
 

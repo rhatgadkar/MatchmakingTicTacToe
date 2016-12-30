@@ -145,6 +145,50 @@ set_user_no_ingame(char *username)
 	PQfinish(conn);
 }
 
+void
+get_win_loss_record(char *username, char *win, char *loss)
+{
+	PGconn *conn;
+	int status;
+	char cmd_str[CMD_SIZE];
+	PGresult *res;
+
+	conn = db_connect("dbname=mydb");
+	memset(cmd_str, 0, CMD_SIZE);
+
+	// get win
+	status = snprintf(cmd_str, CMD_SIZE,
+			"SELECT tttrecords.win \
+			FROM tttrecords \
+			WHERE tttrecords.username='%s'",
+			username);
+	if (status < 0)
+	{
+		fprintf(stderr, "snprintf failed\n");
+		PQfinish(conn);
+		exit(1);
+	}
+	res = exec_command(conn, cmd_str, 1);
+	strcpy(win, PQgetvalue(res, 0, 0));
+	PQclear(res);
+	// get loss
+	status = snprintf(cmd_str, CMD_SIZE,
+			"SELECT tttrecords.loss \
+			FROM tttrecords \
+			WHERE tttrecords.username='%s'",
+			username);
+	if (status < 0)
+	{
+		fprintf(stderr, "snprintf failed\n");
+		PQfinish(conn);
+		exit(1);
+	}
+	res = exec_command(conn, cmd_str, 1);
+	strcpy(loss, PQgetvalue(res, 0, 0));
+
+	PQfinish(conn);
+}
+
 PGconn *
 db_connect(const char *conninfo)
 {
