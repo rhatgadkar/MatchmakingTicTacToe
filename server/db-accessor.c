@@ -3,6 +3,8 @@
 
 #include <libpq-fe.h>
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 #include "db-accessor.h"
 
 static PGconn * db_connect(const char *conninfo);
