@@ -171,6 +171,7 @@ struct client_thread_params
 	pthread_t other_id;
 	int* shm_iter;
 	int thread_canceled;
+	char username[MAXBUFLEN];
 };
 
 void* client_thread(void* parameters)
@@ -189,6 +190,9 @@ void* client_thread(void* parameters)
 	{
 		struct sockaddr their_addr;
 		socklen_t addr_len = sizeof(their_addr);
+		char login[MAXBUFLEN];
+		char username[MAXBUFLEN];
+		char password[MAXBUFLEN];
 
 		printf("Waiting for second client to connect...\n");
 		while (*(params->sockfd_curr_client) == -1)
@@ -196,10 +200,6 @@ void* client_thread(void* parameters)
 			*(params->sockfd_curr_client) = accept(params->sockfd, &their_addr,
 													&addr_len);
 			// receive login from client 2
-			char login[MAXBUFLEN];
-			char username[MAXBUFLEN];
-			char password[MAXBUFLEN];
-			
 			memset(login, 0, MAXBUFLEN);
 			memset(username, 0, MAXBUFLEN);
 			memset(password, 0, MAXBUFLEN);
@@ -216,12 +216,23 @@ void* client_thread(void* parameters)
 			{
 				// receive success
 				get_login_info(login, username, password);
-				if (!is_login_valid(username, password))
+				status = is_login_valid(username, password);
+				if (status == 0)
 				{
 					printf("Incorrect login. Waiting for new client.\n");
 					status = send_to_address(*(params->sockfd_curr_client), "invalidl");
 					if (status == -1)
-						perror("server: invalid to their_addr");
+						perror("server: invalidl to their_addr");
+					*(params->sockfd_curr_client) = -1;
+					continue;
+				}
+				else if (status == -1)
+				{
+					printf("User is in game. Waiting for new client.\n");
+					// send loggedin
+					status = send_to_address(*(params->sockfd_curr_client), "loggedin");
+					if (status == -1)
+						perror("server: loggedin to their_addr");
 					*(params->sockfd_curr_client) = -1;
 					continue;
 				}
@@ -250,6 +261,7 @@ void* client_thread(void* parameters)
 		addr_str, sizeof(addr_str));
 		printf("Second client connected: %s:%hu\n", addr_str,
 		params->addr_v4->sin_port);
+		strcpy(params->username, username);
 	}
 	else
 	{
@@ -388,13 +400,23 @@ void handle_match_msg(int sockfd, int* shm_iter)
 	{
 		// receive success
 		get_login_info(login, username, password);
-		if (!is_login_valid(username, password))
+		status = is_login_valid(username, password);
+		if (status == 0)
 		{
 			printf("Incorrect login. Closing child server.\n");
-			// send invalid to client 1 (player 1)  TODO: implement in client
+			// send invalidl to client 1 (player 1)
 			status = send_to_address(sockfd_client_1, "invalidl");
 			if (status == -1)
-				perror("server: invalid to first_addr");
+				perror("server: invalidl to first_addr");
+			return;
+		}
+		else if (status == -1)
+		{
+			printf("User is in game. Closing child server.\n");
+			// send loggedin to client 1 (player 1)
+			status = send_to_address(sockfd_client_1, "loggedin");
+			if (status == -1)
+				perror("server: loggedin to first_addr");
 			return;
 		}
 	}
@@ -419,6 +441,7 @@ void handle_match_msg(int sockfd, int* shm_iter)
 	first_thread_params.other_id = second_thread;
 	first_thread_params.shm_iter = shm_iter;
 	first_thread_params.thread_canceled = 0;
+	strcpy(first_thread_params.username, username);
 	struct client_thread_params second_thread_params;
 	second_thread_params.sockfd_curr_client = &sockfd_client_2;
 	second_thread_params.sockfd_other_client = &sockfd_client_1;
@@ -427,6 +450,7 @@ void handle_match_msg(int sockfd, int* shm_iter)
 	second_thread_params.other_id = first_thread;
 	second_thread_params.shm_iter = shm_iter;
 	second_thread_params.thread_canceled = 0;
+	memset(second_thread_params.username, 0, MAXBUFLEN);
 
 	pthread_create(&first_thread, NULL, &client_thread, &first_thread_params);
 
@@ -448,6 +472,11 @@ void handle_match_msg(int sockfd, int* shm_iter)
 		pthread_cancel(second_thread);
 		pthread_join(second_thread, NULL);
 	}
+
+	// set both usernames from 't' to 'f'
+	set_user_no_ingame(first_thread_params.username);
+	if (second_thread_params.username[0] != 0)
+		set_user_no_ingame(second_thread_params.username);
 
 	close(sockfd_client_1);
 	close(sockfd_client_2);

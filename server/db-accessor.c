@@ -57,7 +57,28 @@ is_login_valid(char *username, char *password)
 			PQfinish(conn);
 			return 0;
 		}
+		if (strcmp(PQgetvalue(res, 0, 2), "f") != 0)
+		{
+			printf("User is currently in game.\n");
+			PQclear(res);
+			PQfinish(conn);
+			return -1;
+		}
 		PQclear(res);
+		// set ingame to 't'
+		status = snprintf(cmd_str, CMD_SIZE,
+				"UPDATE tttlogin \
+				SET ingame=TRUE \
+				WHERE tttlogin.username='%s'",
+				username);
+		if (status < 0)
+		{
+			fprintf(stderr, "snprintf failed\n");
+			PQfinish(conn);
+			return 0;
+		}
+		res = exec_command(conn, cmd_str, 0);
+
 		PQfinish(conn);
 		return 1;
 	}
@@ -96,6 +117,32 @@ is_login_valid(char *username, char *password)
 	}
 	PQfinish(conn);
 	return 0;
+}
+
+void
+set_user_no_ingame(char *username)
+{
+	PGconn *conn;
+	int status;
+	char cmd_str[CMD_SIZE];
+	PGresult *res;
+
+	conn = db_connect("dbname=mydb");
+	memset(cmd_str, 0, CMD_SIZE);
+
+	status = snprintf(cmd_str, CMD_SIZE,
+			"UPDATE tttlogin \
+			SET ingame=FALSE \
+			WHERE tttlogin.username='%s'",
+			username);
+	if (status < 0)
+	{
+		fprintf(stderr, "snprintf failed\n");
+		PQfinish(conn);
+		return;
+	}
+	res = exec_command(conn, cmd_str, 0);
+	PQfinish(conn);
 }
 
 PGconn *
