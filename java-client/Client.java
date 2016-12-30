@@ -109,8 +109,12 @@ public final class Client {
 				this.isP1 = false;
 				break;
 			}
-			else {
+			else if (buf.equals("invalidl")) {
 				JOptionPane.showMessageDialog(null, "Invalid login credentials. Exiting.");
+				System.exit(0);
+			}
+			else {
+				JOptionPane.showMessageDialog(null, "User is currently in game. Exiting.");
 				System.exit(0);
 			}
 		}
