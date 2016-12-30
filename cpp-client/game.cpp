@@ -119,11 +119,6 @@ void Game::start()
 			got_move = 1;
 			pthread_join(timer_thread, NULL);
 
-			if (!c.send_position(input))
-			{
-				cout << "error with send_position" << endl;
-				return;
-			}
 			// check if win
 			if (m_board.isWin(input))
 			{
@@ -133,7 +128,16 @@ void Game::start()
 					cout << "Player 2 wins" << endl;
 				m_board.draw();
 				c.send_win(input);
+				c.send_bye();
 				exit(0);
+			}
+			else
+			{
+				if (!c.send_position(input))
+				{
+					cout << "error with send_position" << endl;
+					return;
+				}
 			}
 		}
 		// wait for other player to make move
