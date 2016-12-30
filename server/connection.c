@@ -329,7 +329,7 @@ void* client_thread(void* parameters)
 				printf("Received 'giveup'\n");
 
 				// send giveup to second address
-				params->rec = 'l';
+				params->rec = 'g';
 				status = send_to_address(*(params->sockfd_other_client),
 									 "giveup");
 				if (status == -1)
@@ -358,7 +358,7 @@ void* client_thread(void* parameters)
 			printf("Received 'giveup'\n");
 
 			// send giveup to second address
-			params->rec = 'l';
+			params->rec = 'g';
 			status = send_to_address(*(params->sockfd_other_client), "giveup");
 			if (status == -1)
 				perror("server: sendto");
@@ -380,6 +380,8 @@ void* client_thread(void* parameters)
 				perror("server: forward to second_addr");
 				break;
 			}
+			if (buf[0] == 'w')
+				break;
 		}
 	}
 	params->thread_canceled = 1;
@@ -529,17 +531,17 @@ void handle_match_msg(int sockfd, int* shm_iter)
 			printf("Client 1 lost.\n");
 			printf("Client 2 won.\n");
 		}
-		else if (second_thread_params.rec == 'l')
+		else if (first_thread_params.rec == 'w')
 		{
 			printf("Client 1 won.\n");
 			printf("Client 2 lost.\n");
 		}
-		if (first_thread_params.rec == 'w')
+		else if (second_thread_params.rec == 'g')
 		{
 			printf("Client 1 won.\n");
 			printf("Client 2 lost.\n");
 		}
-		else if (first_thread_params.rec == 'l')
+		else if (first_thread_params.rec == 'g')
 		{
 			printf("Client 1 lost.\n");
 			printf("Client 2 won.\n");
