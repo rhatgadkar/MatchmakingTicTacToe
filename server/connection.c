@@ -173,6 +173,7 @@ struct client_thread_params
 	int thread_canceled;
 	char username[MAXBUFLEN];
 	char p1_record_str[MAXBUFLEN];
+	char rec;
 };
 
 void* client_thread(void* parameters)
@@ -328,6 +329,7 @@ void* client_thread(void* parameters)
 				printf("Received 'giveup'\n");
 
 				// send giveup to second address
+				params->rec = 'l';
 				status = send_to_address(*(params->sockfd_other_client),
 									 "giveup");
 				if (status == -1)
@@ -356,6 +358,7 @@ void* client_thread(void* parameters)
 			printf("Received 'giveup'\n");
 
 			// send giveup to second address
+			params->rec = 'l';
 			status = send_to_address(*(params->sockfd_other_client), "giveup");
 			if (status == -1)
 				perror("server: sendto");
@@ -367,6 +370,8 @@ void* client_thread(void* parameters)
 		else
 		{
 			// forward message from first_addr to second_addr
+			if (buf[0] == 'w')
+				params->rec = 'w';
 			status = send_to_address(*(params->sockfd_other_client), buf);
 			printf("Forwarding message from %s:%hu: %s\n", addr_str,
 			params->addr_v4->sin_port, buf);
@@ -470,6 +475,7 @@ void handle_match_msg(int sockfd, int* shm_iter)
 	first_thread_params.shm_iter = shm_iter;
 	first_thread_params.thread_canceled = 0;
 	strcpy(first_thread_params.username, username);
+	first_thread_params.rec = 'n';
 	struct client_thread_params second_thread_params;
 	second_thread_params.sockfd_curr_client = &sockfd_client_2;
 	second_thread_params.sockfd_other_client = &sockfd_client_1;
@@ -487,6 +493,7 @@ void handle_match_msg(int sockfd, int* shm_iter)
 		fprintf(stderr, "snprintf failed\n");
 		return;
 	}
+	second_thread_params.rec = 'n';
 
 	pthread_create(&first_thread, NULL, &client_thread, &first_thread_params);
 
@@ -513,6 +520,31 @@ void handle_match_msg(int sockfd, int* shm_iter)
 	set_user_no_ingame(first_thread_params.username);
 	if (second_thread_params.username[0] != 0)
 		set_user_no_ingame(second_thread_params.username);
+
+	// find out who won/loss
+	if (second_thread_params.username[0] != 0)
+	{
+		if (second_thread_params.rec == 'w')
+		{
+			printf("Client 1 lost.\n");
+			printf("Client 2 won.\n");
+		}
+		else if (second_thread_params.rec == 'l')
+		{
+			printf("Client 1 won.\n");
+			printf("Client 2 lost.\n");
+		}
+		if (first_thread_params.rec == 'w')
+		{
+			printf("Client 1 won.\n");
+			printf("Client 2 lost.\n");
+		}
+		else if (first_thread_params.rec == 'l')
+		{
+			printf("Client 1 lost.\n");
+			printf("Client 2 won.\n");
+		}
+	}
 
 	close(sockfd_client_1);
 	close(sockfd_client_2);
