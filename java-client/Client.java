@@ -96,16 +96,17 @@ public final class Client {
 					buf = "";
 					try {
 						buf = receiveFromServer();
-						buf = TicTacToe.stringToLength(buf, "player-2".length());
 					} catch (DisconnectException e) {
 						System.err.println("Child server exited.");
 						e.printStackTrace();
 						break;
 					}
-				} while (!buf.equals("player-2"));
+				} while (buf.charAt(0) != 'r');
+				System.out.println("Current record: " + buf);
 				break;
 			}
-			else if (buf.equals("player-2")) {
+			else if (buf.charAt(0) == 'r') {
+				System.out.println("Current record: " + buf);
 				this.isP1 = false;
 				break;
 			}
