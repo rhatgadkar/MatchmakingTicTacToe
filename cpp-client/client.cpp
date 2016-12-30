@@ -67,6 +67,7 @@ Client::Client()
 			bool invalidres = false;
 			do
 			{
+				memset(buf, 0, MAXBUFLEN);
 				res = receive_from_server(buf);
 				if (res == -1)
 				{
@@ -74,15 +75,17 @@ Client::Client()
 					invalidres = true;
 					break;
 				}
-			} while (strcmp(buf, "player-2") != 0);
+			} while (buf[0] != 'r');
 			if (invalidres)
 				continue;
 
+			cout << "Current record: " << buf << endl;
 			cout << "Player 2 has connected.  Starting game." << endl;
 			break;
 		}
-		else if (strcmp(buf, "player-2") == 0)
+		else if (buf[0] == 'r')
 		{
+			cout << "Current record: " << buf << endl;
 			cout << "You are player 2." << endl;
 			m_is_p1 = false;
 			break;
