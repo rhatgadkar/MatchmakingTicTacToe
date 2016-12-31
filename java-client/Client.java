@@ -124,7 +124,7 @@ public final class Client {
 			}
 		}
 		if (retries == 10) {
-			System.out.println("Connection failed. Retries limit reached.");
+			JOptionPane.showMessageDialog(null, "Connection failed. Retries limit reached.");
 			System.exit(1);
 		}
 		DoneInit = true;
