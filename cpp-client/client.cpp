@@ -102,7 +102,7 @@ Client::Client(string username, string password)
 	}
 	if (retries == 10)
 	{
-		cout << "Connection failed.  Retries reach limit." << endl;
+		cout << "Connection to server failed." << endl;
 		exit(1);
 	}
 }
