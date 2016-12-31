@@ -20,6 +20,7 @@ public:
 	bool send_bye();
 	bool send_win(int pos);
 	int receive_from_server(char* buf);
+	std::string Record;
 private:
 	// variables
 	bool m_is_p1;

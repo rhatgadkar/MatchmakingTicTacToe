@@ -68,6 +68,14 @@ void Game::start(string username, string password)
 {
 	Client c(username, password);
 
+	// print win/loss record
+	int comma_pos = c.Record.find_first_of(",");
+	string win_record = c.Record.substr(0, comma_pos);
+	string loss_record = c.Record.substr(comma_pos + 1,
+			c.Record.length() - (comma_pos + 1));
+	cout << "W: " << win_record << endl;
+	cout << "L: " << loss_record << endl;
+
 	pthread_t giveup_t;
 	struct check_giveup_params params;
 	params.c = &c;

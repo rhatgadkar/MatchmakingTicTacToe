@@ -78,13 +78,13 @@ Client::Client(string username, string password)
 			if (invalidres)
 				continue;
 
-			cout << "Current record: " << buf << endl;
+			Record = buf + 1;
 			cout << "Player 2 has connected.  Starting game." << endl;
 			break;
 		}
 		else if (buf[0] == 'r')
 		{
-			cout << "Current record: " << buf << endl;
+			Record = buf + 1;
 			cout << "You are player 2." << endl;
 			m_is_p1 = false;
 			break;
