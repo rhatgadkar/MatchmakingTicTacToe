@@ -1,7 +1,6 @@
 #define VAR_SIZE 80
 
 #include <cstring>
-#include <cstdio>
 #include <unistd.h>
 #include <iostream>
 #include "game.h"
