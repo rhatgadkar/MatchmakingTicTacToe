@@ -96,6 +96,20 @@ public final class TicTacToe extends JPanel {
 	}
 
 	public static void main(String[] args) {
+		// login
+		JFrame login = new JFrame("Login");
+		login.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		PasswordWindow loginPrompt = new PasswordWindow();
+		login.setContentPane(loginPrompt);
+		login.pack();
+		login.setVisible(true);
+		while (loginPrompt.Username == null && loginPrompt.Password == null)
+			;
+		String username = new String(loginPrompt.Username);
+		String password = new String(loginPrompt.Password);
+		login.setVisible(false);
+		login.dispose();
+
 		JFrame window = new JFrame("Matchmaking TicTacToe");
 		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 		window.setSize(TicTacToe.WIDTH, TicTacToe.HEIGHT);
@@ -109,7 +123,7 @@ public final class TicTacToe extends JPanel {
 			TicTacToe game = new TicTacToe();
 			window.setContentPane(game);
 
-			game.start();
+			game.start(username, password);
 			System.out.println("Exited game.start()");
 			game.getDisplay().doRepaint();
 
@@ -163,7 +177,7 @@ public final class TicTacToe extends JPanel {
 		add(this.quitbutton);
 	}
 
-	public void start() {
+	public void start(String username, String password) {
 		if (TicTacToe.NotInGame) {
 			this.playerfield.setText("MatchMaking TicTacToe");
 			while (TicTacToe.NotInGame)
@@ -172,7 +186,7 @@ public final class TicTacToe extends JPanel {
 		}
 
 		this.playerfield.setText("Searching for opponent...");
-		this.c.init();
+		this.c.init(username, password);
 
 		if (this.c.isP1())
 			this.playerfield.setText("You are player 1 (" + Player.P1_SYMBOL + ").");

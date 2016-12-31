@@ -17,9 +17,8 @@ public final class Client {
 
 	private Socket sock;
 	private boolean isP1;
-
-	private static String USER = "a";
-	private static String PASS = "a";
+	private String username;
+	private String password;
 
 	public boolean DoneInit;
 
@@ -27,7 +26,9 @@ public final class Client {
 		DoneInit = false;
 	}
 
-	public void init() {
+	public void init(String username, String password) {
+		this.username = username;
+		this.password = password;
 		String buf = "";
 
 		int retries;
@@ -172,7 +173,7 @@ public final class Client {
 	}
 
 	private String handleChildSynAck() throws Exception {
-		String login = Client.USER + "," + Client.PASS;
+		String login = this.username + "," + this.password;
 		sendToServer(login);
 		String ack = "";
 		try {
