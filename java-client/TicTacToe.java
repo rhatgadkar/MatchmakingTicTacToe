@@ -31,7 +31,8 @@ public final class TicTacToe extends JPanel {
 	private JLabel timerfield;
 	private JButton quitbutton;
 	private Client c;
-	private JLabel recordfield;
+	private JLabel winrecordfield;
+	private JLabel lossrecordfield;
 
 	public Display getDisplay() {
 		return this.display;
@@ -176,9 +177,12 @@ public final class TicTacToe extends JPanel {
 		}.init(this.display, this.c));
 		this.quitbutton.setBounds(320, 100, 60, 60);
 		add(this.quitbutton);
-		this.recordfield = new JLabel();
-		this.recordfield.setBounds(320, 200, 60, 60);
-		add(this.recordfield);
+		this.winrecordfield = new JLabel();
+		this.winrecordfield.setBounds(320, 200, 40, 40);
+		add(this.winrecordfield);
+		this.lossrecordfield = new JLabel();
+		this.lossrecordfield.setBounds(320, 250, 40, 40);
+		add(this.lossrecordfield);
 	}
 
 	public void start(String username, String password) {
@@ -191,7 +195,12 @@ public final class TicTacToe extends JPanel {
 
 		this.playerfield.setText("Searching for opponent...");
 		this.c.init(username, password);
-		this.recordfield.setText(this.c.Record);
+
+		String[] initialSplit = this.c.Record.split(",");
+		String winRecord = initialSplit[0].split("r")[1];
+		String lossRecord = initialSplit[1];
+		this.winrecordfield.setText("W: " + winRecord);
+		this.lossrecordfield.setText("L: " + lossRecord);
 
 		if (this.c.isP1())
 			this.playerfield.setText("You are player 1 (" + Player.P1_SYMBOL + ").");
