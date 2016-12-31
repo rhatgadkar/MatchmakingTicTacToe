@@ -13,13 +13,12 @@
 #include <string>
 using namespace std;
 
-const string Client::USER = "b";
-const string Client::PASS = "b";
-
-Client::Client()
+Client::Client(string username, string password)
 {
 	m_p = NULL;
 	m_servinfo = NULL;
+	m_username = username;
+	m_password = password;
 
 	int retries;
 	for (retries = 0; retries < 10; retries++)
@@ -195,7 +194,7 @@ bool Client::handle_child_syn_ack(char resp[MAXBUFLEN])
 
 	memset(buf, 0, MAXBUFLEN);
 
-	string login = Client::USER + "," + Client::PASS;
+	string login = m_username + "," + m_password;
 	res = send_to_server(login.c_str());
 	if (res < 0)
 	{

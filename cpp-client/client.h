@@ -12,7 +12,7 @@
 class Client
 {
 public:
-	Client();
+	Client(std::string username, std::string password);
 	~Client();
 	bool send_position(int pos);
 	bool is_p1() { return m_is_p1; }
@@ -26,8 +26,8 @@ private:
 	struct addrinfo* m_p;
 	struct addrinfo* m_servinfo;
 	int m_sockfd;
-	static const std::string USER;
-	static const std::string PASS;
+	std::string m_username;
+	std::string m_password;
 	// functions
 	int create_socket_server(const char* port);
 	bool handle_syn_ack(char resp[MAXBUFLEN]);  // return port of child server

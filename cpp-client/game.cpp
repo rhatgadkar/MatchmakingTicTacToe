@@ -64,9 +64,9 @@ void* Game::timer_countdown(void* parameters)
 	return NULL;
 }
 
-void Game::start()
+void Game::start(string username, string password)
 {
-	Client c;
+	Client c(username, password);
 
 	pthread_t giveup_t;
 	struct check_giveup_params params;

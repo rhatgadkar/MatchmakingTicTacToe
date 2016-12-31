@@ -11,7 +11,7 @@ class Game
 public:
 	Game();
 	~Game() {}
-	void start();
+	void start(std::string username, std::string password);
 private:
 	Board m_board;
 	Player m_p1;
