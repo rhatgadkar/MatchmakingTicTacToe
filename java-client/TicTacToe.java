@@ -31,6 +31,7 @@ public final class TicTacToe extends JPanel {
 	private JLabel timerfield;
 	private JButton quitbutton;
 	private Client c;
+	private JLabel recordfield;
 
 	public Display getDisplay() {
 		return this.display;
@@ -175,6 +176,9 @@ public final class TicTacToe extends JPanel {
 		}.init(this.display, this.c));
 		this.quitbutton.setBounds(320, 100, 60, 60);
 		add(this.quitbutton);
+		this.recordfield = new JLabel();
+		this.recordfield.setBounds(320, 200, 60, 60);
+		add(this.recordfield);
 	}
 
 	public void start(String username, String password) {
@@ -187,6 +191,7 @@ public final class TicTacToe extends JPanel {
 
 		this.playerfield.setText("Searching for opponent...");
 		this.c.init(username, password);
+		this.recordfield.setText(this.c.Record);
 
 		if (this.c.isP1())
 			this.playerfield.setText("You are player 1 (" + Player.P1_SYMBOL + ").");

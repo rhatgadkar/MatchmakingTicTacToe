@@ -21,6 +21,7 @@ public final class Client {
 	private String password;
 
 	public boolean DoneInit;
+	public String Record;
 
 	public Client() {
 		DoneInit = false;
@@ -104,11 +105,13 @@ public final class Client {
 					}
 				} while (buf.charAt(0) != 'r');
 				System.out.println("Current record: " + buf);
+				this.Record = new String(buf);
 				break;
 			}
 			else if (buf.charAt(0) == 'r') {
 				System.out.println("Current record: " + buf);
 				this.isP1 = false;
+				this.Record = new String(buf);
 				break;
 			}
 			else if (buf.equals("invalidl")) {
