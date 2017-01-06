@@ -34,6 +34,11 @@ public final class Client {
 
 		int retries;
 		for (retries = 0; retries < 10; retries++) {
+			try {
+				this.sock.close();
+			} catch (Exception e) {
+			}
+
 			if (TicTacToe.NotInGame)
 				break;
 
@@ -46,7 +51,13 @@ public final class Client {
 				continue;
 			}
 			try {
-				getNumPpl();
+				int numPpl = getNumPpl();
+				if (numPpl == 2) {
+					System.out.println("Child servers are full. Retrying.");
+					retries = 0;
+					Thread.sleep(30000);
+					continue;
+				}
 				buf = handleSynAck();
 			} catch (Exception e) {
 				continue;
@@ -208,10 +219,14 @@ public final class Client {
 		}
 	}
 
-	private void getNumPpl() throws Exception {
+	private int getNumPpl() throws Exception {
 		try {
 			String numPpl = receiveFrom(15);
 			System.out.println("Number of people online: " + numPpl);
+			if (numPpl == "b")
+				return 2;
+			else
+				return 1;
 		} catch (DisconnectException e) {
 			System.out.println("Server disconnected. Exiting.");
 			e.printStackTrace();
