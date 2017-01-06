@@ -6,6 +6,7 @@
 #define LISTENPORT 4950  // the port clients will be connecting to
 #define MAXBUFLEN 100
 #define BACKLOG 20
+#define MAX_CHILD_SERVERS 1000
 
 int setup_connection(int* sockfd, struct addrinfo* servinfo, int port_int);
 

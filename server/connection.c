@@ -112,15 +112,20 @@ int handle_syn_port(int sockfd, int* curr_port, int* client_port,
 	char num_ppl_str[MAXBUFLEN];
 	shm_iter = shm_ports_used;
 	int k;
-	for (k = 0; k < 1000; k++)
+	for (k = 0; k < MAX_CHILD_SERVERS; k++)
 		num_ppl += (*shm_iter++);
-	sprintf(num_ppl_str, "%d", num_ppl);
+	if (num_ppl == MAX_CHILD_SERVERS * 2)
+		strcpy(num_ppl_str, "b");
+	else
+		sprintf(num_ppl_str, "%d", num_ppl);
 	status = send_to_address(*sockfd_client, num_ppl_str);
 	if (status == -1)
 	{
 		perror("sendto num_ppl");
 		return -1;
 	}
+	if (num_ppl_str[0] == 'b')
+		return -1;
 
 	sleep(1);
 

@@ -136,7 +136,7 @@ int main()
 	int* shm_iter;
 	shm_iter = shm_ports_used;
 	int k;
-	for (k = 0; k < 1000; k++)
+	for (k = 0; k < MAX_CHILD_SERVERS; k++)
 		*shm_iter++ = 0;
 
 	status = setup_connection(&sockfd, servinfo, LISTENPORT);
