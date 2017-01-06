@@ -33,7 +33,7 @@ private:
 	int create_socket_server(const char* port);
 	bool handle_syn_ack(char resp[MAXBUFLEN]);  // return port of child server
 	bool handle_child_syn_ack(char resp[MAXBUFLEN]);
-	bool get_num_ppl();
+	int get_num_ppl();
 	int send_to_server(const char* text);
 	int receive_from(char* buf, int time);
 };

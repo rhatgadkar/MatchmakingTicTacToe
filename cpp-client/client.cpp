@@ -26,6 +26,8 @@ Client::Client(string username, string password)
 		int res;
 		char buf[MAXBUFLEN];
 
+		close(m_sockfd);
+
 		// connect to parent server
 		res = create_socket_server(SERVERPORT);
 		if (res != 0)
@@ -34,8 +36,16 @@ Client::Client(string username, string password)
 			continue;
 		}
 		memset(buf, 0, MAXBUFLEN);
-		if (!get_num_ppl())
+		res = get_num_ppl();
+		if (res == -1)
 			continue;
+		else if (res == 2)
+		{
+			cout << "Child servers are full. Retrying." << endl;
+			retries = 0;
+			sleep(30);
+			continue;
+		}
 		if (!handle_syn_ack(buf))
 			continue;
 
@@ -214,7 +224,7 @@ bool Client::handle_child_syn_ack(char resp[MAXBUFLEN])
 	return true;
 }
 
-bool Client::get_num_ppl()
+int Client::get_num_ppl()
 {
 	int res;
 	char buf[MAXBUFLEN];
@@ -225,11 +235,14 @@ bool Client::get_num_ppl()
 	if (res <= 0)
 	{
 		perror("get_num_ppl");
-		return false;
+		return -1;
 	}
 
 	cout << "Number of people online: " << buf << endl;
-	return true;
+	if (buf[0] == 'b')
+		return 2;
+	else
+		return 1;
 }
 
 bool Client::send_position(int pos)
