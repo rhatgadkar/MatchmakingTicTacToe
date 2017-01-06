@@ -55,7 +55,7 @@ public final class Client {
 				if (numPpl == 2) {
 					System.out.println("Child servers are full. Retrying.");
 					retries = 0;
-					Thread.sleep(30000);
+					Thread.sleep(15000);
 					continue;
 				}
 				buf = handleSynAck();
@@ -222,11 +222,10 @@ public final class Client {
 	private int getNumPpl() throws Exception {
 		try {
 			String numPpl = receiveFrom(15);
-			System.out.println("Number of people online: " + numPpl);
-			if (numPpl == "b")
+			if (numPpl.charAt(0) == 'b')
 				return 2;
-			else
-				return 1;
+			System.out.println("Number of people online: " + numPpl);
+			return 1;
 		} catch (DisconnectException e) {
 			System.out.println("Server disconnected. Exiting.");
 			e.printStackTrace();

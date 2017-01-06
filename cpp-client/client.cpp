@@ -43,7 +43,7 @@ Client::Client(string username, string password)
 		{
 			cout << "Child servers are full. Retrying." << endl;
 			retries = 0;
-			sleep(30);
+			sleep(15);
 			continue;
 		}
 		if (!handle_syn_ack(buf))
@@ -238,11 +238,10 @@ int Client::get_num_ppl()
 		return -1;
 	}
 
-	cout << "Number of people online: " << buf << endl;
 	if (buf[0] == 'b')
 		return 2;
-	else
-		return 1;
+	cout << "Number of people online: " << buf << endl;
+	return 1;
 }
 
 bool Client::send_position(int pos)
