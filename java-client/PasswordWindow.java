@@ -23,10 +23,10 @@ public class PasswordWindow extends JPanel implements ActionListener {
 		this.usernameField = new JTextField(PasswordWindow.VAR_SIZE - 1);
 		this.passwordField = new JPasswordField(PasswordWindow.VAR_SIZE - 1);
 
-		JLabel usernameLabel = new JLabel("Enter username (max " + Integer.toString(VAR_SIZE - 1) + " letters):");
+		JLabel usernameLabel = new JLabel("Enter username (max " + Integer.toString(VAR_SIZE - 1) + " letters, only letters and digits allowed):");
 		usernameLabel.setLabelFor(this.usernameField);
 
-		JLabel passwordLabel = new JLabel("Enter password (max " + Integer.toString(VAR_SIZE - 1) + " letters):");
+		JLabel passwordLabel = new JLabel("Enter password (max " + Integer.toString(VAR_SIZE - 1) + " letters, only letters and digits allowed):");
 		passwordLabel.setLabelFor(this.passwordField);
 
 		JPanel buttonPane = createButtonPanel();
@@ -60,10 +60,23 @@ public class PasswordWindow extends JPanel implements ActionListener {
 		String cmd = e.getActionCommand();
 
 		if (PasswordWindow.OK.equals(cmd)) {
-			if (this.usernameField.getText().length() >= VAR_SIZE ||
-					new String(this.passwordField.getPassword()).length() >= VAR_SIZE) {
+			String currUser = this.usernameField.getText();
+			String currPass = new String(this.passwordField.getPassword());
+			if (currUser.length() >= VAR_SIZE || currPass.length() >= VAR_SIZE) {
 				JOptionPane.showMessageDialog(null, "Username and Password must be at most " + Integer.toString(VAR_SIZE - 1) + " characters long.");
 				return;
+			}
+			for (int i = 0; i < currUser.length(); i++) {
+				if (!Character.isDigit(currUser.charAt(i)) && !Character.isLetter(currUser.charAt(i))) {
+					JOptionPane.showMessageDialog(null, "Username and Password must only contain letters and digits.");
+					return;
+				}
+			}
+			for (int i = 0; i < currPass.length(); i++) {
+				if (!Character.isDigit(currPass.charAt(i)) && !Character.isLetter(currPass.charAt(i))) {
+					JOptionPane.showMessageDialog(null, "Username and Password must only contain letters and digits.");
+					return;
+				}
 			}
 			Username = new String(this.usernameField.getText());
 			Password = new String(this.passwordField.getPassword());

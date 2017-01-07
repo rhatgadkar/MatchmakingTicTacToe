@@ -3,6 +3,7 @@
 #include <cstring>
 #include <unistd.h>
 #include <iostream>
+#include <cctype>
 #include "game.h"
 using namespace std;
 
@@ -28,6 +29,23 @@ int main()
 
 	string username = c_username;
 	string password = c_password;
+
+	for (size_t k = 0; k < username.length(); k++)
+	{
+		if (!isalnum(username[k]))
+		{
+			cout << "Username and password must contain only letters and digits." << endl;
+			return 0;
+		}
+	}
+	for (size_t k = 0; k < password.length(); k++)
+	{
+		if (!isalnum(password[k]))
+		{
+			cout << "Username and password must contain only letters and digits." << endl;
+			return 0;
+		}
+	}
 
 	Game game;
 	game.start(username, password);
