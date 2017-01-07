@@ -1,5 +1,6 @@
 import java.awt.Dimension;
-import java.awt.Toolkit;
+import java.awt.GridLayout;
+import java.awt.FlowLayout;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -10,8 +11,6 @@ import javax.swing.JButton;
 
 @SuppressWarnings("serial")
 public final class TicTacToe extends JPanel {
-	public final static int HEIGHT = 400;
-	public final static int WIDTH = 400;
 
 	public static volatile boolean NotInGame = true;
 
@@ -113,17 +112,13 @@ public final class TicTacToe extends JPanel {
 		login.dispose();
 
 		JFrame window = new JFrame("Matchmaking TicTacToe");
-		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-		window.setSize(TicTacToe.WIDTH, TicTacToe.HEIGHT);
-		window.setLocation((screenSize.width - TicTacToe.WIDTH) / 2,
-		(screenSize.height - TicTacToe.HEIGHT) / 2);
 		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		window.setResizable(false);
-		window.setVisible(true);
 
 		while (true) {
 			TicTacToe game = new TicTacToe();
 			window.setContentPane(game);
+			window.pack();
+			window.setVisible(true);
 
 			game.start(username, password);
 			System.out.println("Exited game.start()");
@@ -134,6 +129,29 @@ public final class TicTacToe extends JPanel {
 		}
 	}
 
+	private JPanel createTopPanel() {
+		JPanel p = new JPanel(new FlowLayout(FlowLayout.CENTER, 50, 0));
+		p.add(this.turnfield);
+		p.add(this.playerfield);
+		p.add(this.timerfield);
+		return p;
+	}
+
+	private JPanel createRightGrid() {
+		JPanel p = new JPanel(new GridLayout(3, 1));
+		p.add(this.quitbutton);
+		p.add(this.winrecordfield);
+		p.add(this.lossrecordfield);
+		return p;
+	}
+
+	private JPanel createBotPanel() {
+		JPanel p = new JPanel(new FlowLayout());
+		p.add(this.display);
+		p.add(createRightGrid());
+		return p;
+	}
+
 	public TicTacToe() {
 		this.board = new Board();
 		this.p1 = new Player(Player.P1_SYMBOL);
@@ -142,22 +160,16 @@ public final class TicTacToe extends JPanel {
 		this.recv.recvBuf = "";
 		this.c = new Client();
 
-		setLayout(null);
 		this.display = new Display(this.board);
 		this.display.setPreferredSize(new Dimension(Display.WIDTH, Display.HEIGHT));
-		this.display.setBounds(0, 70, Display.WIDTH, Display.HEIGHT);
 		this.turnfield = new JLabel();
-		this.turnfield.setBounds(0, 0, 100, 50);
 		this.playerfield = new JLabel();
-		this.playerfield.setBounds(150, 0, 200, 50);
 		this.timerfield = new JLabel();
-		this.timerfield.setBounds(360, 0, 30, 50);
 		this.quitbutton = new JButton("Quit");
-		add(this.display);
-		add(this.turnfield);
-		add(this.playerfield);
-		add(this.timerfield);
 		this.timerfield.setText("");
+		this.winrecordfield = new JLabel();
+		this.lossrecordfield = new JLabel();
+
 		this.quitbutton.addActionListener(new ActionListener() {
 			private Display display;
 			private Client c;
@@ -175,14 +187,10 @@ public final class TicTacToe extends JPanel {
 				return this;
 			}
 		}.init(this.display, this.c));
-		this.quitbutton.setBounds(320, 100, 60, 60);
-		add(this.quitbutton);
-		this.winrecordfield = new JLabel();
-		this.winrecordfield.setBounds(320, 200, 40, 40);
-		add(this.winrecordfield);
-		this.lossrecordfield = new JLabel();
-		this.lossrecordfield.setBounds(320, 250, 40, 40);
-		add(this.lossrecordfield);
+
+		setLayout(new GridLayout(2, 1));
+		add(createTopPanel());
+		add(createBotPanel());
 	}
 
 	public void start(String username, String password) {
