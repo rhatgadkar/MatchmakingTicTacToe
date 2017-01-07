@@ -236,6 +236,9 @@ public final class Client {
 	}
 
 	private void sendToServer(String msg) {
+		char message[] = new char[Client.MAXBUFLEN];
+		for (int i = 0; i < msg.length(); i++)
+			message[i] = msg.charAt(i);
 		try {
 			OutputStream os = this.sock.getOutputStream();
 			OutputStreamWriter osw = new OutputStreamWriter(os);
@@ -256,8 +259,12 @@ public final class Client {
 			InputStreamReader isr = new InputStreamReader(is);
 			BufferedReader br = new BufferedReader(isr);
 			this.sock.setSoTimeout(sec * 1000);
-			if (br.read(message, 0, Client.MAXBUFLEN) == -1)
-				throw new DisconnectException();
+			int status;
+			for (int numbytes = 0; numbytes < Client.MAXBUFLEN; numbytes += status) {
+				status = br.read(message, numbytes, Client.MAXBUFLEN - numbytes);
+				if (status == -1)
+					throw new DisconnectException();
+			}
 		} catch (Exception e) {
 			throw new Exception();
 		}
@@ -270,8 +277,12 @@ public final class Client {
 			InputStream is = this.sock.getInputStream();
 			InputStreamReader isr = new InputStreamReader(is);
 			BufferedReader br = new BufferedReader(isr);
-			if (br.read(message, 0, Client.MAXBUFLEN) == -1)
-				throw new DisconnectException();
+			int status;
+			for (int numbytes = 0; numbytes < Client.MAXBUFLEN; numbytes += status) {
+				status = br.read(message, numbytes, Client.MAXBUFLEN - numbytes);
+				if (status == -1)
+					throw new DisconnectException();
+			}
 		} catch (IOException e) {
 			System.err.println("Error receive message.");
 			e.printStackTrace();
