@@ -10,7 +10,7 @@ import java.net.UnknownHostException;
 import javax.swing.JOptionPane;
 
 public final class Client {
-	public final static int MAXBUFLEN = 1000;
+	public final static int MAXBUFLEN = 100;
 	private final static String SERVERIP = "54.183.217.40";
 //	private final static String SERVERIP = "192.168.218.140";
 	private final static String SERVERPORT = "4950";
