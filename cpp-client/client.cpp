@@ -295,10 +295,19 @@ bool Client::send_win(int pos)
 
 int Client::send_to_server(const char* text)
 {
+	int status;
 	int numbytes;
-	numbytes = send(m_sockfd, text, strlen(text), 0);
-	if (numbytes == -1)
-		return -1;
+	char buf[MAXBUFLEN];
+
+	memset(buf, 0, MAXBUFLEN);
+	strcpy(buf, text);
+
+	for (numbytes = 0; numbytes < MAXBUFLEN; numbytes += status)
+	{
+		status = send(m_sockfd, text + numbytes, MAXBUFLEN - numbytes, 0);
+		if (status == -1)
+			return -1;
+	}
 	return 0;
 }
 
@@ -311,42 +320,49 @@ int Client::receive_from(char* buf, int time)
 	timeout.tv_sec = time;
 	timeout.tv_usec = 0;
 
+	int status;
 	int numbytes;
-	int rv;
 
-	rv = select(m_sockfd + 1, &set, NULL, NULL, &timeout);
-	if (rv == -1)
+	status = select(m_sockfd + 1, &set, NULL, NULL, &timeout);
+	if (status == -1)
 	{
 		perror("select");
 		return -1;
 	}
-	else if (rv == 0)
+	else if (status == 0)
 		return -2;  // timeout
 	else
 	{
-		numbytes = recv(m_sockfd, buf, MAXBUFLEN - 1, 0);
-		if (numbytes == -1)
+		for (numbytes = 0; numbytes < MAXBUFLEN; numbytes += status)
+		{
+			status = recv(m_sockfd, buf + numbytes, MAXBUFLEN - numbytes, 0);
+			if (status <= 0)
+				break;
+		}
+		if (status == -1)
 		{
 			perror("read");
 			return -1;
 		}
-		else if (numbytes == 0)
+		else if (status == 0)
 			return 0;  // disconnect
 		else
 		{
 			return numbytes;  // read successful
 		}
 	}
-
-	numbytes = recv(m_sockfd, buf, MAXBUFLEN - 1, 0);
-	if (numbytes == -1)
-		return -1;
-	return numbytes;
 }
 
 int Client::receive_from_server(char* buf)
 {
+	int status;
 	int numbytes;
-	numbytes = recv(m_sockfd, buf, MAXBUFLEN, 0);
+
+	for (numbytes = 0; numbytes < MAXBUFLEN; numbytes += status)
+	{
+		status = recv(m_sockfd, buf + numbytes, MAXBUFLEN - numbytes, 0);
+		if (status <= 0)
+			return status;
+	}
 	return numbytes;
 }
