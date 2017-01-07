@@ -611,44 +611,53 @@ int receive_from(int sockfd, char* buf, int time)
 	timeout.tv_usec = 0;
 
 	int numbytes;
-	int rv;
+	int status;
 
-	rv = select(sockfd + 1, &set, NULL, NULL, &timeout);
-	if (rv == -1)
+	status = select(sockfd + 1, &set, NULL, NULL, &timeout);
+	if (status == -1)
 	{
 		perror("select");
 		return -1;
 	}
-	else if (rv == 0)
+	else if (status == 0)
 		return -2;  // timeout
 	else
 	{
-		numbytes = recv(sockfd, buf, MAXBUFLEN - 1, 0);
-		if (numbytes == -1)
+		for (numbytes = 0; numbytes < MAXBUFLEN; numbytes += status)
+		{
+			status = recv(sockfd, buf + numbytes, MAXBUFLEN - numbytes, 0);
+			if (status <= 0)
+				break;
+		}
+		if (status == -1)
 		{
 			perror("read");
 			return -1;
 		}
-		else if (numbytes == 0)
+		else if (status == 0)
 			return 0;  // disconnect
 		else
 		{
 			return numbytes;  // read successful
 		}
 	}
-
-	numbytes = recv(sockfd, buf, MAXBUFLEN - 1, 0);
-	if (numbytes == -1)
-		return -1;
-	return numbytes;
 }
 
 int send_to_address(int sockfd, const char* text)
 {
+	int status;
 	int numbytes;
-	numbytes = send(sockfd, text, strlen(text), 0);
-	if (numbytes == -1)
-		return -1;
+	char buf[MAXBUFLEN];
+
+	memset(buf, 0, MAXBUFLEN);
+	strcpy(buf, text);
+
+	for (numbytes = 0; numbytes < MAXBUFLEN; numbytes += status)
+	{
+		status = send(sockfd, text + numbytes, MAXBUFLEN - numbytes, 0);
+		if (status == -1)
+			return -1;
+	}
 	return 0;
 }
 
