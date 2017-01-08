@@ -167,6 +167,11 @@ public final class Client {
 		sendToServer(a);
 	}
 
+	public void sendTie(int pos) {
+		String a = "t" + Integer.toString(pos);
+		sendToServer(a);
+	}
+
 	private String handleSynAck() throws Exception {
 		String ack = "";
 		try {

@@ -154,4 +154,14 @@ public final class Board {
 		}
 		return null;
 	}
+
+	public boolean isTie() {
+		for (int r = 0; r < Board.ROWS; r++) {
+			for (int c = 0; c < Board.COLS; c++) {
+				if (this.grid[r][c].symbol == '.')
+					return false;
+			}
+		}
+		return true;
+	}
 }

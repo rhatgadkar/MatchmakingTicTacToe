@@ -70,17 +70,28 @@ public final class TicTacToe extends JPanel {
 						this.display.gameOverMsg = "Player 1 has given up. You win.";
 					return;
 				}
-				if (this.recv.recvBuf != "" && this.recv.recvBuf.charAt(0) == 'w' && !TicTacToe.NotInGame) {
+				if (this.recv.recvBuf != "" &&
+						(this.recv.recvBuf.charAt(0) == 'w' || this.recv.recvBuf.charAt(0) == 't') &&
+						!TicTacToe.NotInGame) {
 					TicTacToe.NotInGame = true;
-					if (this.c.isP1()) {
-						this.board.insert(Player.P2_SYMBOL, this.recv.recvBuf.charAt(1) - '0');
-						this.display.doRepaint();
-						this.display.gameOverMsg = "Player 2 wins.";
-					}
-					else {
-						this.board.insert(Player.P1_SYMBOL, this.recv.recvBuf.charAt(1) - '0');
-						this.display.doRepaint();
-						this.display.gameOverMsg = "Player 1 wins.";
+					if (this.recv.recvBuf.charAt(0) == 'w' ||
+							this.recv.recvBuf.charAt(0) == 't') {
+						if (this.c.isP1()) {
+							this.board.insert(Player.P2_SYMBOL, this.recv.recvBuf.charAt(1) - '0');
+							this.display.doRepaint();
+							if (this.recv.recvBuf.charAt(0) == 'w')
+								this.display.gameOverMsg = "Player 2 wins.";
+							else
+								this.display.gameOverMsg = "Tie game.";
+						}
+						else {
+							this.board.insert(Player.P1_SYMBOL, this.recv.recvBuf.charAt(1) - '0');
+							this.display.doRepaint();
+							if (this.recv.recvBuf.charAt(0) == 'w')
+								this.display.gameOverMsg = "Player 1 wins.";
+							else
+								this.display.gameOverMsg = "Tie game.";
+						}
 					}
 					return;
 				}
@@ -272,6 +283,15 @@ public final class TicTacToe extends JPanel {
 					else
 						this.display.gameOverMsg = "Player 2 wins.";
 
+					this.c.sendBye();
+					return;
+				}
+				// check if tie
+				else if (this.board.isTie() && !TicTacToe.NotInGame) {
+					TicTacToe.NotInGame = true;
+					this.display.doRepaint();
+					c.sendTie(input);
+					this.display.gameOverMsg = "Tie game.";
 					this.c.sendBye();
 					return;
 				}
