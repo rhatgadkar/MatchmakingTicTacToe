@@ -8,6 +8,7 @@ import javax.swing.JLabel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JButton;
+import javax.swing.JOptionPane;
 
 @SuppressWarnings("serial")
 public final class TicTacToe extends JPanel {
@@ -73,26 +74,37 @@ public final class TicTacToe extends JPanel {
 				if (this.recv.recvBuf != "" &&
 						(this.recv.recvBuf.charAt(0) == 'w' || this.recv.recvBuf.charAt(0) == 't') &&
 						!TicTacToe.NotInGame) {
-					TicTacToe.NotInGame = true;
 					if (this.recv.recvBuf.charAt(0) == 'w' ||
 							this.recv.recvBuf.charAt(0) == 't') {
 						if (this.c.isP1()) {
 							this.board.insert(Player.P2_SYMBOL, this.recv.recvBuf.charAt(1) - '0');
 							this.display.doRepaint();
-							if (this.recv.recvBuf.charAt(0) == 'w')
+							if (this.recv.recvBuf.charAt(0) == 'w') {
+								JOptionPane.showMessageDialog(null, "Game over. You lose.");
 								this.display.gameOverMsg = "Player 2 wins.";
-							else
+							}
+							else {
+								JOptionPane.showMessageDialog(null, "Game over. Tie game.");
 								this.display.gameOverMsg = "Tie game.";
+							}
 						}
 						else {
 							this.board.insert(Player.P1_SYMBOL, this.recv.recvBuf.charAt(1) - '0');
 							this.display.doRepaint();
-							if (this.recv.recvBuf.charAt(0) == 'w')
+							if (this.recv.recvBuf.charAt(0) == 'w') {
+								JOptionPane.showMessageDialog(null, "Game over. You lose.");
 								this.display.gameOverMsg = "Player 1 wins.";
-							else
+							}
+							else {
+								JOptionPane.showMessageDialog(null, "Game over. Tie game.");
 								this.display.gameOverMsg = "Tie game.";
+							}
 						}
+						TicTacToe.NotInGame = true;
+						this.display.doRepaint();
+						return;
 					}
+					TicTacToe.NotInGame = true;
 					return;
 				}
 			} while (!this.recv.recvBuf.equals("giveup"));
@@ -273,11 +285,15 @@ public final class TicTacToe extends JPanel {
 
 				this.timerfield.setText("");
 
+
 				// check if win
 				if (this.board.isWin(input) && !TicTacToe.NotInGame) {
-					TicTacToe.NotInGame = true;
 					this.display.doRepaint();
 					c.sendWin(input);
+					JOptionPane.showMessageDialog(null, "Game over. You win.");
+
+					TicTacToe.NotInGame = true;
+					this.display.doRepaint();
 					if (p1turn)
 						this.display.gameOverMsg = "Player 1 wins.";
 					else
@@ -288,9 +304,12 @@ public final class TicTacToe extends JPanel {
 				}
 				// check if tie
 				else if (this.board.isTie() && !TicTacToe.NotInGame) {
-					TicTacToe.NotInGame = true;
 					this.display.doRepaint();
 					c.sendTie(input);
+					JOptionPane.showMessageDialog(null, "Game over. Tie game.");
+
+					TicTacToe.NotInGame = true;
+					this.display.doRepaint();
 					this.display.gameOverMsg = "Tie game.";
 					this.c.sendBye();
 					return;
@@ -330,6 +349,7 @@ public final class TicTacToe extends JPanel {
 				Thread t = new Thread(timer);
 				t.start();
 
+				this.recv.recvBuf = "";
 				while (!TicTacToe.NotInGame) {
 					if (this.recv.recvBuf == "")
 						continue;
@@ -362,7 +382,6 @@ public final class TicTacToe extends JPanel {
 				}
 
 				input = this.recv.recvBuf.charAt(0) - '0';
-				this.recv.recvBuf = "";
 
 				msg.gotMsg = true;
 				try {
@@ -374,11 +393,13 @@ public final class TicTacToe extends JPanel {
 
 				if (p1turn && !this.board.insert(this.p1.getSymbol(), input)) {
 					System.err.println("Error with receivePosition with input: " + input);
-					System.exit(1);
+					return;
+//					System.exit(1);
 				}
 				if (!p1turn && !this.board.insert(this.p2.getSymbol(), input)) {
 					System.err.println("Error with receivePosition with input: " + input);
-					System.exit(1);
+					return;
+//					System.exit(1);
 				}
 			}
 			p1turn = !p1turn;
