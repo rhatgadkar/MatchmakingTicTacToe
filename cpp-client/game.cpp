@@ -11,7 +11,7 @@
 using namespace std;
 
 Game::Game()
-	: m_p1('x'), m_p2('o')
+	: m_p1(Player::P1_SYMBOL), m_p2(Player::P2_SYMBOL)
 {
 	memset(m_recv_buf, 0, MAXBUFLEN);
 }
@@ -31,7 +31,7 @@ void* Game::check_giveup(void* parameters)
 			{
 				if (params->c->is_p1())
 				{
-					params->board->insert('x', params->recv_buf[1] - '0');
+					params->board->insert(Player::P2_SYMBOL, params->recv_buf[1] - '0');
 					if (params->recv_buf[0] == 'w')
 						cout << "Player 2 wins" << endl;
 					else
@@ -39,7 +39,7 @@ void* Game::check_giveup(void* parameters)
 				}
 				else
 				{
-					params->board->insert('o', params->recv_buf[1] - '0');
+					params->board->insert(Player::P1_SYMBOL, params->recv_buf[1] - '0');
 					if (params->recv_buf[0] == 'w')
 						cout << "Player 1 wins" << endl;
 					else
