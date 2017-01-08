@@ -19,6 +19,7 @@ public:
 	bool send_giveup();
 	bool send_bye();
 	bool send_win(int pos);
+	bool send_tie(int pos);
 	int receive_from_server(char* buf);
 	std::string Record;
 private:

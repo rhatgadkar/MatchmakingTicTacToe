@@ -25,12 +25,27 @@ void* Game::check_giveup(void* parameters)
 	{
 		params->c->receive_from_server(params->recv_buf);
 		if (params->recv_buf != NULL && params->recv_buf[0] != 0 &&
-				params->recv_buf[0] == 'w')
+				(params->recv_buf[0] == 'w' || params->recv_buf[0] == 't'))
 		{
-			if (params->c->is_p1())
-				cout << "Player 2 wins" << endl;
-			else
-				cout << "Player 1 wins" << endl;
+			if (params->recv_buf[0] == 'w' || params->recv_buf[0] == 't')
+			{
+				if (params->c->is_p1())
+				{
+					params->board->insert(m_p1.getSymbol(), params->recv_buf[0] - '0');
+					if (params->recv_buf[0] == 'w')
+						cout << "Player 2 wins" << endl;
+					else
+						cout << "Tie game" << endl;
+				}
+				else
+				{
+				params->board->insert(m_p2.getSymbol(), params->recv_buf[0] - '0');
+					if (params->recv_buf[0] == 'w')
+						cout << "Player 1 wins" << endl;
+					else
+						cout << "Tie game" << endl;
+				}
+			}
 			params->board->draw();
 			cout << "Client is exiting.  Closing server." << endl;
 			exit(0);
@@ -136,6 +151,15 @@ void Game::start(string username, string password)
 					cout << "Player 2 wins" << endl;
 				m_board.draw();
 				c.send_win(input);
+				c.send_bye();
+				exit(0);
+			}
+			// check if tie
+			else if (m_board.isTie())
+			{
+				cout << "Tie game" << endl;
+				m_board.draw();
+				c.send_tie(input);
 				c.send_bye();
 				exit(0);
 			}

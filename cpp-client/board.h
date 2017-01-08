@@ -23,6 +23,7 @@ public:
 	void clear();
 	bool insert(char c, int pos);
 	bool isWin(int pos) const;
+	bool isTie() const;
 private:
 	const char* m_getPos(int pos) const;
 	char m_grid[ROWS][COLS];

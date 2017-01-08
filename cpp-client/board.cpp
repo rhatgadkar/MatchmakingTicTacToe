@@ -145,3 +145,16 @@ bool Board::isWin(int pos) const
 
 	return false;
 }
+
+bool Board::isTie() const
+{
+	for (int r = 0; r < ROWS; r++)
+	{
+		for (int c = 0; c < COLS; c++)
+		{
+			if (m_grid[r][c] == '.')
+				return false;
+		}
+	}
+	return true;
+}

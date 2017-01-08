@@ -293,6 +293,21 @@ bool Client::send_win(int pos)
 	return true;
 }
 
+bool Client::send_tie(int pos)
+{
+	int res;
+	char buf[MAXBUFLEN];
+
+	memset(buf, 0, MAXBUFLEN);
+	buf[0] = 't';
+	buf[1] = pos + '0';
+
+	res = send_to_server(buf);
+	if (res == -1)
+		return false;
+	return true;
+}
+
 int Client::send_to_server(const char* text)
 {
 	int status;
