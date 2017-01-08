@@ -31,7 +31,7 @@ void* Game::check_giveup(void* parameters)
 			{
 				if (params->c->is_p1())
 				{
-					params->board->insert('x', params->recv_buf[0] - '0');
+					params->board->insert('x', params->recv_buf[1] - '0');
 					if (params->recv_buf[0] == 'w')
 						cout << "Player 2 wins" << endl;
 					else
@@ -39,7 +39,7 @@ void* Game::check_giveup(void* parameters)
 				}
 				else
 				{
-					params->board->insert('o', params->recv_buf[0] - '0');
+					params->board->insert('o', params->recv_buf[1] - '0');
 					if (params->recv_buf[0] == 'w')
 						cout << "Player 1 wins" << endl;
 					else
