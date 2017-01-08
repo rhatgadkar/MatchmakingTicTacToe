@@ -1,10 +1,6 @@
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import javax.swing.JOptionPane;
@@ -236,15 +232,16 @@ public final class Client {
 	}
 
 	private void sendToServer(String msg) {
-		char message[] = new char[Client.MAXBUFLEN];
-		for (int i = 0; i < msg.length(); i++)
-			message[i] = msg.charAt(i);
+		byte message[] = new byte[Client.MAXBUFLEN];
+		int i;
+		for (i = 0; i < msg.length(); i++)
+			message[i] = (byte)(msg.charAt(i));
+		for (; i < Client.MAXBUFLEN; i++)
+			message[i] = 0;
 		try {
 			OutputStream os = this.sock.getOutputStream();
-			OutputStreamWriter osw = new OutputStreamWriter(os);
-			BufferedWriter bw = new BufferedWriter(osw);
-			bw.write(msg);
-			bw.flush();
+			os.write(message, 0, Client.MAXBUFLEN);
+			os.flush();
 		} catch (IOException e) {
 			System.err.println("Error send message.");
 			e.printStackTrace();
@@ -253,33 +250,34 @@ public final class Client {
 	}
 
 	private String receiveFrom(int sec) throws DisconnectException, Exception {
-		char message[] = new char[Client.MAXBUFLEN];
+		byte message[] = new byte[Client.MAXBUFLEN];
 		try {
-			InputStream is = this.sock.getInputStream();
-			InputStreamReader isr = new InputStreamReader(is);
-			BufferedReader br = new BufferedReader(isr);
+			InputStream in = this.sock.getInputStream();
 			this.sock.setSoTimeout(sec * 1000);
 			int status;
 			for (int numbytes = 0; numbytes < Client.MAXBUFLEN; numbytes += status) {
-				status = br.read(message, numbytes, Client.MAXBUFLEN - numbytes);
+				status = in.read(message, numbytes, Client.MAXBUFLEN - numbytes);
 				if (status == -1)
 					throw new DisconnectException();
 			}
 		} catch (Exception e) {
 			throw new Exception();
 		}
-		return new String(message);
+		int nullLoc;
+		for (nullLoc = 0; nullLoc < Client.MAXBUFLEN; nullLoc++) {
+			if (message[nullLoc] == 0)
+				break;
+		}
+		return new String(message, 0, nullLoc);
 	}
 
 	public String receiveFromServer() throws DisconnectException {
-		char message[] = new char[Client.MAXBUFLEN];
+		byte message[] = new byte[Client.MAXBUFLEN];
 		try {
-			InputStream is = this.sock.getInputStream();
-			InputStreamReader isr = new InputStreamReader(is);
-			BufferedReader br = new BufferedReader(isr);
+			InputStream in = this.sock.getInputStream();
 			int status;
 			for (int numbytes = 0; numbytes < Client.MAXBUFLEN; numbytes += status) {
-				status = br.read(message, numbytes, Client.MAXBUFLEN - numbytes);
+				status = in.read(message, numbytes, Client.MAXBUFLEN - numbytes);
 				if (status == -1)
 					throw new DisconnectException();
 			}
@@ -288,6 +286,11 @@ public final class Client {
 			e.printStackTrace();
 			throw new DisconnectException();
 		}
-		return new String(message);
+		int nullLoc;
+		for (nullLoc = 0; nullLoc < Client.MAXBUFLEN; nullLoc++) {
+			if (message[nullLoc] == 0)
+				break;
+		}
+		return new String(message, 0, nullLoc);
 	}
 }
