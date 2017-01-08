@@ -377,6 +377,8 @@ void* client_thread(void* parameters)
 			// forward message from first_addr to second_addr
 			if (buf[0] == 'w')
 				params->rec = 'w';
+			else if (buf[0] == 't')
+				params->rec = 't';
 			status = send_to_address(*(params->sockfd_other_client), buf);
 			printf("Forwarding message from %s:%hu: %s\n", addr_str,
 			params->addr_v4->sin_port, buf);
@@ -385,7 +387,7 @@ void* client_thread(void* parameters)
 				perror("server: forward to second_addr");
 				break;
 			}
-			if (buf[0] == 'w')
+			if (buf[0] == 'w' || buf[0] == 't')
 				break;
 		}
 	}
