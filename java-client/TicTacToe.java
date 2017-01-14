@@ -39,7 +39,7 @@ public final class TicTacToe extends JPanel {
 	}
 
 	private class Recv {
-		public volatile String recvBuf;
+		public String recvBuf;
 	}
 
 	private class CheckGiveupThread implements Runnable {
@@ -61,16 +61,24 @@ public final class TicTacToe extends JPanel {
 				}
 				try {
 					String test = this.c.receiveFrom(1);
-					this.recv.recvBuf = TicTacToe.stringToLength(test, "giveup".length());
+					synchronized (this) {
+						this.recv.recvBuf = TicTacToe.stringToLength(test, "giveup".length());
+					}
 				} catch (DisconnectException e) {
 					if (TicTacToe.NotInGame) {
 						return;
 					}
 					TicTacToe.NotInGame = true;
-					if (this.c.isP1())
-						this.display.gameOverMsg = "Player 2 has given up. You win.";
-					else
-						this.display.gameOverMsg = "Player 1 has given up. You win.";
+					if (this.c.isP1()) {
+						synchronized (this.display) {
+							this.display.gameOverMsg = "Player 2 has given up. You win.";
+						}
+					}
+					else {
+						synchronized (this.display) {
+							this.display.gameOverMsg = "Player 1 has given up. You win.";
+						}
+					}
 					return;
 				} catch (Exception e) {
 					continue;
@@ -85,11 +93,15 @@ public final class TicTacToe extends JPanel {
 							this.display.doRepaint();
 							if (this.recv.recvBuf.charAt(0) == 'w') {
 								JOptionPane.showMessageDialog(null, "Game over. You lose.");
-								this.display.gameOverMsg = "Player 2 wins.";
+								synchronized (this.display) {
+									this.display.gameOverMsg = "Player 2 wins.";
+								}
 							}
 							else {
 								JOptionPane.showMessageDialog(null, "Game over. Tie game.");
-								this.display.gameOverMsg = "Tie game.";
+								synchronized (this.display) {
+									this.display.gameOverMsg = "Tie game.";
+								}
 							}
 						}
 						else {
@@ -97,11 +109,15 @@ public final class TicTacToe extends JPanel {
 							this.display.doRepaint();
 							if (this.recv.recvBuf.charAt(0) == 'w') {
 								JOptionPane.showMessageDialog(null, "Game over. You lose.");
-								this.display.gameOverMsg = "Player 1 wins.";
+								synchronized (this.display) {
+									this.display.gameOverMsg = "Player 1 wins.";
+								}
 							}
 							else {
 								JOptionPane.showMessageDialog(null, "Game over. Tie game.");
-								this.display.gameOverMsg = "Tie game.";
+								synchronized (this.display) {
+									this.display.gameOverMsg = "Tie game.";
+								}
 							}
 						}
 						TicTacToe.NotInGame = true;
@@ -114,10 +130,16 @@ public final class TicTacToe extends JPanel {
 			} while (!this.recv.recvBuf.equals("giveup"));
 			if (!TicTacToe.NotInGame) {
 				TicTacToe.NotInGame = true;
-				if (this.c.isP1())
-					this.display.gameOverMsg = "Player 2 has given up. You win.";
-				else
-					this.display.gameOverMsg = "Player 1 has given up. You win.";
+				if (this.c.isP1()) {
+					synchronized (this.display) {
+						this.display.gameOverMsg = "Player 2 has given up. You win.";
+					}
+				}
+				else {
+					synchronized (this.display) {
+						this.display.gameOverMsg = "Player 1 has given up. You win.";
+					}
+				}
 				return;
 			}
 		}
@@ -184,7 +206,9 @@ public final class TicTacToe extends JPanel {
 		this.p1 = new Player(Player.P1_SYMBOL);
 		this.p2 = new Player(Player.P2_SYMBOL);
 		this.recv = new Recv();
-		this.recv.recvBuf = "";
+		synchronized (this) {
+			this.recv.recvBuf = "";
+		}
 		this.c = new Client();
 
 		this.display = new Display(this.board);
@@ -205,7 +229,9 @@ public final class TicTacToe extends JPanel {
 					System.exit(0);
 				else {
 					TicTacToe.NotInGame = true;
-					this.display.gameOverMsg = "Click to start.";
+					synchronized (this.display) {
+						this.display.gameOverMsg = "Click to start.";
+					}
 				}
 			}
 			private ActionListener init(Display display, Client c) {
@@ -305,10 +331,16 @@ public final class TicTacToe extends JPanel {
 					c.sendWin(input);
 					JOptionPane.showMessageDialog(null, "Game over. You win.");
 
-					if (p1turn)
-						this.display.gameOverMsg = "Player 1 wins.";
-					else
-						this.display.gameOverMsg = "Player 2 wins.";
+					if (p1turn) {
+						synchronized (this.display) {
+							this.display.gameOverMsg = "Player 1 wins.";
+						}
+					}
+					else {
+						synchronized (this.display) {
+							this.display.gameOverMsg = "Player 2 wins.";
+						}
+					}
 					this.display.doRepaint();
 
 					this.c.sendBye();
@@ -322,7 +354,9 @@ public final class TicTacToe extends JPanel {
 
 					TicTacToe.NotInGame = true;
 					this.display.doRepaint();
-					this.display.gameOverMsg = "Tie game.";
+					synchronized (this.display) {
+						this.display.gameOverMsg = "Tie game.";
+					}
 					this.c.sendBye();
 					return;
 				}
@@ -330,19 +364,31 @@ public final class TicTacToe extends JPanel {
 					if (input == -1) {
 						if (TicTacToe.NotInGame && this.display.gameOverMsg != null && this.display.gameOverMsg.equals("Click to start.")) {
 							// quitbutton was triggered.
-							if (this.c.isP1())
-								this.display.gameOverMsg = "You have given up. Player 2 wins.";
-							else
-								this.display.gameOverMsg = "You have given up. Player 1 wins.";
+							if (this.c.isP1()) {
+								synchronized (this.display) {
+									this.display.gameOverMsg = "You have given up. Player 2 wins.";
+								}
+							}
+							else {
+								synchronized (this.display) {
+									this.display.gameOverMsg = "You have given up. Player 1 wins.";
+								}
+							}
 						}
 						else if (TicTacToe.NotInGame && this.display.gameOverMsg != null && this.display.gameOverMsg.contains("You win"))
 							// other client triggered quitbutton - disconnectexception
 							;
 						else {
-							if (p1turn)
-								this.display.gameOverMsg = "You have not played a move. Player 2 wins.";
-							else
-								this.display.gameOverMsg = "You have not played a move. Player 1 wins.";
+							if (p1turn) {
+								synchronized (this.display) {
+									this.display.gameOverMsg = "You have not played a move. Player 2 wins.";
+								}
+							}
+							else {
+								synchronized (this.display) {
+									this.display.gameOverMsg = "You have not played a move. Player 1 wins.";
+								}
+							}
 						}
 						this.c.sendGiveup();
 						return;
@@ -361,7 +407,9 @@ public final class TicTacToe extends JPanel {
 				Thread t = new Thread(timer);
 				t.start();
 
-				this.recv.recvBuf = "";
+				synchronized (this) {
+					this.recv.recvBuf = "";
+				}
 				while (!TicTacToe.NotInGame) {
 					if (this.recv.recvBuf == "")
 						continue;
@@ -384,10 +432,16 @@ public final class TicTacToe extends JPanel {
 						System.exit(1);
 					}
 					if (this.display.gameOverMsg != null && this.display.gameOverMsg.equals("Click to start.")) {
-						if (this.c.isP1())
-							this.display.gameOverMsg = "You have given up. Player 2 wins.";
-						else
-							this.display.gameOverMsg = "You have given up. Player 1 wins.";
+						if (this.c.isP1()) {
+							synchronized (this.display) {
+								this.display.gameOverMsg = "You have given up. Player 2 wins.";
+							}
+						}
+						else {
+							synchronized (this.display) {
+								this.display.gameOverMsg = "You have given up. Player 1 wins.";
+							}
+						}
 						this.c.sendGiveup();
 					}
 					else if (this.display.gameOverMsg != null && this.display.gameOverMsg.equals("disconnect")) {

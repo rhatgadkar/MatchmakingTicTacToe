@@ -10,7 +10,7 @@ public class Display extends JPanel implements MouseListener {
 	public final static int WIDTH = 300;
 	public final static int HEIGHT = 300;
 
-	public volatile String gameOverMsg;
+	public String gameOverMsg;
 
 	private class InputMsg {
 		public volatile int input;
@@ -28,8 +28,11 @@ public class Display extends JPanel implements MouseListener {
 		this.acceptedInput = new InputMsg();
 		this.acceptedInput.input = -1;
 		this.symbol = 0;
-		if (TicTacToe.NotInGame)
-			this.gameOverMsg = "Click to start.";
+		if (TicTacToe.NotInGame) {
+			synchronized (this) {
+				this.gameOverMsg = "Click to start.";
+			}
+		}
 		repaint();
 	}
 
@@ -129,9 +132,13 @@ public class Display extends JPanel implements MouseListener {
 				}
 			}
 		}
-		else if (TicTacToe.NotInGame && this.gameOverMsg != null) {
-			TicTacToe.NotInGame = false;
-			this.gameOverMsg = null;
+		else if (TicTacToe.NotInGame) {
+			if (this.gameOverMsg != null) {
+				TicTacToe.NotInGame = false;
+				synchronized (this) {
+					this.gameOverMsg = null;
+				}
+			}
 		}
 	}
 
