@@ -3,6 +3,7 @@ import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import javax.swing.JPanel;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @SuppressWarnings("serial")
 public class Display extends JPanel implements MouseListener {
@@ -28,7 +29,7 @@ public class Display extends JPanel implements MouseListener {
 		this.acceptedInput = new InputMsg();
 		this.acceptedInput.input = -1;
 		this.symbol = 0;
-		if (TicTacToe.NotInGame) {
+		if (TicTacToe.NotInGame.get()) {
 			synchronized (this) {
 				this.gameOverMsg = "Click to start.";
 			}
@@ -43,7 +44,7 @@ public class Display extends JPanel implements MouseListener {
 		}
 		@Override
 		public void run() {
-			while (this.msg.input == -1 && !TicTacToe.NotInGame)
+			while (this.msg.input == -1 && !TicTacToe.NotInGame.get())
 				;
 		}
 	}
@@ -132,9 +133,9 @@ public class Display extends JPanel implements MouseListener {
 				}
 			}
 		}
-		else if (TicTacToe.NotInGame) {
+		else if (TicTacToe.NotInGame.get()) {
 			if (this.gameOverMsg != null) {
-				TicTacToe.NotInGame = false;
+				TicTacToe.NotInGame.set(false);
 				synchronized (this) {
 					this.gameOverMsg = null;
 				}

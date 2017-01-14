@@ -1,5 +1,6 @@
 import java.util.Date;
 import javax.swing.JLabel;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TimerThread implements Runnable {
 	public static class Msg {
@@ -24,7 +25,7 @@ public class TimerThread implements Runnable {
 		long startTime = System.currentTimeMillis();
 		long elapsedTime = 0L;
 		long countdown = 0L;
-		while (!this.msg.gotMsg && (elapsedTime < this.seconds * 1000) && !TicTacToe.NotInGame) {
+		while (!this.msg.gotMsg && (elapsedTime < this.seconds * 1000) && !TicTacToe.NotInGame.get()) {
 			elapsedTime = (new Date().getTime()) - startTime;
 			if (this.display == null) {
 				Long currCountdown = (long)this.seconds - (elapsedTime / 1000);
@@ -34,10 +35,10 @@ public class TimerThread implements Runnable {
 				}
 			}
 		}
-		if (!this.msg.gotMsg && !TicTacToe.NotInGame) {
-			TicTacToe.NotInGame = true;
-			synchronized (this.display) {
-				if (this.display != null) {
+		if (!this.msg.gotMsg && !TicTacToe.NotInGame.get()) {
+			TicTacToe.NotInGame.set(true);
+			if (this.display != null) {
+				synchronized (this.display) {
 					this.display.gameOverMsg = "disconnect";
 				}
 			}

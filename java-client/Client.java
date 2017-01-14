@@ -4,6 +4,7 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import javax.swing.JOptionPane;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class Client {
 	public final static int MAXBUFLEN = 100;
@@ -35,7 +36,7 @@ public final class Client {
 			} catch (Exception e) {
 			}
 
-			if (TicTacToe.NotInGame)
+			if (TicTacToe.NotInGame.get())
 				break;
 
 			// connect to parent server
