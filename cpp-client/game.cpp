@@ -8,6 +8,7 @@
 #include <cstdio>
 #include <cctype>
 #include <time.h>
+#include <string>
 using namespace std;
 
 Game::Game()
@@ -131,7 +132,11 @@ void Game::start(string username, string password)
 			for (;;)
 			{
 				cout << "Enter position (1-9): ";
-				cin >> input;
+				string input_str;
+				getline(cin, input_str);
+				if (input_str.length() > 1 || input_str.length() < 1)
+					continue;
+				input = input_str[0] - '0';
 
 				if (p1turn && !m_board.insert(m_p1.getSymbol(), input))
 					continue;
