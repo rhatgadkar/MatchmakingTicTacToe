@@ -9,22 +9,33 @@
 #include <cctype>
 #include <time.h>
 #include <string>
+#include <unistd.h>
 using namespace std;
+
+pthread_mutex_t Game::recv_buf_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 Game::Game()
 	: m_p1(Player::P1_SYMBOL), m_p2(Player::P2_SYMBOL)
 {
+	pthread_mutex_lock(&Game::recv_buf_mutex);
 	memset(m_recv_buf, 0, MAXBUFLEN);
+	pthread_mutex_unlock(&Game::recv_buf_mutex);
 }
 
 void* Game::check_giveup(void* parameters)
 {
+	char test[MAXBUFLEN];
 	struct check_giveup_params* params;
 	params = (struct check_giveup_params*)parameters;
 
+	pthread_mutex_lock(&Game::recv_buf_mutex);
 	do
 	{
-		params->c->receive_from_server(params->recv_buf);
+		pthread_mutex_unlock(&Game::recv_buf_mutex);
+		memset(test, 0, MAXBUFLEN);
+		params->c->receive_from_server(test);
+		pthread_mutex_lock(&Game::recv_buf_mutex);
+		strcpy(params->recv_buf, test);
 		if (params->recv_buf != NULL && params->recv_buf[0] != 0 &&
 				(params->recv_buf[0] == 'w' || params->recv_buf[0] == 't'))
 		{
@@ -37,6 +48,7 @@ void* Game::check_giveup(void* parameters)
 						cout << "Player 2 wins" << endl;
 					else
 						cout << "Tie game" << endl;
+					pthread_mutex_unlock(&Game::recv_buf_mutex);
 				}
 				else
 				{
@@ -45,13 +57,20 @@ void* Game::check_giveup(void* parameters)
 						cout << "Player 1 wins" << endl;
 					else
 						cout << "Tie game" << endl;
+					pthread_mutex_unlock(&Game::recv_buf_mutex);
 				}
 			}
+			else
+				pthread_mutex_unlock(&Game::recv_buf_mutex);
 			params->board->draw();
 			cout << "Client is exiting.  Closing server." << endl;
 			exit(0);
 		}
+		else
+			pthread_mutex_unlock(&Game::recv_buf_mutex);
+		pthread_mutex_lock(&Game::recv_buf_mutex);
 	} while(strcmp(params->recv_buf, "giveup") != 0);
+	pthread_mutex_unlock(&Game::recv_buf_mutex);
 
 	if (params->c->is_p1())
 		cout << "Player 2 has given up.  Player 1 wins." << endl;
@@ -100,7 +119,9 @@ void Game::start(string username, string password)
 	pthread_t giveup_t;
 	struct check_giveup_params params;
 	params.c = &c;
+	pthread_mutex_lock(&Game::recv_buf_mutex);
 	params.recv_buf = m_recv_buf;
+	pthread_mutex_unlock(&Game::recv_buf_mutex);
 	params.board = &m_board;
 	pthread_create(&giveup_t, NULL, &(Game::check_giveup), &params);
 
@@ -197,16 +218,24 @@ void Game::start(string username, string password)
 
 			pthread_create(&rcv_timer_thread, NULL, &(Game::timer_countdown),
 			&rcv_params_timer);
+			pthread_mutex_lock(&Game::recv_buf_mutex);
+			memset(m_recv_buf, 0, MAXBUFLEN);
+			pthread_mutex_unlock(&Game::recv_buf_mutex);
 			for (;;)
 			{
+				pthread_mutex_lock(&Game::recv_buf_mutex);
 				if (m_recv_buf[0] == 0)
+				{
+					pthread_mutex_unlock(&Game::recv_buf_mutex);
 					continue;
+				}
 				if (isdigit(m_recv_buf[0]) && m_recv_buf[0] != '0')
 				{
 					input = m_recv_buf[0] - '0';
-					memset(m_recv_buf, 0, MAXBUFLEN);
+					pthread_mutex_unlock(&Game::recv_buf_mutex);
 					break;
 				}
+				pthread_mutex_unlock(&Game::recv_buf_mutex);
 			}
 			got_move = 1;
 			pthread_join(rcv_timer_thread, NULL);

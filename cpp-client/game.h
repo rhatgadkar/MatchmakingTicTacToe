@@ -5,6 +5,7 @@
 #include "player.h"
 #include "client.h"
 #include <string>
+#include <pthread.h>
 
 class Game
 {
@@ -33,6 +34,7 @@ private:
 	static void* check_giveup(void* parameters);
 	static void* timer_countdown(void* parameters);
 	char m_recv_buf[MAXBUFLEN];
+	static pthread_mutex_t recv_buf_mutex;
 };
 
 #endif
