@@ -4,6 +4,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import javax.swing.JPanel;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 
 @SuppressWarnings("serial")
 public class Display extends JPanel implements MouseListener {
@@ -12,6 +13,7 @@ public class Display extends JPanel implements MouseListener {
 	public final static int HEIGHT = 300;
 
 	public String gameOverMsg;
+	public ReentrantLock gameOverMsgLock = new ReentrantLock();
 
 	private class InputMsg {
 		public volatile int input;
@@ -30,9 +32,9 @@ public class Display extends JPanel implements MouseListener {
 		this.acceptedInput.input = -1;
 		this.symbol = 0;
 		if (TicTacToe.NotInGame.get()) {
-			synchronized (this) {
-				this.gameOverMsg = "Click to start.";
-			}
+			this.gameOverMsgLock.lock();
+			this.gameOverMsg = "Click to start.";
+			this.gameOverMsgLock.unlock();
 		}
 		repaint();
 	}
@@ -71,7 +73,9 @@ public class Display extends JPanel implements MouseListener {
 	}
 
 	public void paintComponent(Graphics g) {
+		this.gameOverMsgLock.lock();
 		if (this.gameOverMsg == null) {
+			this.gameOverMsgLock.unlock();
 			g.setColor(Color.lightGray);
 			g.fillRect(0, 0, Display.WIDTH, Display.HEIGHT);
 			g.setColor(Color.BLACK);
@@ -102,6 +106,7 @@ public class Display extends JPanel implements MouseListener {
 			g.drawString(this.gameOverMsg, 20, Display.HEIGHT / 2);
 			if (!this.gameOverMsg.equals("Click to start."))
 				g.drawString("Click to restart.", 20, Display.HEIGHT - 100);
+			this.gameOverMsgLock.unlock();
 		}
 	}
 
@@ -134,12 +139,12 @@ public class Display extends JPanel implements MouseListener {
 			}
 		}
 		else if (TicTacToe.NotInGame.get()) {
+			this.gameOverMsgLock.lock();
 			if (this.gameOverMsg != null) {
 				TicTacToe.NotInGame.set(false);
-				synchronized (this) {
-					this.gameOverMsg = null;
-				}
+				this.gameOverMsg = null;
 			}
+			this.gameOverMsgLock.unlock();
 		}
 	}
 

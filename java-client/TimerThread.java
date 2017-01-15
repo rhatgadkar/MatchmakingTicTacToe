@@ -38,9 +38,9 @@ public class TimerThread implements Runnable {
 		if (!this.msg.gotMsg && !TicTacToe.NotInGame.get()) {
 			TicTacToe.NotInGame.set(true);
 			if (this.display != null) {
-				synchronized (this.display) {
-					this.display.gameOverMsg = "disconnect";
-				}
+				this.display.gameOverMsgLock.lock();
+				this.display.gameOverMsg = "disconnect";
+				this.display.gameOverMsgLock.unlock();
 			}
 			System.out.println(this.errorMsg);
 		}
