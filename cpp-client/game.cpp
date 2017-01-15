@@ -9,7 +9,6 @@
 #include <cctype>
 #include <time.h>
 #include <string>
-#include <unistd.h>
 using namespace std;
 
 pthread_mutex_t Game::recv_buf_mutex = PTHREAD_MUTEX_INITIALIZER;
