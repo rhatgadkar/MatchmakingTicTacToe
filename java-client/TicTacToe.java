@@ -434,11 +434,15 @@ public final class TicTacToe extends JPanel {
 					this.recv.recvBufLock.unlock();
 				}
 				if (TicTacToe.NotInGame.get()) {
-					// better way would be to put a lock in ActionListener for gameOverMsg.
-					try {
-						Thread.sleep(10);
-					} catch (Exception e) {
+					this.display.gameOverMsgLock.lock();
+					if (this.display.gameOverMsg.equals("Click to start.")) {
+						if (this.c.isP1())
+							this.display.gameOverMsg = "You have given up. Player 2 wins.";
+						else
+							this.display.gameOverMsg = "You have given up. Player 1 wins.";
 					}
+					this.display.gameOverMsgLock.unlock();
+					this.c.sendGiveup();
 					try {
 						gt.join();
 					} catch (InterruptedException e) {
