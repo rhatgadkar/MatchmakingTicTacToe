@@ -75,7 +75,6 @@ public class Display extends JPanel implements MouseListener {
 	public void paintComponent(Graphics g) {
 		this.gameOverMsgLock.lock();
 		if (this.gameOverMsg == null) {
-			this.gameOverMsgLock.unlock();
 			g.setColor(Color.lightGray);
 			g.fillRect(0, 0, Display.WIDTH, Display.HEIGHT);
 			g.setColor(Color.BLACK);
@@ -98,6 +97,7 @@ public class Display extends JPanel implements MouseListener {
 						g.drawOval(x + 20, y + 20, 50, 50);
 				}
 			}
+			this.gameOverMsgLock.unlock();
 		}
 		else {
 			g.setColor(Color.lightGray);
