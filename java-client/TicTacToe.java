@@ -140,6 +140,7 @@ public final class TicTacToe extends JPanel {
 					this.recv.recvBufLock.unlock();
 				this.recv.recvBufLock.lock();
 			} while (!this.recv.recvBuf.equals("giveup"));
+			this.recv.recvBufLock.unlock();
 			if (!TicTacToe.NotInGame.get()) {
 				TicTacToe.NotInGame.set(true);
 				if (this.c.isP1()) {
