@@ -263,9 +263,9 @@ public final class TicTacToe extends JPanel {
 				if (TicTacToe.NotInGame.get() || !this.c.DoneInit)
 					System.exit(0);
 				else {
-					TicTacToe.NotInGame.set(true);
 					this.display.gameOverMsgLock.lock();
 					try {
+						TicTacToe.NotInGame.set(true);
 						this.display.gameOverMsg = "Click to start.";
 					} finally {
 						this.display.gameOverMsgLock.unlock();
@@ -429,11 +429,11 @@ public final class TicTacToe extends JPanel {
 								else
 									this.display.gameOverMsg = "You have not played a move. Player 1 wins.";
 							}
-							this.c.sendGiveup();
-							return;
 						} finally {
 							this.display.gameOverMsgLock.unlock();
 						}
+						this.c.sendGiveup();
+						return;
 					}
 					else
 						this.c.sendPosition(input);
