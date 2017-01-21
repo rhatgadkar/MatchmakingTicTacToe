@@ -33,8 +33,11 @@ public class Display extends JPanel implements MouseListener {
 		this.symbol = 0;
 		if (TicTacToe.NotInGame.get()) {
 			this.gameOverMsgLock.lock();
-			this.gameOverMsg = "Click to start.";
-			this.gameOverMsgLock.unlock();
+			try {
+				this.gameOverMsg = "Click to start.";
+			} finally {
+				this.gameOverMsgLock.unlock();
+			}
 		}
 		repaint();
 	}
@@ -74,38 +77,40 @@ public class Display extends JPanel implements MouseListener {
 
 	public void paintComponent(Graphics g) {
 		this.gameOverMsgLock.lock();
-		if (this.gameOverMsg == null) {
-			g.setColor(Color.lightGray);
-			g.fillRect(0, 0, Display.WIDTH, Display.HEIGHT);
-			g.setColor(Color.BLACK);
-			g.drawLine(100, 0, 100, Display.HEIGHT);
-			g.drawLine(200, 0, 200, Display.HEIGHT);
-			g.drawLine(0, 100, Display.WIDTH, 100);
-			g.drawLine(0, 200, Display.WIDTH, 200);
+		try {
+			if (this.gameOverMsg == null) {
+				g.setColor(Color.lightGray);
+				g.fillRect(0, 0, Display.WIDTH, Display.HEIGHT);
+				g.setColor(Color.BLACK);
+				g.drawLine(100, 0, 100, Display.HEIGHT);
+				g.drawLine(200, 0, 200, Display.HEIGHT);
+				g.drawLine(0, 100, Display.WIDTH, 100);
+				g.drawLine(0, 200, Display.WIDTH, 200);
 
-			for (int tileRow = 0; tileRow < Board.ROWS; tileRow++) {
-				for (int tileCol = 0; tileCol < Board.COLS; tileCol++) {
-					int x = tileCol * (Display.WIDTH / Board.COLS);
-					int y = tileRow * (Display.HEIGHT / Board.ROWS);
-					char symbol = this.board.getSymbolAtCoord(tileRow, tileCol);
-					g.setColor(Color.BLACK);
-					if (symbol == 'x') {
-						g.drawLine(x + 20, y + 20, x + 20 + 50, y + 20 + 50);
-						g.drawLine(x + 20, y + 20 + 50, x + 20 + 50, y + 20);
+				for (int tileRow = 0; tileRow < Board.ROWS; tileRow++) {
+					for (int tileCol = 0; tileCol < Board.COLS; tileCol++) {
+						int x = tileCol * (Display.WIDTH / Board.COLS);
+						int y = tileRow * (Display.HEIGHT / Board.ROWS);
+						char symbol = this.board.getSymbolAtCoord(tileRow, tileCol);
+						g.setColor(Color.BLACK);
+						if (symbol == 'x') {
+							g.drawLine(x + 20, y + 20, x + 20 + 50, y + 20 + 50);
+							g.drawLine(x + 20, y + 20 + 50, x + 20 + 50, y + 20);
+						}
+						else if (symbol == 'o')
+							g.drawOval(x + 20, y + 20, 50, 50);
 					}
-					else if (symbol == 'o')
-						g.drawOval(x + 20, y + 20, 50, 50);
 				}
 			}
-			this.gameOverMsgLock.unlock();
-		}
-		else {
-			g.setColor(Color.lightGray);
-			g.fillRect(0, 0, Display.WIDTH, Display.HEIGHT);
-			g.setColor(Color.BLACK);
-			g.drawString(this.gameOverMsg, 20, Display.HEIGHT / 2);
-			if (!this.gameOverMsg.equals("Click to start."))
-				g.drawString("Click to restart.", 20, Display.HEIGHT - 100);
+			else {
+				g.setColor(Color.lightGray);
+				g.fillRect(0, 0, Display.WIDTH, Display.HEIGHT);
+				g.setColor(Color.BLACK);
+				g.drawString(this.gameOverMsg, 20, Display.HEIGHT / 2);
+				if (!this.gameOverMsg.equals("Click to start."))
+					g.drawString("Click to restart.", 20, Display.HEIGHT - 100);
+			}
+		} finally {
 			this.gameOverMsgLock.unlock();
 		}
 	}
@@ -140,11 +145,14 @@ public class Display extends JPanel implements MouseListener {
 		}
 		else if (TicTacToe.NotInGame.get()) {
 			this.gameOverMsgLock.lock();
-			if (this.gameOverMsg != null) {
-				TicTacToe.NotInGame.set(false);
-				this.gameOverMsg = null;
+			try {
+				if (this.gameOverMsg != null) {
+					TicTacToe.NotInGame.set(false);
+					this.gameOverMsg = null;
+				}
+			} finally {
+				this.gameOverMsgLock.unlock();
 			}
-			this.gameOverMsgLock.unlock();
 		}
 	}
 
