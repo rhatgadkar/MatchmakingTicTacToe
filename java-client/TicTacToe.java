@@ -71,22 +71,15 @@ public final class TicTacToe extends JPanel {
 				} catch (DisconnectException e) {
 					if (TicTacToe.NotInGame.get())
 						return;
-					TicTacToe.NotInGame.set(true);
-					if (this.c.isP1()) {
-						this.display.gameOverMsgLock.lock();
-						try {
+					this.display.gameOverMsgLock.lock();
+					try {
+						TicTacToe.NotInGame.set(true);
+						if (this.c.isP1())
 							this.display.gameOverMsg = "Player 2 has given up. You win.";
-						} finally {
-							this.display.gameOverMsgLock.unlock();
-						}
-					}
-					else {
-						this.display.gameOverMsgLock.lock();
-						try {
+						else
 							this.display.gameOverMsg = "Player 1 has given up. You win.";
-						} finally {
-							this.display.gameOverMsgLock.unlock();
-						}
+					} finally {
+						this.display.gameOverMsgLock.unlock();
 					}
 					return;
 				} catch (Exception e) {
@@ -158,22 +151,15 @@ public final class TicTacToe extends JPanel {
 				}
 			}
 			if (!TicTacToe.NotInGame.get()) {
-				TicTacToe.NotInGame.set(true);
-				if (this.c.isP1()) {
-						this.display.gameOverMsgLock.lock();
-						try {
-							this.display.gameOverMsg = "Player 2 has given up. You win.";
-						} finally {
-							this.display.gameOverMsgLock.unlock();
-						}
-				}
-				else {
-					this.display.gameOverMsgLock.lock();
-					try {
+				this.display.gameOverMsgLock.lock();
+				try {
+					TicTacToe.NotInGame.set(true);
+					if (this.c.isP1())
+						this.display.gameOverMsg = "Player 2 has given up. You win.";
+					else
 						this.display.gameOverMsg = "Player 1 has given up. You win.";
-					} finally {
-						this.display.gameOverMsgLock.unlock();
-					}
+				} finally {
+					this.display.gameOverMsgLock.unlock();
 				}
 				return;
 			}
