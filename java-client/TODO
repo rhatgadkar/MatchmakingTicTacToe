@@ -1,0 +1,2 @@
+- Make child server not exit after a time period when waiting for p2 to connect.
+- Add play as guest option (without login -> no score report).
