@@ -65,8 +65,11 @@ public final class TicTacToe extends JPanel {
 					String test = this.c.receiveFrom(5);
 					this.recv.recvBuf = TicTacToe.stringToLength(test, "giveup".length());
 				} catch (DisconnectException e) {
-					if (TicTacToe.NotInGame)
+					if (TicTacToe.NotInGame) {
+						if (this.display.gameOverMsg == "Other player lost connection. You win.")
+							this.display.gameOverMsg = "You lost connection. You lose.";
 						return;
+					}
 					TicTacToe.NotInGame = true;
 					if (this.c.isP1())
 						this.display.gameOverMsg = "Player 2 has given up. You win.";
