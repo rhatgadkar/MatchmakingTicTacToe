@@ -101,6 +101,7 @@ public final class Client {
 			// get assigned player-1 or player-2
 			if (buf.equals("player-1")) {
 				this.isP1 = true;
+				boolean retryConn = false;
 				do {
 					buf = "";
 					try {
@@ -108,9 +109,12 @@ public final class Client {
 					} catch (DisconnectException e) {
 						System.err.println("Child server exited.");
 						e.printStackTrace();
+						retryConn = true;
 						break;
 					}
 				} while (buf.charAt(0) != 'r');
+				if (retryConn)
+					continue;
 				System.out.println("Current record: " + buf);
 				this.Record = new String(buf);
 				break;
