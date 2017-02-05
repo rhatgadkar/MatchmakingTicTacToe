@@ -258,7 +258,7 @@ public final class Client {
 		}
 	}
 
-	private String receiveFrom(int sec) throws DisconnectException, Exception {
+	public String receiveFrom(int sec) throws DisconnectException, Exception {
 		byte message[] = new byte[Client.MAXBUFLEN];
 		try {
 			InputStream in = this.sock.getInputStream();
