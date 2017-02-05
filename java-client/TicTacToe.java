@@ -56,10 +56,13 @@ public final class TicTacToe extends JPanel {
 		@Override
 		public void run() {
 			do {
-				if (TicTacToe.NotInGame)
+				if (TicTacToe.NotInGame) {
+					if (this.display.gameOverMsg == "Other player lost connection. You win.")
+						this.display.gameOverMsg = "You lost connection. You lose.";
 					return;
+				}
 				try {
-					String test = this.c.receiveFromServer();
+					String test = this.c.receiveFrom(5);
 					this.recv.recvBuf = TicTacToe.stringToLength(test, "giveup".length());
 				} catch (DisconnectException e) {
 					if (TicTacToe.NotInGame)
@@ -70,6 +73,8 @@ public final class TicTacToe extends JPanel {
 					else
 						this.display.gameOverMsg = "Player 1 has given up. You win.";
 					return;
+				} catch (Exception e) {
+					continue;
 				}
 				if (this.recv.recvBuf != "" &&
 						(this.recv.recvBuf.charAt(0) == 'w' || this.recv.recvBuf.charAt(0) == 't') &&
@@ -370,8 +375,13 @@ public final class TicTacToe extends JPanel {
 							this.display.gameOverMsg = "You have given up. Player 2 wins.";
 						else
 							this.display.gameOverMsg = "You have given up. Player 1 wins.";
+						this.c.sendGiveup();
 					}
-					this.c.sendGiveup();
+					else {
+						this.c.sendWin(0);
+						if (this.display.gameOverMsg.equals("Lost connection with opponent."))
+							this.display.gameOverMsg = "Other player lost connection. You win.";
+					}
 					try {
 						gt.join();
 					} catch (InterruptedException e) {
