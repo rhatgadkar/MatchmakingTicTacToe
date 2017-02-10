@@ -19,6 +19,9 @@ Game::Game()
 
 void* Game::check_giveup(void* parameters)
 {
+	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+	
 	struct check_giveup_params* params;
 	params = (struct check_giveup_params*)parameters;
 
@@ -74,9 +77,7 @@ void* Game::timer_countdown(void* parameters)
 			return NULL;
 	} while(difftime(end, start) < params->seconds);
 	cout << params->msg << endl;
-	if (params->c != NULL)
-		params->c->send_bye();
-	exit(0);
+	*(params->got_move) = 1;
 	return NULL;
 }
 
@@ -125,11 +126,10 @@ void Game::start(string username, string password)
 			params_timer.got_move = &got_move;
 			params_timer.msg =
 			"You have not played a move in 30 seconds. You have given up.";
-			params_timer.c = NULL;
 
 			pthread_create(&timer_thread, NULL, &(Game::timer_countdown),
 			&params_timer);
-			for (;;)
+			while (got_move == 0)
 			{
 				cout << "Enter position (1-9): ";
 				string input_str;
@@ -168,6 +168,21 @@ void Game::start(string username, string password)
 				c.send_bye();
 				exit(0);
 			}
+			// check if connection lost
+			else if (m_board.m_getPos(input) == NULL)
+			{
+				pthread_cancel(giveup_t);
+				cout << "Canceled giveup_t." << endl;
+				c.send_win(0);
+				char buf[MAXBUFLEN];
+				memset(buf, 0, MAXBUFLEN);
+				c.receive_from_server(buf);
+				if (strcmp(buf, "ACK") == 0)
+					cout << "Opponent lost connection. You win." << endl;
+				else
+					cout << "Lost connection. You lose." << endl;
+				exit(0);
+			}
 			else
 			{
 				if (!c.send_position(input))
@@ -188,11 +203,10 @@ void Game::start(string username, string password)
 			rcv_params_timer.got_move = &got_move;
 			rcv_params_timer.msg =
 			"A move has not been received in 45 seconds. Closing connection.";
-			rcv_params_timer.c = &c;
 
 			pthread_create(&rcv_timer_thread, NULL, &(Game::timer_countdown),
 			&rcv_params_timer);
-			for (;;)
+			while (got_move == 0)
 			{
 				if (m_recv_buf[0] == 0)
 					continue;
@@ -205,6 +219,22 @@ void Game::start(string username, string password)
 			}
 			got_move = 1;
 			pthread_join(rcv_timer_thread, NULL);
+			
+			// check if connection lost
+			if (m_board.m_getPos(input) == NULL)
+			{
+				pthread_cancel(giveup_t);
+				cout << "Canceled giveup_t." << endl;
+				c.send_win(0);
+				char buf[MAXBUFLEN];
+				memset(buf, 0, MAXBUFLEN);
+				c.receive_from_server(buf);
+				if (strcmp(buf, "ACK") == 0)
+					cout << "Opponent lost connection. You win." << endl;
+				else
+					cout << "Lost connection. You lose." << endl;
+				exit(0);
+			}
 
 			if (p1turn && !m_board.insert(m_p1.getSymbol(), input))
 			{
