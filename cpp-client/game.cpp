@@ -155,7 +155,13 @@ void Game::start(string username, string password)
 				else
 					cout << "Player 2 wins" << endl;
 				m_board.draw();
+				pthread_cancel(giveup_t);
 				c.send_win(input);
+				char buf[MAXBUFLEN];
+				memset(buf, 0, MAXBUFLEN);
+				c.receive_from(buf, 5);
+				if (buf[0] == 0 || strcmp(buf, "ACK") != 0)
+					cout << "Lost connection. You lose." << endl;
 				c.send_bye();
 				exit(0);
 			}
@@ -168,18 +174,11 @@ void Game::start(string username, string password)
 				c.send_bye();
 				exit(0);
 			}
-			// check if connection lost
+			// check if giveup
 			else if (m_board.m_getPos(input) == NULL)
 			{
-				pthread_cancel(giveup_t);
-				c.send_win(0);
-				char buf[MAXBUFLEN];
-				memset(buf, 0, MAXBUFLEN);
-				c.receive_from(buf, 5);
-				if (strcmp(buf, "ACK") == 0)
-					cout << "Opponent lost connection. You win." << endl;
-				else
-					cout << "Lost connection. You lose." << endl;
+				c.send_giveup();
+				cout << "You giveup. You lose." << endl;
 				exit(0);
 			}
 			else

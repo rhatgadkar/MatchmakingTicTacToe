@@ -293,10 +293,29 @@ public final class TicTacToe extends JPanel {
 				// check if win
 				if (this.board.isWin(input) && !TicTacToe.NotInGame) {
 					this.display.doRepaint();
+					TicTacToe.NotInGame = true;
+					try {
+						gt.join();
+					} catch (InterruptedException e) {
+						System.err.println("Could not join giveup thread.");
+						System.exit(1);
+					}
 					c.sendWin(input);
+					String ack = "";
+					try {
+						ack = this.c.receiveFrom(5);
+					} catch (Exception e) {
+						this.display.gameOverMsg = "You lost connection. You lose.";
+						this.display.doRepaint();
+						return;
+					}
+					if (!ack.equals("ACK")) {
+						this.display.gameOverMsg = "You lost connection. You lose.";
+						this.display.doRepaint();
+						return;
+					}
 					JOptionPane.showMessageDialog(null, "Game over. You win.");
 
-					TicTacToe.NotInGame = true;
 					this.display.doRepaint();
 					if (p1turn)
 						this.display.gameOverMsg = "Player 1 wins.";
