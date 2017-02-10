@@ -57,17 +57,13 @@ public final class TicTacToe extends JPanel {
 		public void run() {
 			do {
 				if (TicTacToe.NotInGame) {
-					if (this.display.gameOverMsg == "Other player lost connection. You win.")
-						this.display.gameOverMsg = "You lost connection. You lose.";
 					return;
 				}
 				try {
-					String test = this.c.receiveFrom(5);
+					String test = this.c.receiveFrom(2);
 					this.recv.recvBuf = TicTacToe.stringToLength(test, "giveup".length());
 				} catch (DisconnectException e) {
 					if (TicTacToe.NotInGame) {
-						if (this.display.gameOverMsg == "Other player lost connection. You win.")
-							this.display.gameOverMsg = "You lost connection. You lose.";
 						return;
 					}
 					TicTacToe.NotInGame = true;
@@ -373,6 +369,12 @@ public final class TicTacToe extends JPanel {
 						Thread.sleep(10);
 					} catch (Exception e) {
 					}
+					try {
+						gt.join();
+					} catch (InterruptedException e) {
+						System.err.println("Could not join giveup thread.");
+						System.exit(1);
+					}
 					if (this.display.gameOverMsg.equals("Click to start.")) {
 						if (this.c.isP1())
 							this.display.gameOverMsg = "You have given up. Player 2 wins.";
@@ -381,15 +383,18 @@ public final class TicTacToe extends JPanel {
 						this.c.sendGiveup();
 					}
 					else {
-						this.c.sendWin(0);
-						if (this.display.gameOverMsg.equals("Lost connection with opponent."))
+						// server disconnect -> if recv ACK, then other player disconnected.
+						this.c.sendAck();
+						String ack = "";
+						try {
+							ack = this.c.receiveFrom(5);
+						} catch (Exception e) {
+							this.display.gameOverMsg = "You lost connection. You lose.";
+							System.out.println("ack: " + ack);
+							e.printStackTrace();
+						}
+						if (ack.equals("ACK"))
 							this.display.gameOverMsg = "Other player lost connection. You win.";
-					}
-					try {
-						gt.join();
-					} catch (InterruptedException e) {
-						System.err.println("Could not join giveup thread.");
-						System.exit(1);
 					}
 					return;
 				}

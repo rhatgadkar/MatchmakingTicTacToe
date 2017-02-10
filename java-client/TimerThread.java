@@ -37,8 +37,6 @@ public class TimerThread implements Runnable {
 		if (!this.msg.gotMsg && !TicTacToe.NotInGame) {
 			TicTacToe.NotInGame = true;
 			System.out.println(this.errorMsg);
-			if (this.display != null)
-				this.display.gameOverMsg = "Lost connection with opponent.";
 		}
 	}
 }
