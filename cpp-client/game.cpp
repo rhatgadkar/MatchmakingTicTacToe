@@ -232,7 +232,7 @@ void Game::start(string username, string password)
 				if (strcmp(buf, "ACK") == 0)
 					cout << "Opponent lost connection. You win." << endl;
 				else
-					cout << "Lost connection. You lose." << endl;
+					cout << "You lose. A connection loss could have occurred." << endl;
 				exit(0);
 			}
 
