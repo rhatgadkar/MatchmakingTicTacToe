@@ -150,10 +150,6 @@ void Game::start(string username, string password)
 			// check if win
 			if (m_board.isWin(input))
 			{
-				if (p1turn)
-					cout << "Player 1 wins" << endl;
-				else
-					cout << "Player 2 wins" << endl;
 				m_board.draw();
 				pthread_cancel(giveup_t);
 				c.send_win(input);
@@ -162,6 +158,13 @@ void Game::start(string username, string password)
 				c.receive_from(buf, 5);
 				if (buf[0] == 0 || strcmp(buf, "ACK") != 0)
 					cout << "Lost connection. You lose." << endl;
+				else
+				{
+					if (p1turn)
+						cout << "Player 1 wins" << endl;
+					else
+						cout << "Player 2 wins" << endl;
+				}
 				c.send_bye();
 				exit(0);
 			}

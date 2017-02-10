@@ -394,12 +394,15 @@ public final class TicTacToe extends JPanel {
 						System.err.println("Could not join giveup thread.");
 						System.exit(1);
 					}
-					if ( this.display.gameOverMsg != null && this.display.gameOverMsg.equals("Click to start.")) {
+					if (this.display.gameOverMsg != null && this.display.gameOverMsg.equals("Click to start.")) {
 						if (this.c.isP1())
 							this.display.gameOverMsg = "You have given up. Player 2 wins.";
 						else
 							this.display.gameOverMsg = "You have given up. Player 1 wins.";
 						this.c.sendGiveup();
+					}
+					else if (this.display.gameOverMsg != null && this.display.gameOverMsg.contains("given")) {
+						return;
 					}
 					else {
 						// server disconnect -> if recv ACK, then other player disconnected.
