@@ -172,7 +172,6 @@ void Game::start(string username, string password)
 			else if (m_board.m_getPos(input) == NULL)
 			{
 				pthread_cancel(giveup_t);
-				cout << "Canceled giveup_t." << endl;
 				c.send_win(0);
 				char buf[MAXBUFLEN];
 				memset(buf, 0, MAXBUFLEN);
@@ -217,7 +216,6 @@ void Game::start(string username, string password)
 				{
 					input = m_recv_buf[0] - '0';
 					memset(m_recv_buf, 0, MAXBUFLEN);
-					cout << "hi" << endl;
 					break;
 				}
 			}
@@ -228,7 +226,6 @@ void Game::start(string username, string password)
 			if (m_board.m_getPos(input) == NULL)
 			{
 				pthread_cancel(giveup_t);
-				cout << "Canceled giveup_t." << endl;
 				c.send_win(0);
 				char buf[MAXBUFLEN];
 				memset(buf, 0, MAXBUFLEN);
