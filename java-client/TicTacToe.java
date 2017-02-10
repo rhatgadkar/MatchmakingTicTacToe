@@ -384,17 +384,15 @@ public final class TicTacToe extends JPanel {
 					}
 					else {
 						// server disconnect -> if recv ACK, then other player disconnected.
-						this.c.sendAck();
+						this.c.sendWin(0);
 						String ack = "";
 						try {
 							ack = this.c.receiveFrom(5);
 						} catch (Exception e) {
 							this.display.gameOverMsg = "You lost connection. You lose.";
 						}
-						if (ack.equals("ACK")) {
+						if (ack.equals("ACK"))
 							this.display.gameOverMsg = "Other player lost connection. You win.";
-							this.c.sendWin(0);
-						}
 					}
 					return;
 				}

@@ -176,11 +176,6 @@ public final class Client {
 		sendToServer(a);
 	}
 
-	public void sendAck() {
-		String ack = "ACK";
-		sendToServer(ack);
-	}
-
 	private String handleSynAck() throws Exception {
 		String ack = "";
 		try {
