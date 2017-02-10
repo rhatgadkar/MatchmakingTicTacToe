@@ -176,7 +176,7 @@ void Game::start(string username, string password)
 				c.send_win(0);
 				char buf[MAXBUFLEN];
 				memset(buf, 0, MAXBUFLEN);
-				c.receive_from_server(buf);
+				c.receive_from(buf, 5);
 				if (strcmp(buf, "ACK") == 0)
 					cout << "Opponent lost connection. You win." << endl;
 				else
@@ -209,11 +209,15 @@ void Game::start(string username, string password)
 			while (got_move == 0)
 			{
 				if (m_recv_buf[0] == 0)
+				{
+					input = -1;
 					continue;
+				}
 				if (isdigit(m_recv_buf[0]) && m_recv_buf[0] != '0')
 				{
 					input = m_recv_buf[0] - '0';
 					memset(m_recv_buf, 0, MAXBUFLEN);
+					cout << "hi" << endl;
 					break;
 				}
 			}
@@ -228,7 +232,7 @@ void Game::start(string username, string password)
 				c.send_win(0);
 				char buf[MAXBUFLEN];
 				memset(buf, 0, MAXBUFLEN);
-				c.receive_from_server(buf);
+				c.receive_from(buf, 5);
 				if (strcmp(buf, "ACK") == 0)
 					cout << "Opponent lost connection. You win." << endl;
 				else

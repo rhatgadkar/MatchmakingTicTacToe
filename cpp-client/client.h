@@ -21,6 +21,7 @@ public:
 	bool send_win(int pos);
 	bool send_tie(int pos);
 	int receive_from_server(char* buf);
+	int receive_from(char* buf, int time);
 	std::string Record;
 private:
 	// variables
@@ -36,7 +37,6 @@ private:
 	bool handle_child_syn_ack(char resp[MAXBUFLEN]);
 	int get_num_ppl();
 	int send_to_server(const char* text);
-	int receive_from(char* buf, int time);
 };
 
 #endif  // CLIENT_H
