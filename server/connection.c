@@ -382,9 +382,13 @@ void* client_thread(void* parameters)
 			if (buf[0] == 'w')
 			{
 				status = send_to_address(*(params->sockfd_curr_client), "ACK");
+				if (status == -1)
+					printf("Sending ACK back failed.\n");
 				if (buf[1] != '0')
 					status = send_to_address(*(params->sockfd_other_client), buf);
 			}
+			else
+				status = send_to_address(*(params->sockfd_other_client), buf);
 			printf("Forwarding message from %s:%hu: %s\n", addr_str,
 			params->addr_v4->sin_port, buf);
 			if (status == -1)
