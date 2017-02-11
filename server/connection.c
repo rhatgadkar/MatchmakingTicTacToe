@@ -543,42 +543,40 @@ void handle_match_msg(int sockfd, int* shm_iter)
 		pthread_join(second_thread, NULL);
 	}
 
-	if (second_thread_params.username[0] != 0 && first_thread_params.username[0] != 0)
-	{
-		// set both usernames from 't' to 'f'
+	// set both usernames from 't' to 'f'
+	if (first_thread_params.username[0] != 0)
 		set_user_no_ingame(first_thread_params.username);
-		if (second_thread_params.username[0] != 0)
-			set_user_no_ingame(second_thread_params.username);
+	if (second_thread_params.username[0] != 0)
+		set_user_no_ingame(second_thread_params.username);
 
-		// find out who won/loss
-		if (second_thread_params.rec == 'w')
-		{
-			printf("Client 1 lost.\n");
-			printf("Client 2 won.\n");
-			update_win_loss_record(first_thread_params.username, 'l',
-									second_thread_params.username, 'w');
-		}
-		else if (first_thread_params.rec == 'w')
-		{
-			printf("Client 1 won.\n");
-			printf("Client 2 lost.\n");
-			update_win_loss_record(first_thread_params.username, 'w',
-									second_thread_params.username, 'l');
-		}
-		else if (second_thread_params.rec == 'g')
-		{
-			printf("Client 1 won.\n");
-			printf("Client 2 lost.\n");
-			update_win_loss_record(first_thread_params.username, 'w',
-									second_thread_params.username, 'l');
-		}
-		else if (first_thread_params.rec == 'g')
-		{
-			printf("Client 1 lost.\n");
-			printf("Client 2 won.\n");
-			update_win_loss_record(first_thread_params.username, 'l',
-									second_thread_params.username, 'w');
-		}
+	// find out who won/loss
+	if (second_thread_params.rec == 'w')
+	{
+		printf("Client 1 lost.\n");
+		printf("Client 2 won.\n");
+		update_win_loss_record(first_thread_params.username, 'l',
+								second_thread_params.username, 'w');
+	}
+	else if (first_thread_params.rec == 'w')
+	{
+		printf("Client 1 won.\n");
+		printf("Client 2 lost.\n");
+		update_win_loss_record(first_thread_params.username, 'w',
+								second_thread_params.username, 'l');
+	}
+	else if (second_thread_params.rec == 'g')
+	{
+		printf("Client 1 won.\n");
+		printf("Client 2 lost.\n");
+		update_win_loss_record(first_thread_params.username, 'w',
+								second_thread_params.username, 'l');
+	}
+	else if (first_thread_params.rec == 'g')
+	{
+		printf("Client 1 lost.\n");
+		printf("Client 2 won.\n");
+		update_win_loss_record(first_thread_params.username, 'l',
+								second_thread_params.username, 'w');
 	}
 
 	close(sockfd_client_1);
