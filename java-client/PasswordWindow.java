@@ -66,16 +66,18 @@ public class PasswordWindow extends JPanel implements ActionListener {
 				JOptionPane.showMessageDialog(null, "Username and Password must be at most " + Integer.toString(VAR_SIZE - 1) + " characters long.");
 				return;
 			}
-			for (int i = 0; i < currUser.length(); i++) {
-				if (!Character.isDigit(currUser.charAt(i)) && !Character.isLetter(currUser.charAt(i))) {
-					JOptionPane.showMessageDialog(null, "Username and Password must only contain letters and digits.");
-					return;
+			if (currUser.length() != 0 && currPass.length() != 0) {
+				for (int i = 0; i < currUser.length(); i++) {
+					if (!Character.isDigit(currUser.charAt(i)) && !Character.isLetter(currUser.charAt(i))) {
+						JOptionPane.showMessageDialog(null, "Username and Password must only contain letters and digits.");
+						return;
+					}
 				}
-			}
-			for (int i = 0; i < currPass.length(); i++) {
-				if (!Character.isDigit(currPass.charAt(i)) && !Character.isLetter(currPass.charAt(i))) {
-					JOptionPane.showMessageDialog(null, "Username and Password must only contain letters and digits.");
-					return;
+				for (int i = 0; i < currPass.length(); i++) {
+					if (!Character.isDigit(currPass.charAt(i)) && !Character.isLetter(currPass.charAt(i))) {
+						JOptionPane.showMessageDialog(null, "Username and Password must only contain letters and digits.");
+						return;
+					}
 				}
 			}
 			Username = new String(this.usernameField.getText());

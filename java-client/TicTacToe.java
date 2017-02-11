@@ -231,11 +231,13 @@ public final class TicTacToe extends JPanel {
 		this.playerfield.setText("Searching for opponent...");
 		this.c.init(username, password);
 
-		String[] initialSplit = this.c.Record.split(",");
-		String winRecord = initialSplit[0].split("r")[1];
-		String lossRecord = initialSplit[1];
-		this.winrecordfield.setText("W: " + winRecord);
-		this.lossrecordfield.setText("L: " + lossRecord);
+		if (!username.isEmpty() && !password.isEmpty()) {
+			String[] initialSplit = this.c.Record.split(",");
+			String winRecord = initialSplit[0].split("r")[1];
+			String lossRecord = initialSplit[1];
+			this.winrecordfield.setText("W: " + winRecord);
+			this.lossrecordfield.setText("L: " + lossRecord);
+		}
 
 		if (this.c.isP1())
 			this.playerfield.setText("You are player 1 (" + Player.P1_SYMBOL + ").");

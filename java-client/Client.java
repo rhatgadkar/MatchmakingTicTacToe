@@ -112,17 +112,19 @@ public final class Client {
 						retryConn = true;
 						break;
 					}
-				} while (buf.charAt(0) != 'r');
+				} while (buf.charAt(0) != 'r' && buf.charAt(0) != ',');
 				if (retryConn)
 					continue;
 				System.out.println("Current record: " + buf);
 				this.Record = new String(buf);
 				break;
 			}
-			else if (buf.charAt(0) == 'r') {
-				System.out.println("Current record: " + buf);
+			else if (buf.charAt(0) == 'r' || buf.charAt(0) == ',') {
+				if (buf.charAt(0) == 'r') {
+					System.out.println("Current record: " + buf);
+					this.Record = new String(buf);
+				}
 				this.isP1 = false;
-				this.Record = new String(buf);
 				break;
 			}
 			else if (buf.equals("invalidl")) {
