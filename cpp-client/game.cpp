@@ -144,6 +144,7 @@ void Game::start(string username, string password)
 				cout << "Enter position (1-9): ";
 				string input_str;
 				getline(cin, input_str);
+				cout << endl;  // required for getline to not freeze
 				if (input_str.length() > 1 || input_str.length() < 1)
 					continue;
 				input = input_str[0] - '0';
