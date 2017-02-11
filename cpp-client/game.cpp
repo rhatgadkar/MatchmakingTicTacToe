@@ -139,7 +139,7 @@ void Game::start(string username, string password)
 
 			pthread_create(&timer_thread, NULL, &(Game::timer_countdown),
 			&params_timer);
-			while (got_move == 0)
+			for (;;)
 			{
 				cout << "Enter position (1-9): ";
 				string input_str;
@@ -168,7 +168,6 @@ void Game::start(string username, string password)
 				m_board.draw();
 				pthread_cancel(giveup_t);
 				c.send_win(input);
-				c.send_bye();
 				exit(0);
 			}
 			// check if tie
@@ -177,7 +176,6 @@ void Game::start(string username, string password)
 				cout << "Tie game" << endl;
 				m_board.draw();
 				c.send_tie(input);
-				c.send_bye();
 				exit(0);
 			}
 			else
@@ -204,7 +202,7 @@ void Game::start(string username, string password)
 
 			pthread_create(&rcv_timer_thread, NULL, &(Game::timer_countdown),
 			&rcv_params_timer);
-			while (got_move == 0)
+			for (;;)
 			{
 				if (m_recv_buf[0] == 0)
 					continue;
