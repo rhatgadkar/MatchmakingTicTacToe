@@ -78,12 +78,17 @@ void* Game::timer_countdown(void* parameters)
 	} while(difftime(end, start) < params->seconds);
 	cout << params->msg << endl;
 	*(params->got_move) = 1;
-	if (params->msg == "You have not played a move in 30 seconds. You have given up.")
+/*	if (params->msg == "You have not played a move in 30 seconds. You have given up.")
 	{
 		params->c->send_giveup();
 		cout << "You giveup. You lose." << endl;
 		exit(0);
-	}
+	}*/
+	if (params->giveup)
+		params->c->send_giveup();
+	else
+		params->c->send_bye();
+	exit(0);
 	return NULL;
 }
 
@@ -136,6 +141,7 @@ void Game::start(string username, string password)
 			params_timer.msg =
 			"You have not played a move in 30 seconds. You have given up.";
 			params_timer.c = &c;
+			params_timer.giveup = true;
 
 			pthread_create(&timer_thread, NULL, &(Game::timer_countdown),
 			&params_timer);
@@ -168,11 +174,11 @@ void Game::start(string username, string password)
 				m_board.draw();
 				pthread_cancel(giveup_t);
 				c.send_win(input);
-				char buf[MAXBUFLEN];
+/*				char buf[MAXBUFLEN];
 				memset(buf, 0, MAXBUFLEN);
 				c.receive_from(buf, 1);
 				if (buf[0] == 0 || strcmp(buf, "ACK") != 0)
-					cout << "Lost connection. Not known if win got sent." << endl;
+					cout << "Lost connection. Not known if win got sent." << endl;*/
 				c.send_bye();
 				exit(0);
 			}
@@ -212,6 +218,7 @@ void Game::start(string username, string password)
 			rcv_params_timer.got_move = &got_move;
 			rcv_params_timer.msg =
 			"A move has not been received in 45 seconds. Closing connection.";
+			rcv_params_timer.giveup = false;
 
 			pthread_create(&rcv_timer_thread, NULL, &(Game::timer_countdown),
 			&rcv_params_timer);
@@ -232,7 +239,7 @@ void Game::start(string username, string password)
 			got_move = 1;
 			pthread_join(rcv_timer_thread, NULL);
 			
-			// check if connection lost
+/*			// check if connection lost
 			if (m_board.m_getPos(input) == NULL)
 			{
 				pthread_cancel(giveup_t);
@@ -244,8 +251,10 @@ void Game::start(string username, string password)
 					cout << "Opponent lost connection. You win." << endl;
 				else
 					cout << "You lose. A connection loss could have occurred." << endl;
+				c.send_bye();
+				cout << "Connection loss." << endl;
 				exit(0);
-			}
+			}*/
 
 			if (p1turn && !m_board.insert(m_p1.getSymbol(), input))
 			{

@@ -303,7 +303,7 @@ public final class TicTacToe extends JPanel {
 						System.exit(1);
 					}
 					c.sendWin(input);
-					String ack = "";
+/*					String ack = "";
 					try {
 						ack = this.c.receiveFrom(1);
 					} catch (Exception e) {
@@ -315,14 +315,14 @@ public final class TicTacToe extends JPanel {
 						this.display.gameOverMsg = "Lost connection. Not known if win got sent.";
 						this.display.doRepaint();
 						return;
-					}
+					}*/
 					JOptionPane.showMessageDialog(null, "Game over. You win.");
 
-					this.display.doRepaint();
 					if (p1turn)
 						this.display.gameOverMsg = "Player 1 wins.";
 					else
 						this.display.gameOverMsg = "Player 2 wins.";
+					this.display.doRepaint();
 
 					this.c.sendBye();
 					return;
@@ -403,13 +403,14 @@ public final class TicTacToe extends JPanel {
 							this.display.gameOverMsg = "You have given up. Player 1 wins.";
 						this.c.sendGiveup();
 					}
-					else if (this.display.gameOverMsg != null && this.display.gameOverMsg.contains("given")) {
+/*					else if (this.display.gameOverMsg != null && this.display.gameOverMsg.contains("given")) {
 						return;
-					}
+					}*/
 					else {
-						// server disconnect -> if recv ACK, then other player disconnected.
-						this.c.sendWin(0);
-						String ack = "";
+/*						// server disconnect -> if recv ACK, then other player disconnected.
+						this.c.sendWin(0);*/
+						this.c.sendBye();
+/*						String ack = "";
 						try {
 							ack = this.c.receiveFrom(1);
 						} catch (Exception e) {
@@ -417,7 +418,8 @@ public final class TicTacToe extends JPanel {
 							e.printStackTrace();
 						}
 						if (ack.equals("ACK"))
-							this.display.gameOverMsg = "Other player lost connection. You win.";
+							this.display.gameOverMsg = "Other player lost connection. You win.";*/
+						this.display.gameOverMsg = "Connection loss.";
 					}
 					return;
 				}

@@ -28,6 +28,7 @@ private:
 		int* got_move;
 		std::string msg;
 		Client* c;
+		bool giveup;
 	};
 	static void* check_giveup(void* parameters);
 	static void* timer_countdown(void* parameters);

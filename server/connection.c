@@ -387,7 +387,7 @@ void* client_thread(void* parameters)
 				params->rec = 'w';
 			else if (buf[0] == 't')
 				params->rec = 't';
-			if (buf[0] == 'w')
+/*			if (buf[0] == 'w')
 			{
 				status = send_to_address(*(params->sockfd_curr_client), "ACK");
 				if (status == -1)
@@ -396,7 +396,8 @@ void* client_thread(void* parameters)
 					status = send_to_address(*(params->sockfd_other_client), buf);
 			}
 			else
-				status = send_to_address(*(params->sockfd_other_client), buf);
+				status = send_to_address(*(params->sockfd_other_client), buf);*/
+			status = send_to_address(*(params->sockfd_other_client), buf);
 			printf("Forwarding message from %s:%hu: %s\n", addr_str,
 			params->addr_v4->sin_port, buf);
 			if (status == -1)
