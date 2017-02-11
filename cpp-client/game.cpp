@@ -159,7 +159,7 @@ void Game::start(string username, string password)
 				c.send_win(input);
 				char buf[MAXBUFLEN];
 				memset(buf, 0, MAXBUFLEN);
-				c.receive_from(buf, 5);
+				c.receive_from(buf, 1);
 				if (buf[0] == 0 || strcmp(buf, "ACK") != 0)
 					cout << "Lost connection. Not known if win got sent." << endl;
 				c.send_bye();
@@ -228,7 +228,7 @@ void Game::start(string username, string password)
 				c.send_win(0);
 				char buf[MAXBUFLEN];
 				memset(buf, 0, MAXBUFLEN);
-				c.receive_from(buf, 5);
+				c.receive_from(buf, 1);
 				if (strcmp(buf, "ACK") == 0)
 					cout << "Opponent lost connection. You win." << endl;
 				else

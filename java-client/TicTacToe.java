@@ -60,7 +60,7 @@ public final class TicTacToe extends JPanel {
 					return;
 				}
 				try {
-					String test = this.c.receiveFrom(2);
+					String test = this.c.receiveFrom(1);
 					this.recv.recvBuf = TicTacToe.stringToLength(test, "giveup".length());
 				} catch (DisconnectException e) {
 					if (TicTacToe.NotInGame) {
@@ -303,7 +303,7 @@ public final class TicTacToe extends JPanel {
 					c.sendWin(input);
 					String ack = "";
 					try {
-						ack = this.c.receiveFrom(5);
+						ack = this.c.receiveFrom(1);
 					} catch (Exception e) {
 						this.display.gameOverMsg = "Lost connection. Not known if win got sent.";
 						this.display.doRepaint();
@@ -409,7 +409,7 @@ public final class TicTacToe extends JPanel {
 						this.c.sendWin(0);
 						String ack = "";
 						try {
-							ack = this.c.receiveFrom(5);
+							ack = this.c.receiveFrom(1);
 						} catch (Exception e) {
 							this.display.gameOverMsg = "You lose. A connection loss could have occurred.";
 							e.printStackTrace();
