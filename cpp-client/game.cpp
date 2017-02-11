@@ -147,7 +147,6 @@ void Game::start(string username, string password)
 			&params_timer);
 			while (got_move == 0)
 			{
-				input = -1;
 				cout << "Enter position (1-9): ";
 				string input_str;
 				getline(cin, input_str);
@@ -191,13 +190,13 @@ void Game::start(string username, string password)
 				c.send_bye();
 				exit(0);
 			}
-			// check if giveup
+/*			// check if giveup
 			else if (m_board.m_getPos(input) == NULL)
 			{
 				c.send_giveup();
 				cout << "You giveup. You lose." << endl;
 				exit(0);
-			}
+			}*/
 			else
 			{
 				if (!c.send_position(input))
@@ -225,10 +224,7 @@ void Game::start(string username, string password)
 			while (got_move == 0)
 			{
 				if (m_recv_buf[0] == 0)
-				{
-					input = -1;
 					continue;
-				}
 				if (isdigit(m_recv_buf[0]) && m_recv_buf[0] != '0')
 				{
 					input = m_recv_buf[0] - '0';
