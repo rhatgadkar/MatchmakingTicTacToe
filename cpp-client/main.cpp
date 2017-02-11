@@ -29,20 +29,25 @@ int main()
 
 	string password = c_password;
 
-	for (size_t k = 0; k < username.length(); k++)
+	if (username.length() == 0 && password.length() == 0)
+		;
+	else
 	{
-		if (!isalnum(username[k]))
+		for (size_t k = 0; k < username.length(); k++)
 		{
-			cout << "Username and password must contain only letters and digits." << endl;
-			return 0;
+			if (!isalnum(username[k]))
+			{
+				cout << "Username and password must contain only letters and digits." << endl;
+				return 0;
+			}
 		}
-	}
-	for (size_t k = 0; k < password.length(); k++)
-	{
-		if (!isalnum(password[k]))
+		for (size_t k = 0; k < password.length(); k++)
 		{
-			cout << "Username and password must contain only letters and digits." << endl;
-			return 0;
+			if (!isalnum(password[k]))
+			{
+				cout << "Username and password must contain only letters and digits." << endl;
+				return 0;
+			}
 		}
 	}
 

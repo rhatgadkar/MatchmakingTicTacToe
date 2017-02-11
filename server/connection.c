@@ -221,6 +221,8 @@ void* client_thread(void* parameters)
 			}
 			else
 			{
+				if (login[0] == ',')
+					break;
 				// receive success
 				get_login_info(login, username, password);
 				status = is_login_valid(username, password);
@@ -257,13 +259,18 @@ void* client_thread(void* parameters)
 		memset(p2_win, 0, MAXBUFLEN);
 		memset(p2_loss, 0, MAXBUFLEN);
 		memset(record_str, 0, MAXBUFLEN);
-		get_win_loss_record(username, p2_win, p2_loss);
-		status = snprintf(record_str, MAXBUFLEN,
-				"r%s,%s", p2_win, p2_loss);
-		if (status < 0)
+		if (login[0] == ',')
+			record_str[0] = ',';
+		else
 		{
-			fprintf(stderr, "snprintf failed\n");
-			return NULL;
+			get_win_loss_record(username, p2_win, p2_loss);
+			status = snprintf(record_str, MAXBUFLEN,
+					"r%s,%s", p2_win, p2_loss);
+			if (status < 0)
+			{
+				fprintf(stderr, "snprintf failed\n");
+				return NULL;
+			}
 		}
 
 		// send ACK to client 2 (player 2)
@@ -289,7 +296,8 @@ void* client_thread(void* parameters)
 		addr_str, sizeof(addr_str));
 		printf("Second client connected: %s:%hu\n", addr_str,
 		params->addr_v4->sin_port);
-		strcpy(params->username, username);
+		if (login[0] != ',')
+			strcpy(params->username, username);
 	}
 	else
 	{
@@ -443,6 +451,8 @@ void handle_match_msg(int sockfd, int* shm_iter)
 	}
 	else
 	{
+		if (login[0] == ',')
+			break;
 		// receive success
 		get_login_info(login, username, password);
 		status = is_login_valid(username, password);
@@ -479,7 +489,8 @@ void handle_match_msg(int sockfd, int* shm_iter)
 	char p1_loss[MAXBUFLEN];
 	memset(p1_win, 0, MAXBUFLEN);
 	memset(p1_loss, 0, MAXBUFLEN);
-	get_win_loss_record(username, p1_win, p1_loss);
+	if (login[0] != ',')
+		get_win_loss_record(username, p1_win, p1_loss);
 
 	pthread_t first_thread;
 	pthread_t second_thread;
@@ -492,7 +503,10 @@ void handle_match_msg(int sockfd, int* shm_iter)
 	first_thread_params.other_id = second_thread;
 	first_thread_params.shm_iter = shm_iter;
 	first_thread_params.thread_canceled = 0;
-	strcpy(first_thread_params.username, username);
+	if (login[0] == ',')
+		first_thread_params.username[0] = 0;
+	else
+		strcpy(first_thread_params.username, username);
 	first_thread_params.rec = 'n';
 	struct client_thread_params second_thread_params;
 	second_thread_params.sockfd_curr_client = &sockfd_client_2;
@@ -504,12 +518,17 @@ void handle_match_msg(int sockfd, int* shm_iter)
 	second_thread_params.thread_canceled = 0;
 	memset(second_thread_params.username, 0, MAXBUFLEN);
 	memset(second_thread_params.p1_record_str, 0, MAXBUFLEN);
-	status = snprintf(second_thread_params.p1_record_str, MAXBUFLEN,
-			"r%s,%s", p1_win, p1_loss);
-	if (status < 0)
+	if (login[0] == ',')
+		second_thread_params.p1_record_str[0] = ',';
+	else
 	{
-		fprintf(stderr, "snprintf failed\n");
-		return;
+		status = snprintf(second_thread_params.p1_record_str, MAXBUFLEN,
+				"r%s,%s", p1_win, p1_loss);
+		if (status < 0)
+		{
+			fprintf(stderr, "snprintf failed\n");
+			return;
+		}
 	}
 	second_thread_params.rec = 'n';
 
@@ -534,14 +553,14 @@ void handle_match_msg(int sockfd, int* shm_iter)
 		pthread_join(second_thread, NULL);
 	}
 
-	// set both usernames from 't' to 'f'
-	set_user_no_ingame(first_thread_params.username);
-	if (second_thread_params.username[0] != 0)
-		set_user_no_ingame(second_thread_params.username);
-
-	// find out who won/loss
-	if (second_thread_params.username[0] != 0)
+	if (second_thread_params.username[0] != 0 && first_thread_params.username[0] != 0)
 	{
+		// set both usernames from 't' to 'f'
+		set_user_no_ingame(first_thread_params.username);
+		if (second_thread_params.username[0] != 0)
+			set_user_no_ingame(second_thread_params.username);
+
+		// find out who won/loss
 		if (second_thread_params.rec == 'w')
 		{
 			printf("Client 1 lost.\n");
