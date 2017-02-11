@@ -411,7 +411,7 @@ public final class TicTacToe extends JPanel {
 						try {
 							ack = this.c.receiveFrom(1);
 						} catch (Exception e) {
-							this.display.gameOverMsg = "You lose. A connection loss could have occurred.";
+							this.display.gameOverMsg = "You lose. Possible connection loss.";
 							e.printStackTrace();
 						}
 						if (ack.equals("ACK"))
