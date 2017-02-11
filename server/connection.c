@@ -450,10 +450,8 @@ void handle_match_msg(int sockfd, int* shm_iter)
 		printf("Did not receive login info. Closing child server.\n");
 		return;
 	}
-	else
+	else if (login[0] != ',')
 	{
-		if (login[0] == ',')
-			break;
 		// receive success
 		get_login_info(login, username, password);
 		status = is_login_valid(username, password);
