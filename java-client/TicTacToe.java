@@ -406,7 +406,7 @@ public final class TicTacToe extends JPanel {
 /*					else if (this.display.gameOverMsg != null && this.display.gameOverMsg.contains("given")) {
 						return;
 					}*/
-					else {
+					else if (this.display.gameOverMsg != null && this.display.gameOverMsg.equals("disconnect")) {
 /*						// server disconnect -> if recv ACK, then other player disconnected.
 						this.c.sendWin(0);*/
 						this.c.sendBye();
