@@ -303,19 +303,6 @@ public final class TicTacToe extends JPanel {
 						System.exit(1);
 					}
 					c.sendWin(input);
-/*					String ack = "";
-					try {
-						ack = this.c.receiveFrom(1);
-					} catch (Exception e) {
-						this.display.gameOverMsg = "Lost connection. Not known if win got sent.";
-						this.display.doRepaint();
-						return;
-					}
-					if (!ack.equals("ACK")) {
-						this.display.gameOverMsg = "Lost connection. Not known if win got sent.";
-						this.display.doRepaint();
-						return;
-					}*/
 					JOptionPane.showMessageDialog(null, "Game over. You win.");
 
 					if (p1turn)
@@ -403,22 +390,9 @@ public final class TicTacToe extends JPanel {
 							this.display.gameOverMsg = "You have given up. Player 1 wins.";
 						this.c.sendGiveup();
 					}
-/*					else if (this.display.gameOverMsg != null && this.display.gameOverMsg.contains("given")) {
-						return;
-					}*/
 					else if (this.display.gameOverMsg != null && this.display.gameOverMsg.equals("disconnect")) {
-/*						// server disconnect -> if recv ACK, then other player disconnected.
-						this.c.sendWin(0);*/
+						// server disconnect
 						this.c.sendBye();
-/*						String ack = "";
-						try {
-							ack = this.c.receiveFrom(1);
-						} catch (Exception e) {
-							this.display.gameOverMsg = "You lose. Possible connection loss.";
-							e.printStackTrace();
-						}
-						if (ack.equals("ACK"))
-							this.display.gameOverMsg = "Other player lost connection. You win.";*/
 						this.display.gameOverMsg = "Connection loss.";
 					}
 					return;
@@ -437,12 +411,10 @@ public final class TicTacToe extends JPanel {
 				if (p1turn && !this.board.insert(this.p1.getSymbol(), input)) {
 					System.err.println("Error with receivePosition with input: " + input);
 					return;
-//					System.exit(1);
 				}
 				if (!p1turn && !this.board.insert(this.p2.getSymbol(), input)) {
 					System.err.println("Error with receivePosition with input: " + input);
 					return;
-//					System.exit(1);
 				}
 			}
 			p1turn = !p1turn;
