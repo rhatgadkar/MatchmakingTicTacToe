@@ -84,17 +84,19 @@ Client::Client(string username, string password)
 					invalidres = true;
 					break;
 				}
-			} while (buf[0] != 'r');
+			} while (buf[0] != 'r' && buf[0] != ',');
 			if (invalidres)
 				continue;
 
-			Record = buf + 1;
+			if (buf[0] == 'r')
+				Record = buf + 1;
 			cout << "Player 2 has connected.  Starting game." << endl;
 			break;
 		}
-		else if (buf[0] == 'r')
+		else if (buf[0] == 'r' || buf[0] == ',')
 		{
-			Record = buf + 1;
+			if (buf[0] == 'r')
+				Record = buf + 1;
 			cout << "You are player 2." << endl;
 			m_is_p1 = false;
 			break;

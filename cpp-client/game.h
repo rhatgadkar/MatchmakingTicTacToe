@@ -27,6 +27,7 @@ private:
 		int seconds;
 		int* got_move;
 		std::string msg;
+		Client* c;
 	};
 	static void* check_giveup(void* parameters);
 	static void* timer_countdown(void* parameters);

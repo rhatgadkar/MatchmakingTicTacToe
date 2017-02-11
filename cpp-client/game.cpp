@@ -78,6 +78,12 @@ void* Game::timer_countdown(void* parameters)
 	} while(difftime(end, start) < params->seconds);
 	cout << params->msg << endl;
 	*(params->got_move) = 1;
+	if (params->msg == "You have not played a move in 30 seconds. You have given up.")
+	{
+		params->c->send_giveup();
+		cout << "You giveup. You lose." << endl;
+		exit(0);
+	}
 	return NULL;
 }
 
@@ -129,11 +135,13 @@ void Game::start(string username, string password)
 			params_timer.got_move = &got_move;
 			params_timer.msg =
 			"You have not played a move in 30 seconds. You have given up.";
+			params_timer.c = &c;
 
 			pthread_create(&timer_thread, NULL, &(Game::timer_countdown),
 			&params_timer);
 			while (got_move == 0)
 			{
+				input = -1;
 				cout << "Enter position (1-9): ";
 				string input_str;
 				getline(cin, input_str);
