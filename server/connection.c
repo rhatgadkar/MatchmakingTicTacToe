@@ -359,6 +359,7 @@ void* client_thread(void* parameters)
 			if (*(params->sockfd_other_client) != -1)
 			{
 				// send bye to second address
+				params->rec = 'b';
 				status = send_to_address(*(params->sockfd_other_client),
 										"bye");
 				if (status == -1)
