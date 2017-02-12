@@ -29,7 +29,6 @@ private:
 		std::string msg;
 		Client* c;
 		bool giveup;
-		bool expire;
 	};
 	static void* check_giveup(void* parameters);
 	static void* timer_countdown(void* parameters);

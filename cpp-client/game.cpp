@@ -9,6 +9,7 @@
 #include <cctype>
 #include <time.h>
 #include <string>
+#include <unistd.h>
 using namespace std;
 
 Game::Game()
@@ -19,9 +20,6 @@ Game::Game()
 
 void* Game::check_giveup(void* parameters)
 {
-	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
-	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
-	
 	struct check_giveup_params* params;
 	params = (struct check_giveup_params*)parameters;
 
@@ -77,13 +75,12 @@ void* Game::timer_countdown(void* parameters)
 			return NULL;
 	} while(difftime(end, start) < params->seconds);
 	cout << params->msg << endl;
-	*(params->got_move) = 1;
 	if (params->giveup)
 		params->c->send_giveup();
 	else
 		params->c->send_bye();
-	params->expire = true;
-//	exit(0);
+	sleep(1);
+	exit(0);
 	return NULL;
 }
 
@@ -137,7 +134,6 @@ void Game::start(string username, string password)
 			"You have not played a move in 30 seconds. You have given up.";
 			params_timer.c = &c;
 			params_timer.giveup = true;
-			params_timer.expire = false;
 
 			pthread_create(&timer_thread, NULL, &(Game::timer_countdown),
 			&params_timer);
@@ -168,7 +164,6 @@ void Game::start(string username, string password)
 				else
 					cout << "Player 2 wins" << endl;
 				m_board.draw();
-				pthread_cancel(giveup_t);
 				c.send_win(input);
 				exit(0);
 			}
@@ -180,8 +175,6 @@ void Game::start(string username, string password)
 				c.send_tie(input);
 				exit(0);
 			}
-			else if (params_timer.expire)
-				exit(0);
 			else
 			{
 				if (!c.send_position(input))
@@ -203,7 +196,6 @@ void Game::start(string username, string password)
 			rcv_params_timer.msg =
 			"A move has not been received in 45 seconds. Closing connection.";
 			rcv_params_timer.giveup = false;
-			rcv_params_timer.expire = false;
 
 			pthread_create(&rcv_timer_thread, NULL, &(Game::timer_countdown),
 			&rcv_params_timer);
@@ -221,9 +213,6 @@ void Game::start(string username, string password)
 			got_move = 1;
 			pthread_join(rcv_timer_thread, NULL);
 
-			if (rcv_params_timer.expire)
-				exit(0);
-			
 			if (p1turn && !m_board.insert(m_p1.getSymbol(), input))
 			{
 				cout << "error with receive_position with input: " << input
