@@ -457,18 +457,6 @@ public final class TicTacToe extends JPanel {
 					}
 				}
 				if (TicTacToe.NotInGame.get()) {
-					this.display.gameOverMsgLock.lock();
-					try {
-						if (this.display.gameOverMsg != null && this.display.gameOverMsg.equals("Click to start.")) {
-							if (this.c.isP1())
-								this.display.gameOverMsg = "You have given up. Player 2 wins.";
-							else
-								this.display.gameOverMsg = "You have given up. Player 1 wins.";
-						}
-					} finally {
-						this.display.gameOverMsgLock.unlock();
-					}
-					this.c.sendGiveup();
 					try {
 						gt.join();
 					} catch (InterruptedException e) {
