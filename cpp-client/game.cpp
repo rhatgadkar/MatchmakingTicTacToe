@@ -9,7 +9,6 @@
 #include <cctype>
 #include <time.h>
 #include <string>
-#include <unistd.h>
 using namespace std;
 
 Game::Game()
@@ -78,8 +77,7 @@ void* Game::timer_countdown(void* parameters)
 	if (params->giveup)
 		params->c->send_giveup();
 	else
-		params->c->send_bye();
-	sleep(1);
+		params->c->send_tie(0);
 	exit(0);
 	return NULL;
 }
