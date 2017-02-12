@@ -82,7 +82,8 @@ void* Game::timer_countdown(void* parameters)
 		params->c->send_giveup();
 	else
 		params->c->send_bye();
-	exit(0);
+	params->expire = true;
+//	exit(0);
 	return NULL;
 }
 
@@ -136,6 +137,7 @@ void Game::start(string username, string password)
 			"You have not played a move in 30 seconds. You have given up.";
 			params_timer.c = &c;
 			params_timer.giveup = true;
+			params_timer.expire = false;
 
 			pthread_create(&timer_thread, NULL, &(Game::timer_countdown),
 			&params_timer);
@@ -178,6 +180,8 @@ void Game::start(string username, string password)
 				c.send_tie(input);
 				exit(0);
 			}
+			else if (params_timer.expire)
+				exit(0);
 			else
 			{
 				if (!c.send_position(input))
@@ -199,6 +203,7 @@ void Game::start(string username, string password)
 			rcv_params_timer.msg =
 			"A move has not been received in 45 seconds. Closing connection.";
 			rcv_params_timer.giveup = false;
+			rcv_params_timer.expire = false;
 
 			pthread_create(&rcv_timer_thread, NULL, &(Game::timer_countdown),
 			&rcv_params_timer);
@@ -215,6 +220,9 @@ void Game::start(string username, string password)
 			}
 			got_move = 1;
 			pthread_join(rcv_timer_thread, NULL);
+
+			if (rcv_params_timer.expire)
+				exit(0);
 			
 			if (p1turn && !m_board.insert(m_p1.getSymbol(), input))
 			{
