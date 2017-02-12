@@ -61,13 +61,9 @@ public final class TicTacToe extends JPanel {
 			for (;;) {
 				if (TicTacToe.NotInGame.get())
 					return;
-				}
 				String test = "";
 				try {
 					test = this.c.receiveFrom(1);
-					synchronized (this) {
-						this.recv.recvBuf = TicTacToe.stringToLength(test, "giveup".length());
-					}
 				} catch (DisconnectException e) {
 					if (TicTacToe.NotInGame.get())
 						return;
@@ -345,7 +341,7 @@ public final class TicTacToe extends JPanel {
 				// check if win
 				if (this.board.isWin(input) && !TicTacToe.NotInGame.get()) {
 					this.display.doRepaint();
-					TicTacToe.NotInGame = true;
+					TicTacToe.NotInGame.set(true);
 					try {
 						gt.join();
 					} catch (InterruptedException e) {
@@ -480,25 +476,22 @@ public final class TicTacToe extends JPanel {
 						System.exit(1);
 					}
 					this.display.gameOverMsgLock.lock();
-					if (this.display.gameOverMsg != null && this.display.gameOverMsg.equals("Click to start.")) {
-						if (this.c.isP1()) {
-							synchronized (this.display) {
+					try {
+						if (this.display.gameOverMsg != null && this.display.gameOverMsg.equals("Click to start.")) {
+							if (this.c.isP1())
 								this.display.gameOverMsg = "You have given up. Player 2 wins.";
-							}
-						}
-						else {
-							synchronized (this.display) {
+							else
 								this.display.gameOverMsg = "You have given up. Player 1 wins.";
-							}
+							this.c.sendGiveup();
 						}
-						this.c.sendGiveup();
+						else if (this.display.gameOverMsg != null && this.display.gameOverMsg.equals("disconnect")) {
+							// server disconnect
+							this.display.gameOverMsg = "Connection loss.";
+							this.c.sendBye();
+						}
+					} finally {
+						this.display.gameOverMsgLock.unlock();
 					}
-					else if (this.display.gameOverMsg != null && this.display.gameOverMsg.equals("disconnect")) {
-						// server disconnect
-						this.display.gameOverMsg = "Connection loss.";
-						this.c.sendBye();
-					}
-					this.display.gameOverMsgLock.unlock();
 					return;
 				}
 
