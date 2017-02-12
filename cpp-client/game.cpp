@@ -95,7 +95,7 @@ void* Game::timer_countdown(void* parameters)
 	if (params->giveup)
 		params->c->send_giveup();
 	else
-		params->c->send_tie(0);
+		params->c->send_bye();  // this results in seg fault for some reason.
 	exit(0);
 	return NULL;
 }
