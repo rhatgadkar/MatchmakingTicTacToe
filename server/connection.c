@@ -15,7 +15,6 @@
 #include "db-accessor.h"
 
 #define LISTENPORT 4950  // the port clients will be connecting to
-#define MAXBUFLEN 100
 
 static int receive_from(int sockfd, char* buf, int time);
 static int send_to_address(int sockfd, const char* text);

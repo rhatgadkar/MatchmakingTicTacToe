@@ -30,6 +30,7 @@ private:
 		std::string msg;
 		Client* c;
 		bool giveup;
+		pthread_t* giveup_t;
 	};
 	static void* check_giveup(void* parameters);
 	static void* timer_countdown(void* parameters);

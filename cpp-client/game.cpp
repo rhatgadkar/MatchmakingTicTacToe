@@ -23,6 +23,9 @@ Game::Game()
 
 void* Game::check_giveup(void* parameters)
 {
+	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+
 	char test[MAXBUFLEN];
 	struct check_giveup_params* params;
 	params = (struct check_giveup_params*)parameters;
@@ -32,7 +35,7 @@ void* Game::check_giveup(void* parameters)
 	{
 		pthread_mutex_unlock(&Game::recv_buf_mutex);
 		memset(test, 0, MAXBUFLEN);
-		params->c->receive_from_server(test);
+		params->c->receive_from(test, 1);
 		pthread_mutex_lock(&Game::recv_buf_mutex);
 		strcpy(params->recv_buf, test);
 		if (params->recv_buf != NULL && params->recv_buf[0] != 0 &&
@@ -92,11 +95,9 @@ void* Game::timer_countdown(void* parameters)
 			return NULL;
 	} while(difftime(end, start) < params->seconds);
 	cout << params->msg << endl;
-	if (params->giveup)
-		params->c->send_giveup();
-	else
-		params->c->send_bye();  // this results in seg fault for some reason.
-	exit(0);
+	pthread_cancel(*params->giveup_t);
+	pthread_join(*params->giveup_t, NULL);
+	*(params->got_move) = 1;
 	return NULL;
 }
 
@@ -152,23 +153,34 @@ void Game::start(string username, string password)
 			"You have not played a move in 30 seconds. You have given up.";
 			params_timer.c = &c;
 			params_timer.giveup = true;
+			params_timer.giveup_t = &giveup_t;
 
 			pthread_create(&timer_thread, NULL, &(Game::timer_countdown),
 			&params_timer);
-			for (;;)
+			input = -1;
+			while (got_move == 0)
 			{
 				cout << "Enter position (1-9): ";
 				string input_str;
 				getline(cin, input_str);
 				cout << endl;  // required for getline to not freeze
 				if (input_str.length() > 1 || input_str.length() < 1)
+				{
+					input = -1;
 					continue;
+				}
 				input = input_str[0] - '0';
 
 				if (p1turn && !m_board.insert(m_p1.getSymbol(), input))
+				{
+					input = -1;
 					continue;
+				}
 				if (!p1turn && !m_board.insert(m_p2.getSymbol(), input))
+				{
+					input = -1;
 					continue;
+				}
 				break;
 			}
 			got_move = 1;
@@ -193,6 +205,14 @@ void Game::start(string username, string password)
 				c.send_tie(input);
 				exit(0);
 			}
+			else if (input == -1)
+			{
+				if (params_timer.giveup)
+					c.send_giveup();
+				else
+					c.send_bye();
+				exit(0);
+			}
 			else
 			{
 				if (!c.send_position(input))
@@ -214,18 +234,21 @@ void Game::start(string username, string password)
 			rcv_params_timer.msg =
 			"A move has not been received in 45 seconds. Closing connection.";
 			rcv_params_timer.giveup = false;
+			rcv_params_timer.giveup_t = &giveup_t;
 
 			pthread_create(&rcv_timer_thread, NULL, &(Game::timer_countdown),
 			&rcv_params_timer);
 			pthread_mutex_lock(&Game::recv_buf_mutex);
 			memset(m_recv_buf, 0, MAXBUFLEN);
 			pthread_mutex_unlock(&Game::recv_buf_mutex);
-			for (;;)
+			input = -1;
+			while (got_move == 0)
 			{
 				pthread_mutex_lock(&Game::recv_buf_mutex);
 				if (m_recv_buf[0] == 0)
 				{
 					pthread_mutex_unlock(&Game::recv_buf_mutex);
+					input = -1;
 					continue;
 				}
 				if (isdigit(m_recv_buf[0]) && m_recv_buf[0] != '0')
@@ -235,9 +258,19 @@ void Game::start(string username, string password)
 					break;
 				}
 				pthread_mutex_unlock(&Game::recv_buf_mutex);
+				input = -1;
 			}
 			got_move = 1;
 			pthread_join(rcv_timer_thread, NULL);
+
+			if (input == -1)
+			{
+				if (rcv_params_timer.giveup)
+					c.send_giveup();
+				else
+					c.send_bye();
+				exit(0);
+			}
 
 			if (p1turn && !m_board.insert(m_p1.getSymbol(), input))
 			{
