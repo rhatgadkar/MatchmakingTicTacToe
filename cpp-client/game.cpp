@@ -95,6 +95,11 @@ void* Game::timer_countdown(void* parameters)
 			return NULL;
 	} while(difftime(end, start) < params->seconds);
 	cout << params->msg << endl;
+	if (params->giveup)
+	{
+		params->c->send_giveup();
+		exit(0);
+	}
 	pthread_cancel(*params->giveup_t);
 	pthread_join(*params->giveup_t, NULL);
 	*(params->got_move) = 1;
@@ -157,30 +162,20 @@ void Game::start(string username, string password)
 
 			pthread_create(&timer_thread, NULL, &(Game::timer_countdown),
 			&params_timer);
-			input = -1;
-			while (got_move == 0)
+			for (;;)
 			{
 				cout << "Enter position (1-9): ";
 				string input_str;
 				getline(cin, input_str);
 				cout << endl;  // required for getline to not freeze
 				if (input_str.length() > 1 || input_str.length() < 1)
-				{
-					input = -1;
 					continue;
-				}
 				input = input_str[0] - '0';
 
 				if (p1turn && !m_board.insert(m_p1.getSymbol(), input))
-				{
-					input = -1;
 					continue;
-				}
 				if (!p1turn && !m_board.insert(m_p2.getSymbol(), input))
-				{
-					input = -1;
 					continue;
-				}
 				break;
 			}
 			got_move = 1;
@@ -203,14 +198,6 @@ void Game::start(string username, string password)
 				cout << "Tie game" << endl;
 				m_board.draw();
 				c.send_tie(input);
-				exit(0);
-			}
-			else if (input == -1)
-			{
-				if (params_timer.giveup)
-					c.send_giveup();
-				else
-					c.send_bye();
 				exit(0);
 			}
 			else
