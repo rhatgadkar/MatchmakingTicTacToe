@@ -1,7 +1,7 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
-#define SERVERIP "54.183.217.40"
+#define SERVERIP "54.219.156.253"
 //#define SERVERIP "192.168.218.140"
 #define SERVERPORT "4950"
 #define MAXBUFLEN 100
