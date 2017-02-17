@@ -8,6 +8,11 @@ using namespace std;
 
 int main(int argc, char** argv)
 {
+	if (argc < 2)
+	{
+		cout << "Input arguments must be specified." << endl;
+		return 1;
+	}
 	// each string in argv is from 1 - 9.
 	int* user_input = new int[argc - 1];
 	for (int iter = 1; iter < argc; iter++)
