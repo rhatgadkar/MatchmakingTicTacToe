@@ -9,6 +9,7 @@
 #include <cctype>
 #include <time.h>
 #include <string>
+#include <unistd.h>
 using namespace std;
 
 pthread_mutex_t Game::recv_buf_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -167,6 +168,7 @@ void Game::start(string username, string password, int* user_input,
 			&params_timer);
 			for (;;)
 			{
+				sleep(1);
 				if (user_input_iter >= user_input_length)
 					continue;
 				else
