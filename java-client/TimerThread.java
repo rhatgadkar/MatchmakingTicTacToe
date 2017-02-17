@@ -13,7 +13,8 @@ public class TimerThread implements Runnable {
 	private Display display;
 	private JLabel timerCountdown;
 
-	public TimerThread(Msg msg, int seconds, String errorMsg, Display display, JLabel timerCountdown) {
+	public TimerThread(Msg msg, int seconds, String errorMsg, Display display,
+			JLabel timerCountdown) {
 		this.msg = msg;
 		this.seconds = seconds;
 		this.errorMsg = errorMsg;
@@ -25,7 +26,8 @@ public class TimerThread implements Runnable {
 		long startTime = System.currentTimeMillis();
 		long elapsedTime = 0L;
 		long countdown = 0L;
-		while (!this.msg.gotMsg && (elapsedTime < this.seconds * 1000) && !TicTacToe.NotInGame.get()) {
+		while (!this.msg.gotMsg && (elapsedTime < this.seconds * 1000) &&
+				!TicTacToe.NotInGame.get()) {
 			elapsedTime = (new Date().getTime()) - startTime;
 			if (this.display == null) {
 				Long currCountdown = (long)this.seconds - (elapsedTime / 1000);

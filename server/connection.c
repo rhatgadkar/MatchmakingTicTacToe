@@ -19,7 +19,7 @@
 static int receive_from(int sockfd, char* buf, int time);
 static int send_to_address(int sockfd, const char* text);
 static int accept_timer(int sockfd, struct sockaddr* their_addr,
-						socklen_t* addr_len, int time);
+		socklen_t* addr_len, int time);
 
 int setup_connection(int* sockfd, struct addrinfo* servinfo, int port_int)
 {
@@ -77,7 +77,7 @@ int setup_connection(int* sockfd, struct addrinfo* servinfo, int port_int)
 }
 
 int handle_syn_port(int sockfd, int* curr_port, int* client_port,
-					int* shm_ports_used, int* sockfd_client)
+		int* shm_ports_used, int* sockfd_client)
 {
 	int status;
 	struct sockaddr their_addr;
@@ -204,7 +204,7 @@ void* client_thread(void* parameters)
 		while (*(params->sockfd_curr_client) == -1)
 		{
 			*(params->sockfd_curr_client) = accept(params->sockfd, &their_addr,
-													&addr_len);
+					&addr_len);
 			// receive login from client 2
 			memset(login, 0, MAXBUFLEN);
 			memset(username, 0, MAXBUFLEN);
@@ -275,7 +275,7 @@ void* client_thread(void* parameters)
 		// send ACK to client 2 (player 2)
 		printf("sending to client 2: %s\n", record_str);
 		status = send_to_address(*(params->sockfd_curr_client),
-								(const char *)record_str);
+				(const char *)record_str);
 		if (status == -1)
 		{
 			perror("server: ACK to second_addr");
@@ -284,7 +284,7 @@ void* client_thread(void* parameters)
 		}
 		printf("sending to client 1: %s\n", params->p1_record_str);
 		status = send_to_address(*(params->sockfd_other_client),
-								(const char *)params->p1_record_str);
+				(const char *)params->p1_record_str);
 		if (status == -1)
 		{
 			perror("server: ACK to first_addr");
@@ -292,18 +292,18 @@ void* client_thread(void* parameters)
 			return NULL;
 		}
 		inet_ntop(AF_INET, &(params->addr_v4->sin_addr),
-		addr_str, sizeof(addr_str));
+				addr_str, sizeof(addr_str));
 		printf("Second client connected: %s:%hu\n", addr_str,
-		params->addr_v4->sin_port);
+				params->addr_v4->sin_port);
 		if (login[0] != ',')
 			strcpy(params->username, username);
 	}
 	else
 	{
 		inet_ntop(AF_INET, &(params->addr_v4->sin_addr),
-		addr_str, sizeof(addr_str));
+				addr_str, sizeof(addr_str));
 		printf("First client connected: %s:%hu\n", addr_str,
-		params->addr_v4->sin_port);
+				params->addr_v4->sin_port);
 	}
 
 
@@ -313,7 +313,7 @@ void* client_thread(void* parameters)
 
 		status = receive_from(*(params->sockfd_curr_client), buf, 120);
 		printf("Receiving message from %s:%hu: %s\n", addr_str,
-		params->addr_v4->sin_port, buf);
+				params->addr_v4->sin_port, buf);
 		if (status == -1)
 		{
 			perror("recv");
@@ -343,7 +343,7 @@ void* client_thread(void* parameters)
 				// send giveup to second address
 				params->rec = 'g';
 				status = send_to_address(*(params->sockfd_other_client),
-									 "giveup");
+						"giveup");
 				if (status == -1)
 					perror("server: sendto");
 				break;
@@ -353,13 +353,13 @@ void* client_thread(void* parameters)
 		if (strcmp(buf, "bye") == 0)
 		{
 			printf("Received 'bye', closing connection to %s:%hu\n",
-			addr_str, params->addr_v4->sin_port);
+					addr_str, params->addr_v4->sin_port);
 
 			if (*(params->sockfd_other_client) != -1)
 			{
 				// send bye to second address
 				status = send_to_address(*(params->sockfd_other_client),
-										"bye");
+						"bye");
 				if (status == -1)
 					perror("server: sendto");
 			}
@@ -388,7 +388,7 @@ void* client_thread(void* parameters)
 				params->rec = 't';
 			status = send_to_address(*(params->sockfd_other_client), buf);
 			printf("Forwarding message from %s:%hu: %s\n", addr_str,
-			params->addr_v4->sin_port, buf);
+					params->addr_v4->sin_port, buf);
 			if (status == -1)
 			{
 				perror("server: forward to second_addr");
@@ -523,7 +523,7 @@ void handle_match_msg(int sockfd, int* shm_iter)
 	pthread_create(&first_thread, NULL, &client_thread, &first_thread_params);
 
 	pthread_create(&second_thread, NULL, &client_thread,
-					&second_thread_params);
+			&second_thread_params);
 
 	while (second_thread_params.thread_canceled == 0 &&
 			first_thread_params.thread_canceled == 0)
@@ -553,28 +553,28 @@ void handle_match_msg(int sockfd, int* shm_iter)
 		printf("Client 1 lost.\n");
 		printf("Client 2 won.\n");
 		update_win_loss_record(first_thread_params.username, 'l',
-								second_thread_params.username, 'w');
+				second_thread_params.username, 'w');
 	}
 	else if (first_thread_params.rec == 'w')
 	{
 		printf("Client 1 won.\n");
 		printf("Client 2 lost.\n");
 		update_win_loss_record(first_thread_params.username, 'w',
-								second_thread_params.username, 'l');
+				second_thread_params.username, 'l');
 	}
 	else if (second_thread_params.rec == 'g')
 	{
 		printf("Client 1 won.\n");
 		printf("Client 2 lost.\n");
 		update_win_loss_record(first_thread_params.username, 'w',
-								second_thread_params.username, 'l');
+				second_thread_params.username, 'l');
 	}
 	else if (first_thread_params.rec == 'g')
 	{
 		printf("Client 1 lost.\n");
 		printf("Client 2 won.\n");
 		update_win_loss_record(first_thread_params.username, 'l',
-								second_thread_params.username, 'w');
+				second_thread_params.username, 'w');
 	}
 
 	close(sockfd_client_1);
@@ -582,7 +582,7 @@ void handle_match_msg(int sockfd, int* shm_iter)
 }
 
 int accept_timer(int sockfd, struct sockaddr* their_addr, socklen_t* addr_len,
-					int time)
+		int time)
 {
 	fd_set set;
 	struct timeval timeout;

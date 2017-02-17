@@ -16,14 +16,16 @@ int main()
 
 	memset(c_password, 0, VAR_SIZE);
 
-	cout << "Maximum username and password length is " << VAR_SIZE - 1 << " characters." << endl;
+	cout << "Maximum username and password length is " << VAR_SIZE - 1
+			<< " characters." << endl;
 	cout << "Enter username: ";
 	getline(cin, username);
 	strcpy(c_password, getpass("Enter password: "));
 
 	if (username.length() >= VAR_SIZE || c_password[VAR_SIZE - 1] != 0)
 	{
-		cout << "Username and password must be at most " << VAR_SIZE - 1 << " characters long." << endl;
+		cout << "Username and password must be at most " << VAR_SIZE - 1
+				<< " characters long." << endl;
 		return 0;
 	}
 
@@ -37,7 +39,8 @@ int main()
 		{
 			if (!isalnum(username[k]))
 			{
-				cout << "Username and password must contain only letters and digits." << endl;
+				cout << "Username and password must contain only letters and "
+						<< "digits." << endl;
 				return 0;
 			}
 		}
@@ -45,7 +48,8 @@ int main()
 		{
 			if (!isalnum(password[k]))
 			{
-				cout << "Username and password must contain only letters and digits." << endl;
+				cout << "Username and password must contain only letters and "
+						<< "digits." << endl;
 				return 0;
 			}
 		}

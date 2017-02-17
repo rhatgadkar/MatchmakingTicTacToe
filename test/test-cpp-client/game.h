@@ -13,7 +13,7 @@ public:
 	Game();
 	~Game() {}
 	void start(std::string username, std::string password, int* user_input,
-				int user_input_length);
+			int user_input_length);
 private:
 	Board m_board;
 	Player m_p1;

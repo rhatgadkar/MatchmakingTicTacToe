@@ -155,13 +155,13 @@ void Game::start(string username, string password)
 			params_timer.seconds = 30;
 			params_timer.got_move = &got_move;
 			params_timer.msg =
-			"You have not played a move in 30 seconds. You have given up.";
+					"You have not played a move in 30 seconds. You have given up.";
 			params_timer.c = &c;
 			params_timer.giveup = true;
 			params_timer.giveup_t = &giveup_t;
 
 			pthread_create(&timer_thread, NULL, &(Game::timer_countdown),
-			&params_timer);
+					&params_timer);
 			for (;;)
 			{
 				cout << "Enter position (1-9): ";
@@ -219,12 +219,12 @@ void Game::start(string username, string password)
 			rcv_params_timer.seconds = 45;
 			rcv_params_timer.got_move = &got_move;
 			rcv_params_timer.msg =
-			"A move has not been received in 45 seconds. Closing connection.";
+					"A move has not been received in 45 seconds. Closing connection.";
 			rcv_params_timer.giveup = false;
 			rcv_params_timer.giveup_t = &giveup_t;
 
 			pthread_create(&rcv_timer_thread, NULL, &(Game::timer_countdown),
-			&rcv_params_timer);
+					&rcv_params_timer);
 			pthread_mutex_lock(&Game::recv_buf_mutex);
 			memset(m_recv_buf, 0, MAXBUFLEN);
 			pthread_mutex_unlock(&Game::recv_buf_mutex);

@@ -79,7 +79,7 @@ bool Board::isWin(int pos) const
 		const char* right1 = m_getPos(pos + 1);
 		const char* right2 = m_getPos(pos + 2);
 		if (right1 != NULL && right2 != NULL && *right1 == *curr &&
-			*right2 == *curr)
+				*right2 == *curr)
 			return true;
 	}
 	if (pos == 2 || pos == 5 || pos == 8)
@@ -87,7 +87,7 @@ bool Board::isWin(int pos) const
 		const char* right1 = m_getPos(pos + 1);
 		const char* left1 = m_getPos(pos - 1);
 		if (right1 != NULL && left1 != NULL && *right1 == *curr &&
-			*left1 == *curr)
+				*left1 == *curr)
 			return true;
 	}
 	if (pos == 3 || pos == 6 || pos == 9)
@@ -95,7 +95,7 @@ bool Board::isWin(int pos) const
 		const char* left1 = m_getPos(pos - 1);
 		const char* left2 = m_getPos(pos - 2);
 		if (left1 != NULL && left2 != NULL && *left1 == *curr &&
-			*left2 == *curr)
+				*left2 == *curr)
 			return true;
 	}
 	
@@ -111,34 +111,34 @@ bool Board::isWin(int pos) const
 		if (pos == 5)
 		{
 			if (pos1 != NULL && pos9 != NULL && *pos1 == *curr &&
-				*pos9 == *curr)
+					*pos9 == *curr)
 				return true;
 			if (pos3 != NULL && pos7 != NULL && *pos3 == *curr &&
-				*pos7 == *curr)
+					*pos7 == *curr)
 				return true;
 		}
 		if (pos == 1)
 		{
 			if (pos5 != NULL && pos9 != NULL && *pos5 == *curr &&
-				*pos9 == *curr)
+					*pos9 == *curr)
 				return true;
 		}
 		if (pos == 9)
 		{
 			if (pos5 != NULL && pos1 != NULL && *pos5 == *curr &&
-				*pos1 == *curr)
+					*pos1 == *curr)
 				return true;
 		}
 		if (pos == 3)
 		{
 			if (pos5 != NULL && pos7 != NULL && *pos5 == *curr &&
-				*pos7 == *curr)
+					*pos7 == *curr)
 				return true;
 		}
 		if (pos == 7)
 		{
 			if (pos5 != NULL && pos3 != NULL && *pos5 == *curr &&
-				*pos3 == *curr)
+					*pos3 == *curr)
 				return true;
 		}
 	}

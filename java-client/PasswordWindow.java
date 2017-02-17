@@ -23,10 +23,14 @@ public class PasswordWindow extends JPanel implements ActionListener {
 		this.usernameField = new JTextField(PasswordWindow.VAR_SIZE - 1);
 		this.passwordField = new JPasswordField(PasswordWindow.VAR_SIZE - 1);
 
-		JLabel usernameLabel = new JLabel("Enter username (max " + Integer.toString(VAR_SIZE - 1) + " letters, only letters and digits allowed):");
+		JLabel usernameLabel = new JLabel("Enter username (max " +
+				Integer.toString(VAR_SIZE - 1) +
+				" letters, only letters and digits allowed):");
 		usernameLabel.setLabelFor(this.usernameField);
 
-		JLabel passwordLabel = new JLabel("Enter password (max " + Integer.toString(VAR_SIZE - 1) + " letters, only letters and digits allowed):");
+		JLabel passwordLabel = new JLabel("Enter password (max " +
+				Integer.toString(VAR_SIZE - 1) +
+				" letters, only letters and digits allowed):");
 		passwordLabel.setLabelFor(this.passwordField);
 
 		JPanel buttonPane = createButtonPanel();
@@ -63,19 +67,25 @@ public class PasswordWindow extends JPanel implements ActionListener {
 			String currUser = this.usernameField.getText();
 			String currPass = new String(this.passwordField.getPassword());
 			if (currUser.length() >= VAR_SIZE || currPass.length() >= VAR_SIZE) {
-				JOptionPane.showMessageDialog(null, "Username and Password must be at most " + Integer.toString(VAR_SIZE - 1) + " characters long.");
+				JOptionPane.showMessageDialog(null,
+						"Username and Password must be at most " +
+						Integer.toString(VAR_SIZE - 1) + " characters long.");
 				return;
 			}
 			if (currUser.length() != 0 && currPass.length() != 0) {
 				for (int i = 0; i < currUser.length(); i++) {
-					if (!Character.isDigit(currUser.charAt(i)) && !Character.isLetter(currUser.charAt(i))) {
-						JOptionPane.showMessageDialog(null, "Username and Password must only contain letters and digits.");
+					if (!Character.isDigit(currUser.charAt(i)) &&
+							!Character.isLetter(currUser.charAt(i))) {
+						JOptionPane.showMessageDialog(null,
+								"Username and Password must only contain letters and digits.");
 						return;
 					}
 				}
 				for (int i = 0; i < currPass.length(); i++) {
-					if (!Character.isDigit(currPass.charAt(i)) && !Character.isLetter(currPass.charAt(i))) {
-						JOptionPane.showMessageDialog(null, "Username and Password must only contain letters and digits.");
+					if (!Character.isDigit(currPass.charAt(i)) &&
+							!Character.isLetter(currPass.charAt(i))) {
+						JOptionPane.showMessageDialog(null,
+								"Username and Password must only contain letters and digits.");
 						return;
 					}
 				}

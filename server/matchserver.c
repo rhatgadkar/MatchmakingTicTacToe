@@ -176,7 +176,7 @@ int main()
 	for (;;)
 	{
 		status = handle_syn_port(sockfd, &curr_port, &client_port,
-					 shm_ports_used, &sockfd_client);
+				shm_ports_used, &sockfd_client);
 		close(sockfd_client);
 		if (status == -1)
 			continue;
