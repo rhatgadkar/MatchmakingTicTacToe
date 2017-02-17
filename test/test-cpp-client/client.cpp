@@ -64,7 +64,11 @@ Client::Client(string username, string password)
 		memset(buf, 0, MAXBUFLEN);
 		cout << "connected to child server" << endl;
 		if (!handle_child_syn_ack(buf))
+		{
+			// possible collision to a child server
+			retries = 0;
 			continue;
+		}
 
 		// get assigned player-1 or player-2
 		if (strcmp(buf, "player-1") == 0)
@@ -81,6 +85,7 @@ Client::Client(string username, string password)
 				if (res == -1)
 				{
 					perror("recvfrom ACK");
+					cerr << "receive_from_server failed." << endl;
 					invalidres = true;
 					break;
 				}
@@ -191,6 +196,7 @@ bool Client::handle_syn_ack(char resp[MAXBUFLEN])
 	if (res <= 0)
 	{
 		perror("recvfrom ACK");
+		cerr << "handle_syn_ack failed" << endl;
 		return false;
 	}
 
@@ -218,6 +224,7 @@ bool Client::handle_child_syn_ack(char resp[MAXBUFLEN])
 	if (res <= 0)
 	{
 		perror("recvfrom ACK");
+		cerr << "handle_child_syn_ack failed" << endl;
 		return false;
 	}
 

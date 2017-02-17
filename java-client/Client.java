@@ -89,6 +89,8 @@ public final class Client {
 			try {
 				buf = handleChildSynAck();
 			} catch (Exception e) {
+				// possible collision to a child server
+				retries = 0;
 				continue;
 			}
 			buf = TicTacToe.stringToLength(buf, "player-1".length());

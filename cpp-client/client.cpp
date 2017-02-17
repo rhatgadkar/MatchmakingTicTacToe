@@ -64,7 +64,11 @@ Client::Client(string username, string password)
 		memset(buf, 0, MAXBUFLEN);
 		cout << "connected to child server" << endl;
 		if (!handle_child_syn_ack(buf))
+		{
+			// possible collision to a child server
+			retries = 0;
 			continue;
+		}
 
 		// get assigned player-1 or player-2
 		if (strcmp(buf, "player-1") == 0)
