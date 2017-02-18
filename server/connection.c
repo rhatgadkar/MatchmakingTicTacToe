@@ -104,7 +104,7 @@ int handle_syn_port(int sockfd, int* curr_port, int* client_port,
 	their_addr_v4 = (struct sockaddr_in*)&their_addr;
 	inet_ntop(AF_INET, &(their_addr_v4->sin_addr), s, sizeof(s));
 	printf("client: %s:%hu connected to parent server.\n", s,
-	their_addr_v4->sin_port);
+			their_addr_v4->sin_port);
 
 	// send number of people online to client
 	int num_ppl = 0;
@@ -203,14 +203,15 @@ void* client_thread(void* parameters)
 		printf("Waiting for second client to connect...\n");
 		while (*(params->sockfd_curr_client) == -1)
 		{
-			*(params->sockfd_curr_client) = accept(params->sockfd, &their_addr,
-					&addr_len);
+			*(params->sockfd_curr_client) = accept(params->sockfd,
+					&their_addr, &addr_len);
 			// receive login from client 2
 			memset(login, 0, MAXBUFLEN);
 			memset(username, 0, MAXBUFLEN);
 			memset(password, 0, MAXBUFLEN);
 			
-			status = receive_from(*(params->sockfd_curr_client), login, 15);
+			status = receive_from(*(params->sockfd_curr_client),
+					login, 15);
 			if (status <= 0)
 			{
 				// timeout, error, or disconnect

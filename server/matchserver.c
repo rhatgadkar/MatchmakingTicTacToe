@@ -96,7 +96,6 @@ void create_match_server(int curr_port)
 		}
 
 		int fd;
-		struct flock lock_w;
 		char str_curr_port[MAXBUFLEN];
 		sprintf(str_curr_port, "%d", curr_port);
 
