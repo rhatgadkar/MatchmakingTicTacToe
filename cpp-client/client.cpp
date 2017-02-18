@@ -88,9 +88,15 @@ Client::Client(string username, string password)
 					invalidres = true;
 					break;
 				}
-			} while (buf[0] != 'r' && buf[0] != ',');
+			} while (buf[0] != 'r' && buf[0] != ',' && buf[0] != 'b');
 			if (invalidres)
 				continue;
+			if (buf[0] == 'b')
+			{
+				retries = 0;
+				cout << "Didn't find opponent. Searching again." << endl;
+				continue;
+			}
 
 			if (buf[0] == 'r')
 				Record = buf + 1;

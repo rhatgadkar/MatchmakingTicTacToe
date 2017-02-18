@@ -115,9 +115,15 @@ public final class Client {
 						retryConn = true;
 						break;
 					}
-				} while (buf.charAt(0) != 'r' && buf.charAt(0) != ',');
+				} while (buf.charAt(0) != 'r' && buf.charAt(0) != ',' &&
+						buf.charAt(0) != 'b');
 				if (retryConn)
 					continue;
+				if (buf.charAt(0) == 'b') {
+					retries = 0;
+					System.out.println("Didn't find opponent. Searching again.");
+					continue;
+				}
 				System.out.println("Current record: " + buf);
 				this.Record = new String(buf);
 				break;
