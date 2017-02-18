@@ -39,7 +39,10 @@ void sigchld_handler(int s)
 		{
 			printf("clearing port: %d\n", port);
 			port_to_shm_iter(port, &shm_iter, shm_ports_used);
+			acquire_shm_lock(shm_ports_used);
+			*(shm_ports_used + SHM_POP_POS) -= *shm_iter;
 			*shm_iter = 0;
+			release_shm_lock(shm_ports_used);
 		}
 	}
 }
@@ -99,7 +102,7 @@ void create_match_server(int curr_port)
 		char str_curr_port[MAXBUFLEN];
 		sprintf(str_curr_port, "%d", curr_port);
 
-		handle_match_msg(sockfd, shm_iter);
+		handle_match_msg(sockfd, shm_iter, shm_ports_used);
 
 		printf("Child server at port: %d has closed.\n", curr_port);
 
@@ -137,6 +140,8 @@ int main()
 	int k;
 	for (k = 0; k < MAX_CHILD_SERVERS; k++)
 		*shm_iter++ = 0;
+	*(shm_ports_used + SHM_POP_POS) = 0;
+	*(shm_ports_used + SHM_LOCK_POS) = 0;
 
 	status = setup_connection(&sockfd, servinfo, LISTENPORT);
 	if (status != 0)
@@ -181,8 +186,14 @@ int main()
 			continue;
 
 		port_to_shm_iter(curr_port, &shm_iter, shm_ports_used);
+		acquire_shm_lock(shm_ports_used);
 		if (*shm_iter == 0)
+		{
+			release_shm_lock(shm_ports_used);
 			create_match_server(curr_port);
+		}
+		else
+			release_shm_lock(shm_ports_used);
 	}
 
 	close(sockfd);
