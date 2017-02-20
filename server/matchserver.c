@@ -25,7 +25,6 @@ void sigchld_handler(int s)
 	int port;
 	int* shm_iter;
 
-
 	while(waitpid(-1, NULL, WNOHANG) > 0)
 	{
 		memset(buf, 0, MAXBUFLEN);

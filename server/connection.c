@@ -165,6 +165,8 @@ int handle_syn_port(int sockfd, int* curr_port, int* client_port,
 				release_shm_lock(shm_ports_used);
 		}
 	}
+	else
+		release_shm_lock(shm_ports_used);
 
 	sprintf(port, "%d", *curr_port);
 	status = send_to_address(*sockfd_client, port);
