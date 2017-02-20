@@ -38,7 +38,11 @@ Client::Client(string username, string password)
 		memset(buf, 0, MAXBUFLEN);
 		res = get_num_ppl();
 		if (res == -1)
+		{
+			cout << "Parent server is busy. Retrying." << endl;
+			sleep(15);
 			continue;
+		}
 		else if (res == 2)
 		{
 			cout << "Child servers are full. Retrying." << endl;
@@ -81,11 +85,11 @@ Client::Client(string username, string password)
 			do
 			{
 				memset(buf, 0, MAXBUFLEN);
-				res = receive_from_server(buf);
-				if (res == -1)
+				res = receive_from(buf, 130);
+				if (res <= 0)
 				{
 					perror("recvfrom ACK");
-					cerr << "receive_from_server failed." << endl;
+					cerr << "receive_from wait for p2 failed." << endl;
 					invalidres = true;
 					break;
 				}

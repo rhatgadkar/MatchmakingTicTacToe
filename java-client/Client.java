@@ -3,6 +3,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.net.SocketTimeoutException;
 import javax.swing.JOptionPane;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -49,6 +50,11 @@ public final class Client {
 			}
 			try {
 				int numPpl = getNumPpl();
+				if (numPpl == -1) {
+					System.out.println("Parent server is busy. Retrying.");
+					Thread.sleep(15000);
+					continue;
+				}
 				if (numPpl == 2) {
 					System.out.println("Child servers are full. Retrying.");
 					retries = 0;
@@ -108,8 +114,12 @@ public final class Client {
 				do {
 					buf = "";
 					try {
-						buf = receiveFromServer();
-					} catch (DisconnectException e) {
+						buf = receiveFrom(130);
+					} catch (SocketTimeoutException e) {
+						System.err.println("Couldn't find opponent.");
+						retryConn = true;
+						break;
+					} catch (Exception e) {
 						System.err.println("Child server exited.");
 						e.printStackTrace();
 						retryConn = true;
@@ -269,7 +279,8 @@ public final class Client {
 		}
 	}
 
-	public String receiveFrom(int sec) throws DisconnectException, Exception {
+	public String receiveFrom(int sec) throws DisconnectException,
+			SocketTimeoutException, Exception {
 		byte message[] = new byte[Client.MAXBUFLEN];
 		try {
 			InputStream in = this.sock.getInputStream();
@@ -280,6 +291,8 @@ public final class Client {
 				if (status == -1)
 					throw new DisconnectException();
 			}
+		} catch (SocketTimeoutException e) {
+			throw new SocketTimeoutException();
 		} catch (Exception e) {
 			throw new Exception();
 		}
