@@ -198,7 +198,7 @@ struct client_thread_params
 
 void* client_thread(void* parameters)
 {
-	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+//	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 
 	struct client_thread_params* params;
@@ -208,10 +208,15 @@ void* client_thread(void* parameters)
 	char buf[MAXBUFLEN];
 	char addr_str[INET_ADDRSTRLEN];
 
+	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+
 	acquire_shm_lock(params->shm_ports_used);
 	if (*(params->sockfd_curr_client) == -1 && *(params->shm_iter) == 1)
 	{
 		release_shm_lock(params->shm_ports_used);
+	
+		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+	
 		struct sockaddr their_addr;
 		socklen_t addr_len = sizeof(their_addr);
 		char login[MAXBUFLEN];
@@ -265,11 +270,16 @@ void* client_thread(void* parameters)
 				}
 			}
 		}
+	
+		pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
 
 		acquire_shm_lock(params->shm_ports_used);
 		*(params->shm_iter) = *(params->shm_iter) + 1;
 		*(params->shm_ports_used + SHM_POP_POS) += 1;
 		release_shm_lock(params->shm_ports_used);
+
+		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+
 		printf("client 2 success\n");
 
 		params->addr_v4 = (struct sockaddr_in*)&their_addr;
@@ -303,7 +313,6 @@ void* client_thread(void* parameters)
 		if (status == -1)
 		{
 			perror("server: ACK to second_addr");
-			pthread_cancel(params->other_id);
 			params->thread_canceled = 1;
 			return NULL;
 		}
@@ -313,7 +322,6 @@ void* client_thread(void* parameters)
 		if (status == -1)
 		{
 			perror("server: ACK to first_addr");
-			pthread_cancel(params->other_id);
 			params->thread_canceled = 1;
 			return NULL;
 		}
@@ -327,6 +335,9 @@ void* client_thread(void* parameters)
 	else
 	{
 		release_shm_lock(params->shm_ports_used);
+	
+		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+
 		inet_ntop(AF_INET, &(params->addr_v4->sin_addr),
 				addr_str, sizeof(addr_str));
 		printf("First client connected: %s:%hu\n", addr_str,
