@@ -23,19 +23,27 @@ Game::Game()
 
 void* Game::check_giveup(void* parameters)
 {
-	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+//	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 
 	char test[MAXBUFLEN];
 	struct check_giveup_params* params;
 	params = (struct check_giveup_params*)parameters;
 
+	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+
 	pthread_mutex_lock(&Game::recv_buf_mutex);
 	do
 	{
 		pthread_mutex_unlock(&Game::recv_buf_mutex);
+	
+		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+	
 		memset(test, 0, MAXBUFLEN);
 		params->c->receive_from(test, 1);
+
+		pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+		
 		pthread_mutex_lock(&Game::recv_buf_mutex);
 		strcpy(params->recv_buf, test);
 		if (params->recv_buf != NULL && params->recv_buf[0] != 0 &&
@@ -51,6 +59,8 @@ void* Game::check_giveup(void* parameters)
 					else
 						cout << "Tie game" << endl;
 					pthread_mutex_unlock(&Game::recv_buf_mutex);
+					
+					pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 				}
 				else
 				{
@@ -60,19 +70,34 @@ void* Game::check_giveup(void* parameters)
 					else
 						cout << "Tie game" << endl;
 					pthread_mutex_unlock(&Game::recv_buf_mutex);
+
+					pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 				}
 			}
 			else
+			{
 				pthread_mutex_unlock(&Game::recv_buf_mutex);
+
+				pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+			}
 			params->board->draw();
 			cout << "Client is exiting.  Closing server." << endl;
 			exit(0);
 		}
 		else
+		{
 			pthread_mutex_unlock(&Game::recv_buf_mutex);
+
+			pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+		}
+
+		pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
+		
 		pthread_mutex_lock(&Game::recv_buf_mutex);
 	} while(strcmp(params->recv_buf, "giveup") != 0);
 	pthread_mutex_unlock(&Game::recv_buf_mutex);
+
+	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 
 	if (params->c->is_p1())
 		cout << "Player 2 has given up.  Player 1 wins." << endl;
