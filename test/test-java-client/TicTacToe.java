@@ -69,12 +69,16 @@ public final class TicTacToe extends JPanel {
 					this.display.gameOverMsgLock.lock();
 					try {
 						TicTacToe.NotInGame.set(true);
-						if (this.c.isP1())
+						if (this.c.isP1()) {
 							this.display.gameOverMsg =
 									"Player 2 has given up. You win.";
-						else
+							System.out.println("Player 2 has given up. You win.");
+						}
+						else {
 							this.display.gameOverMsg =
 									"Player 1 has given up. You win.";
+							System.out.println("Player 1 has given up. You win.");
+						}
 					} finally {
 						this.display.gameOverMsgLock.unlock();
 					}
@@ -101,6 +105,7 @@ public final class TicTacToe extends JPanel {
 									this.display.gameOverMsgLock.lock();
 									try {
 										this.display.gameOverMsg = "Player 2 wins.";
+										System.out.println("Player 2 wins.");
 									} finally {
 										this.display.gameOverMsgLock.unlock();
 									}
@@ -111,6 +116,7 @@ public final class TicTacToe extends JPanel {
 									this.display.gameOverMsgLock.lock();
 									try {
 										this.display.gameOverMsg = "Tie game.";
+										System.out.println("Tie game");
 									} finally {
 										this.display.gameOverMsgLock.unlock();
 									}
@@ -126,6 +132,7 @@ public final class TicTacToe extends JPanel {
 									this.display.gameOverMsgLock.lock();
 									try {
 										this.display.gameOverMsg = "Player 1 wins.";
+										System.out.println("Player 1 wins.");
 									} finally {
 										this.display.gameOverMsgLock.unlock();
 									}
@@ -136,6 +143,7 @@ public final class TicTacToe extends JPanel {
 									this.display.gameOverMsgLock.lock();
 									try {
 										this.display.gameOverMsg = "Tie game.";
+										System.out.println("Tie game");
 									} finally {
 										this.display.gameOverMsgLock.unlock();
 									}
@@ -158,12 +166,16 @@ public final class TicTacToe extends JPanel {
 				this.display.gameOverMsgLock.lock();
 				try {
 					TicTacToe.NotInGame.set(true);
-					if (this.c.isP1())
+					if (this.c.isP1()) {
 						this.display.gameOverMsg =
 								"Player 2 has given up. You win.";
-					else
+						System.out.println("Player 2 has given up. You win.");
+					}
+					else {
 						this.display.gameOverMsg =
 								"Player 1 has given up. You win.";
+						System.out.println("Player 1 has given up. You win.");
+					}
 				} finally {
 					this.display.gameOverMsgLock.unlock();
 				}
@@ -392,6 +404,7 @@ public final class TicTacToe extends JPanel {
 						this.display.gameOverMsgLock.lock();
 						try {
 							this.display.gameOverMsg = "Player 1 wins.";
+							System.out.println("Player 1 wins.");
 						} finally {
 							this.display.gameOverMsgLock.unlock();
 						}
@@ -400,6 +413,7 @@ public final class TicTacToe extends JPanel {
 						this.display.gameOverMsgLock.lock();
 						try {
 							this.display.gameOverMsg = "Player 2 wins.";
+							System.out.println("Player 2 wins.");
 						} finally {
 							this.display.gameOverMsgLock.unlock();
 						}
@@ -420,6 +434,7 @@ public final class TicTacToe extends JPanel {
 					this.display.gameOverMsgLock.lock();
 					try {
 						this.display.gameOverMsg = "Tie game.";
+						System.out.println("Tie game.");
 					} finally {
 						this.display.gameOverMsgLock.unlock();
 					}
@@ -434,12 +449,16 @@ public final class TicTacToe extends JPanel {
 									this.display.gameOverMsg != null &&
 									this.display.gameOverMsg.equals("Click to start.")) {
 								// quitbutton was triggered.
-								if (this.c.isP1())
+								if (this.c.isP1()) {
 									this.display.gameOverMsg =
 											"You have given up. Player 2 wins.";
-								else
+									System.out.println("You have given up. Player 2 wins.");
+								}
+								else {
 									this.display.gameOverMsg =
 											"You have given up. Player 1 wins.";
+									System.out.println("You have given up. Player 1 wins.");
+								}
 							}
 							else if (TicTacToe.NotInGame.get() &&
 									this.display.gameOverMsg != null &&
@@ -447,12 +466,16 @@ public final class TicTacToe extends JPanel {
 								// other client triggered quitbutton - disconnectexception
 								;
 							else {
-								if (p1turn)
+								if (p1turn) {
 									this.display.gameOverMsg =
 											"You have not played a move. Player 2 wins.";
-								else
+									System.out.println("You have not played a move. Player 2 wins.");
+								}
+								else {
 									this.display.gameOverMsg =
 											"You have not played a move. Player 1 wins.";
+									System.out.println("You have not played a move. Player 1 wins.");
+								}
 							}
 						} finally {
 							this.display.gameOverMsgLock.unlock();
@@ -511,18 +534,23 @@ public final class TicTacToe extends JPanel {
 					try {
 						if (this.display.gameOverMsg != null &&
 								this.display.gameOverMsg.equals("Click to start.")) {
-							if (this.c.isP1())
+							if (this.c.isP1()) {
 								this.display.gameOverMsg =
 										"You have given up. Player 2 wins.";
-							else
+								System.out.println("You have given up. Player 2 wins.");
+							}
+							else {
 								this.display.gameOverMsg =
 										"You have given up. Player 1 wins.";
+								System.out.println("You have given up. Player 1 wins.");
+							}
 							this.c.sendGiveup();
 						}
 						else if (this.display.gameOverMsg != null &&
 								this.display.gameOverMsg.equals("disconnect")) {
 							// server disconnect
 							this.display.gameOverMsg = "Connection loss.";
+							System.out.println("Connection loss.");
 							this.c.sendBye();
 						}
 					} finally {
