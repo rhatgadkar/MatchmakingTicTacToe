@@ -6,4 +6,4 @@ while True:
     a = system(cmd)
     if a != 0:
         break
-print 'Error happened. Couldn\'t start test-cpp-client. Exiting.'
+print 'Error happened. Couldn\'t start test-java-client. Exiting.'
