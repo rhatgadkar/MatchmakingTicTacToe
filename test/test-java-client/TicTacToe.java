@@ -197,9 +197,17 @@ public final class TicTacToe extends JPanel {
 				break;
 			}
 		}
-		
-		String username = new String(args[loginPos]);
-		String password = new String(args[loginPos]);
+
+		String username;
+		String password;
+		if (loginPos == -1) {
+			username = new String("");
+			password = new String("");
+		}
+		else {
+			username = new String(args[loginPos]);
+			password = new String(args[loginPos]);
+		}
 
 		JFrame window = new JFrame("Matchmaking TicTacToe");
 		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
