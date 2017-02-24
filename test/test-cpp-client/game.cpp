@@ -128,6 +128,7 @@ void* Game::timer_countdown(void* parameters)
 	if (params->giveup)
 	{
 		params->c->send_giveup();
+		cout << "you lose" << endl;
 		exit(0);
 	}
 	pthread_cancel(*params->giveup_t);
