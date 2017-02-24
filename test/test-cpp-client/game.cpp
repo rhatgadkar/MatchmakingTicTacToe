@@ -56,7 +56,8 @@ void* Game::check_giveup(void* parameters)
 				{
 					params->board->insert(Player::P2_SYMBOL, params->recv_buf[1] - '0');
 					if (params->recv_buf[0] == 'w')
-						cout << "Player 2 wins" << endl;
+//						cout << "Player 2 wins" << endl;
+						cout << "You lose." << endl;
 					else
 						cout << "Tie game" << endl;
 					pthread_mutex_unlock(&Game::recv_buf_mutex);
@@ -67,7 +68,8 @@ void* Game::check_giveup(void* parameters)
 				{
 					params->board->insert(Player::P1_SYMBOL, params->recv_buf[1] - '0');
 					if (params->recv_buf[0] == 'w')
-						cout << "Player 1 wins" << endl;
+//						cout << "Player 1 wins" << endl;
+						cout << "You lose." << endl;
 					else
 						cout << "Tie game" << endl;
 					pthread_mutex_unlock(&Game::recv_buf_mutex);
@@ -101,9 +103,11 @@ void* Game::check_giveup(void* parameters)
 	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 
 	if (params->c->is_p1())
-		cout << "Player 2 has given up.  Player 1 wins." << endl;
+//		cout << "Player 2 has given up.  Player 1 wins." << endl;
+		cout << "You win." << endl;
 	else
-		cout << "Player 1 has given up.  Player 2 wins." << endl;
+//		cout << "Player 1 has given up.  Player 2 wins." << endl;
+		cout << "You win." << endl;
 	exit(0);
 }
 
@@ -218,9 +222,11 @@ void Game::start(string username, string password, int* user_input,
 			if (m_board.isWin(input))
 			{
 				if (p1turn)
-					cout << "Player 1 wins" << endl;
+//					cout << "Player 1 wins" << endl;
+					cout << "You win." << endl;
 				else
-					cout << "Player 2 wins" << endl;
+//					cout << "Player 2 wins" << endl;
+					cout << "You win." << endl;
 				m_board.draw();
 				c.send_win(input);
 				exit(0);

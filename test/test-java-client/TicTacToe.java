@@ -188,8 +188,18 @@ public final class TicTacToe extends JPanel {
 		// login
 		JFrame login = new JFrame("Login");
 		login.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		String username = new String("");
-		String password = new String("");
+		
+		int loginPos = -1;
+		for (int i = 0; i < args.length; i++) {
+			char in = args[i].charAt(0);
+			if (in < '1' || in > '9') {
+				loginPos = i;
+				break;
+			}
+		}
+		
+		String username = new String(args[loginPos]);
+		String password = new String(args[loginPos]);
 
 		JFrame window = new JFrame("Matchmaking TicTacToe");
 		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -201,7 +211,7 @@ public final class TicTacToe extends JPanel {
 			window.setVisible(false);
 
 			game.NotInGame.set(false);
-			game.start(username, password, args);
+			game.start(username, password, args, loginPos);
 			System.out.println("Exited game.start()");
 			game.getDisplay().doRepaint();
 
@@ -283,7 +293,8 @@ public final class TicTacToe extends JPanel {
 		add(createBotPanel());
 	}
 
-	public void start(String username, String password, String[] user_input) {
+	public void start(String username, String password, String[] user_input,
+			int user_input_length) {
 		if (TicTacToe.NotInGame.get()) {
 			this.playerfield.setText("MatchMaking TicTacToe");
 			while (TicTacToe.NotInGame.get())
@@ -349,7 +360,7 @@ public final class TicTacToe extends JPanel {
 						input = -1;
 						continue;
 					}
-					if (user_input_iter >= user_input.length) {
+					if (user_input_iter >= user_input_length) {
 						input = -1;
 						continue;
 					}
@@ -452,12 +463,14 @@ public final class TicTacToe extends JPanel {
 								if (this.c.isP1()) {
 									this.display.gameOverMsg =
 											"You have given up. Player 2 wins.";
-									System.out.println("You have given up. Player 2 wins.");
+//									System.out.println("You have given up. Player 2 wins.");
+									System.out.println("You lose.");
 								}
 								else {
 									this.display.gameOverMsg =
 											"You have given up. Player 1 wins.";
-									System.out.println("You have given up. Player 1 wins.");
+//									System.out.println("You have given up. Player 1 wins.");
+									System.out.println("You lose.");
 								}
 							}
 							else if (TicTacToe.NotInGame.get() &&
@@ -469,12 +482,14 @@ public final class TicTacToe extends JPanel {
 								if (p1turn) {
 									this.display.gameOverMsg =
 											"You have not played a move. Player 2 wins.";
-									System.out.println("You have not played a move. Player 2 wins.");
+//									System.out.println("You have not played a move. Player 2 wins.");
+									System.out.println("You lose.");
 								}
 								else {
 									this.display.gameOverMsg =
 											"You have not played a move. Player 1 wins.";
-									System.out.println("You have not played a move. Player 1 wins.");
+//									System.out.println("You have not played a move. Player 1 wins.");
+									System.out.println("You lose.");
 								}
 							}
 						} finally {
@@ -537,12 +552,14 @@ public final class TicTacToe extends JPanel {
 							if (this.c.isP1()) {
 								this.display.gameOverMsg =
 										"You have given up. Player 2 wins.";
-								System.out.println("You have given up. Player 2 wins.");
+//								System.out.println("You have given up. Player 2 wins.");
+								System.out.println("You lose.");
 							}
 							else {
 								this.display.gameOverMsg =
 										"You have given up. Player 1 wins.";
-								System.out.println("You have given up. Player 1 wins.");
+//								System.out.println("You have given up. Player 1 wins.");
+								System.out.println("You lose.");
 							}
 							this.c.sendGiveup();
 						}

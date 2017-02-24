@@ -14,21 +14,28 @@ int main(int argc, char** argv)
 		return 1;
 	}
 	// each string in argv is from 1 - 9.
+	int login_pos = -1;
 	int* user_input = new int[argc - 1];
 	for (int iter = 1; iter < argc; iter++)
 	{
 		char in = argv[iter][0];
 		if (in < '1' || in > '9')
 		{
-			cout << "Invalid user input. Aborting." << endl;
-			return 1;
+			login_pos = iter;
+			break;
 		}
 		user_input[iter - 1] = in - '0';
 	}
 
 	Game game;
-	// no login
-	game.start("", "", user_input, argc - 1);
+	if (login_pos == -1)
+		// no login
+		game.start("", "", user_input, argc - 1);
+	else
+	{
+		string login = argv[login_pos];
+		game.start(login, login, user_input, login_pos - 1);
+	}
 	delete [] user_input;
 
 	return 0;
