@@ -6,7 +6,7 @@
 #define LISTENPORT 4950  // the port clients will be connecting to
 #define MAXBUFLEN 100
 #define BACKLOG 20
-#define MAX_CHILD_SERVERS 1000
+#define MAX_CHILD_SERVERS 100
 #define SHM_POP_POS 900
 #define SHM_LOCK_POS 899
 
