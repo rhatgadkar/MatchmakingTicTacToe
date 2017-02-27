@@ -9,6 +9,7 @@ import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
+import java.net.SocketTimeoutException;
 
 @SuppressWarnings("serial")
 public final class TicTacToe extends JPanel {
@@ -65,28 +66,26 @@ public final class TicTacToe extends JPanel {
 					test = this.c.receiveFrom(1);
 				} catch (DisconnectException e) {
 					// server disconnect
-/*					if (TicTacToe.NotInGame.get())
-						return;
 					this.display.gameOverMsgLock.lock();
 					try {
-						TicTacToe.NotInGame.set(true);
-						if (this.c.isP1()) {
-							this.display.gameOverMsg =
-									"Player 2 has given up. You win.";
-							System.out.println("Player 2 has given up. You win.");
-						}
-						else {
-							this.display.gameOverMsg =
-									"Player 1 has given up. You win.";
-							System.out.println("Player 1 has given up. You win.");
-						}
+						this.display.gameOverMsg = "disconnect";
 					} finally {
 						this.display.gameOverMsgLock.unlock();
-					}*/
+					}
 					TicTacToe.NotInGame.set(true);
 					return;
-				} catch (Exception e) {
+				} catch (SocketTimeoutException e) {
 					continue;
+				} catch (Exception e) {
+					// server disconnect
+					this.display.gameOverMsgLock.lock();
+					try {
+						this.display.gameOverMsg = "disconnect";
+					} finally {
+						this.display.gameOverMsgLock.unlock();
+					}
+					TicTacToe.NotInGame.set(true);
+					return;
 				}
 				this.recv.recvBufLock.lock();
 				try {
@@ -486,8 +485,15 @@ public final class TicTacToe extends JPanel {
 							else if (TicTacToe.NotInGame.get() &&
 									this.display.gameOverMsg != null &&
 									this.display.gameOverMsg.contains("You win"))
-								// other client triggered quitbutton - disconnectexception
+								// other client triggered quitbutton
 								;
+							else if (TicTacToe.NotInGame.get() &&
+									this.display.gameOverMsg != null &&
+									this.display.gameOverMsg.equals("disconnect")) {
+								// server disconnect
+								this.display.gameOverMsg = "Connection loss.";
+								this.c.sendBye();
+							}
 							else {
 								if (p1turn) {
 									this.display.gameOverMsg =
