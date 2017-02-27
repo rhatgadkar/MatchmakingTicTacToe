@@ -40,7 +40,10 @@ void* Game::check_giveup(void* parameters)
 		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 	
 		memset(test, 0, MAXBUFLEN);
-		params->c->receive_from(test, 1);
+		int status = params->c->receive_from(test, 1);
+		if (status == 0)
+			// server disconnect
+			return NULL;
 
 		pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
 		

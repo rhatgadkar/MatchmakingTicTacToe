@@ -66,7 +66,8 @@ public final class TicTacToe extends JPanel {
 				try {
 					test = this.c.receiveFrom(1);
 				} catch (DisconnectException e) {
-					if (TicTacToe.NotInGame.get())
+					// server disconnect
+/*					if (TicTacToe.NotInGame.get())
 						return;
 					this.display.gameOverMsgLock.lock();
 					try {
@@ -79,7 +80,7 @@ public final class TicTacToe extends JPanel {
 									"Player 1 has given up. You win.";
 					} finally {
 						this.display.gameOverMsgLock.unlock();
-					}
+					}*/
 					return;
 				} catch (Exception e) {
 					continue;
