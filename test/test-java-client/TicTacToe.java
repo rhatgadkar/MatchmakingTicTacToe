@@ -83,6 +83,7 @@ public final class TicTacToe extends JPanel {
 					} finally {
 						this.display.gameOverMsgLock.unlock();
 					}*/
+					TicTacToe.NotInGame.set(true);
 					return;
 				} catch (Exception e) {
 					continue;
