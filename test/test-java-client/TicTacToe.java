@@ -64,16 +64,6 @@ public final class TicTacToe extends JPanel {
 				String test = "";
 				try {
 					test = this.c.receiveFrom(1);
-				} catch (DisconnectException e) {
-					// server disconnect
-					this.display.gameOverMsgLock.lock();
-					try {
-						this.display.gameOverMsg = "disconnect";
-					} finally {
-						this.display.gameOverMsgLock.unlock();
-					}
-					TicTacToe.NotInGame.set(true);
-					return;
 				} catch (SocketTimeoutException e) {
 					continue;
 				} catch (Exception e) {

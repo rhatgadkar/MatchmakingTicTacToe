@@ -202,11 +202,9 @@ public final class Client {
 		try {
 			ack = receiveFrom(15);
 			System.out.println("Receieved ACK from server.");
-		} catch (DisconnectException e) {
-			System.out.println("Server disconnected. Exiting.");
-			e.printStackTrace();
-			throw new Exception();
 		} catch (Exception e) {
+			System.err.println("Possible server disconnect.");
+			e.printStackTrace();
 			throw new Exception();
 		}
 		return ack;
@@ -219,11 +217,9 @@ public final class Client {
 		try {
 			ack = receiveFrom(15);
 			System.out.println("Receieved ACK from server.");
-		} catch (DisconnectException e) {
-			System.out.println("Server disconnected. Exiting.");
-			e.printStackTrace();
-			throw new Exception();
 		} catch (Exception e) {
+			System.err.println("Possible server disconnect.");
+			e.printStackTrace();
 			throw new Exception();
 		}
 		return ack;
@@ -252,11 +248,9 @@ public final class Client {
 				return 2;
 			System.out.println("Number of people online: " + numPpl);
 			return 1;
-		} catch (DisconnectException e) {
-			System.out.println("Server disconnected. Exiting.");
-			e.printStackTrace();
-			throw new Exception();
 		} catch (Exception e) {
+			System.err.println("Possible server disconnect.");
+			e.printStackTrace();
 			throw new Exception();
 		}
 	}
@@ -279,8 +273,8 @@ public final class Client {
 		}
 	}
 
-	public String receiveFrom(int sec) throws DisconnectException,
-			SocketTimeoutException, Exception {
+	public String receiveFrom(int sec) throws SocketTimeoutException,
+			Exception {
 		byte message[] = new byte[Client.MAXBUFLEN];
 		try {
 			InputStream in = this.sock.getInputStream();
@@ -289,7 +283,7 @@ public final class Client {
 			for (int numbytes = 0; numbytes < Client.MAXBUFLEN; numbytes += status) {
 				status = in.read(message, numbytes, Client.MAXBUFLEN - numbytes);
 				if (status == -1)
-					throw new DisconnectException();
+					throw new Exception();
 			}
 		} catch (SocketTimeoutException e) {
 			throw new SocketTimeoutException();
@@ -304,7 +298,7 @@ public final class Client {
 		return new String(message, 0, nullLoc);
 	}
 
-	public String receiveFromServer() throws DisconnectException {
+	public String receiveFromServer() throws Exception {
 		byte message[] = new byte[Client.MAXBUFLEN];
 		try {
 			InputStream in = this.sock.getInputStream();
@@ -312,12 +306,12 @@ public final class Client {
 			for (int numbytes = 0; numbytes < Client.MAXBUFLEN; numbytes += status) {
 				status = in.read(message, numbytes, Client.MAXBUFLEN - numbytes);
 				if (status == -1)
-					throw new DisconnectException();
+					throw new Exception();
 			}
 		} catch (IOException e) {
 			System.err.println("Error receive message.");
 			e.printStackTrace();
-			throw new DisconnectException();
+			throw new Exception();
 		}
 		int nullLoc;
 		for (nullLoc = 0; nullLoc < Client.MAXBUFLEN; nullLoc++) {
