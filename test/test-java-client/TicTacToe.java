@@ -436,10 +436,16 @@ public final class TicTacToe extends JPanel {
 				// check if tie
 				else if (this.board.isTie() && !TicTacToe.NotInGame.get()) {
 					this.display.doRepaint();
+					TicTacToe.NotInGame.set(true);
+					try {
+						gt.join();
+					} catch (InterruptedException e) {
+						System.err.println("Could not join giveup thread.");
+						System.exit(1);
+					}
 					c.sendTie(input);
 					System.out.println("Game over. Tie game.");
 
-					TicTacToe.NotInGame.set(true);
 					this.display.doRepaint();
 					this.display.gameOverMsgLock.lock();
 					try {
@@ -453,6 +459,13 @@ public final class TicTacToe extends JPanel {
 				}
 				else {
 					if (input == -1) {
+						TicTacToe.NotInGame.set(true);
+						try {
+							gt.join();
+						} catch (InterruptedException e) {
+							System.err.println("Could not join giveup thread.");
+							System.exit(1);
+						}
 						this.display.gameOverMsgLock.lock();
 						try {
 							if (TicTacToe.NotInGame.get() &&
