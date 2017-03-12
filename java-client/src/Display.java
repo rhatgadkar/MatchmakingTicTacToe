@@ -3,7 +3,6 @@ import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import javax.swing.JPanel;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 
 @SuppressWarnings("serial")
@@ -12,55 +11,55 @@ public class Display extends JPanel implements MouseListener {
 	public final static int WIDTH = 300;
 	public final static int HEIGHT = 300;
 
-	public String gameOverMsg;
-	public ReentrantLock gameOverMsgLock = new ReentrantLock();
+	public String GameOverMsg;
+	public ReentrantLock GameOverMsgLock = new ReentrantLock();
 
 	private class InputMsg {
 		public volatile int input;
 	}
 
-	private Board board;
-	private boolean allowInput;
-	private final InputMsg acceptedInput;
-	private char symbol;
+	private Board _board;
+	private boolean _allowInput;
+	private final InputMsg _acceptedInput;
+	private char _symbol;
 
 	public Display(Board board) {
 		addMouseListener(this);
-		this.board = board;
-		this.allowInput = false;
-		this.acceptedInput = new InputMsg();
-		this.acceptedInput.input = -1;
-		this.symbol = 0;
+		_board = board;
+		_allowInput = false;
+		_acceptedInput = new InputMsg();
+		_acceptedInput.input = -1;
+		_symbol = 0;
 		if (TicTacToe.NotInGame.get()) {
-			this.gameOverMsgLock.lock();
+			GameOverMsgLock.lock();
 			try {
-				this.gameOverMsg = "Click to start.";
+				GameOverMsg = "Click to start.";
 			} finally {
-				this.gameOverMsgLock.unlock();
+				GameOverMsgLock.unlock();
 			}
 		}
 		repaint();
 	}
 
 	private class InputThread implements Runnable {
-		private InputMsg msg;
+		private InputMsg _msg;
 		public InputThread(InputMsg msg) {
-			this.msg = msg;
+			_msg = msg;
 		}
 		@Override
 		public void run() {
-			while (this.msg.input == -1 && !TicTacToe.NotInGame.get())
+			while (_msg.input == -1 && !TicTacToe.NotInGame.get())
 				;
 		}
 	}
 
 	public int getInput(char symbol) {
-		this.acceptedInput.input = -1;
-		Thread t = new Thread(new InputThread(this.acceptedInput));
+		_acceptedInput.input = -1;
+		Thread t = new Thread(new InputThread(_acceptedInput));
 		t.start();
 
-		this.symbol = symbol;
-		this.allowInput = true;
+		_symbol = symbol;
+		_allowInput = true;
 		try {
 			t.join();
 		} catch (InterruptedException e) {
@@ -68,7 +67,7 @@ public class Display extends JPanel implements MouseListener {
 			System.exit(1);
 		}
 
-		return this.acceptedInput.input;
+		return _acceptedInput.input;
 	}
 
 	public void doRepaint() {
@@ -76,9 +75,9 @@ public class Display extends JPanel implements MouseListener {
 	}
 
 	public void paintComponent(Graphics g) {
-		this.gameOverMsgLock.lock();
+		GameOverMsgLock.lock();
 		try {
-			if (this.gameOverMsg == null) {
+			if (GameOverMsg == null) {
 				g.setColor(Color.lightGray);
 				g.fillRect(0, 0, Display.WIDTH, Display.HEIGHT);
 				g.setColor(Color.BLACK);
@@ -91,7 +90,7 @@ public class Display extends JPanel implements MouseListener {
 					for (int tileCol = 0; tileCol < Board.COLS; tileCol++) {
 						int x = tileCol * (Display.WIDTH / Board.COLS);
 						int y = tileRow * (Display.HEIGHT / Board.ROWS);
-						char symbol = this.board.getSymbolAtCoord(tileRow, tileCol);
+						char symbol = _board.getSymbolAtCoord(tileRow, tileCol);
 						g.setColor(Color.BLACK);
 						if (symbol == 'x') {
 							g.drawLine(x + 20, y + 20, x + 20 + 50, y + 20 + 50);
@@ -106,12 +105,12 @@ public class Display extends JPanel implements MouseListener {
 				g.setColor(Color.lightGray);
 				g.fillRect(0, 0, Display.WIDTH, Display.HEIGHT);
 				g.setColor(Color.BLACK);
-				g.drawString(this.gameOverMsg, 20, Display.HEIGHT / 2);
-				if (!this.gameOverMsg.equals("Click to start."))
+				g.drawString(GameOverMsg, 20, Display.HEIGHT / 2);
+				if (!GameOverMsg.equals("Click to start."))
 					g.drawString("Click to restart.", 20, Display.HEIGHT - 100);
 			}
 		} finally {
-			this.gameOverMsgLock.unlock();
+			GameOverMsgLock.unlock();
 		}
 	}
 
@@ -120,7 +119,7 @@ public class Display extends JPanel implements MouseListener {
 
 	@Override
 	public void mousePressed(MouseEvent e) {
-		if (this.allowInput) {
+		if (_allowInput) {
 			int row = e.getY() / (Display.HEIGHT / Board.ROWS);
 			int col = e.getX() / (Display.WIDTH / Board.COLS);
 			if (row == Board.ROWS)
@@ -136,22 +135,22 @@ public class Display extends JPanel implements MouseListener {
 					input = row * 4 + col;
 				else
 					input = row * 3 + col + 1;
-				boolean addTile = this.board.insert(this.symbol, input);
+				boolean addTile = _board.insert(_symbol, input);
 				if (addTile) {
-					this.acceptedInput.input = input;
-					this.allowInput = false;
+					_acceptedInput.input = input;
+					_allowInput = false;
 				}
 			}
 		}
 		else if (TicTacToe.NotInGame.get()) {
-			this.gameOverMsgLock.lock();
+			GameOverMsgLock.lock();
 			try {
-				if (this.gameOverMsg != null) {
+				if (GameOverMsg != null) {
 					TicTacToe.NotInGame.set(false);
-					this.gameOverMsg = null;
+					GameOverMsg = null;
 				}
 			} finally {
-				this.gameOverMsgLock.unlock();
+				GameOverMsgLock.unlock();
 			}
 		}
 	}

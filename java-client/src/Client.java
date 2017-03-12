@@ -5,7 +5,6 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.net.SocketTimeoutException;
 import javax.swing.JOptionPane;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class Client {
 	public final static int MAXBUFLEN = 100;
@@ -13,10 +12,10 @@ public final class Client {
 //	private final static String SERVERIP = "192.168.218.140";
 	private final static String SERVERPORT = "4950";
 
-	private Socket sock;
-	private boolean isP1;
-	private String username;
-	private String password;
+	private Socket _sock;
+	private boolean _isP1;
+	private String _username;
+	private String _password;
 
 	public boolean DoneInit;
 	public String Record;
@@ -26,14 +25,14 @@ public final class Client {
 	}
 
 	public void init(String username, String password) {
-		this.username = username;
-		this.password = password;
+		_username = username;
+		_password = password;
 		String buf = "";
 
 		int retries;
 		for (retries = 0; retries < 10; retries++) {
 			try {
-				this.sock.close();
+				_sock.close();
 			} catch (Exception e) {
 			}
 
@@ -68,7 +67,7 @@ public final class Client {
 
 			// close connection to parent server
 			try {
-				this.sock.close();
+				_sock.close();
 			} catch (IOException e) {
 				System.err.println("Could not close connection to parent server. Exiting.");
 				e.printStackTrace();
@@ -102,14 +101,14 @@ public final class Client {
 			buf = TicTacToe.stringToLength(buf, "player-1".length());
 
 			try {
-				this.sock.setSoTimeout(0);
+				_sock.setSoTimeout(0);
 			} catch (Exception e) {
 				continue;
 			}
 
 			// get assigned player-1 or player-2
 			if (buf.equals("player-1")) {
-				this.isP1 = true;
+				_isP1 = true;
 				boolean retryConn = false;
 				do {
 					buf = "";
@@ -143,7 +142,7 @@ public final class Client {
 					System.out.println("Current record: " + buf);
 					this.Record = new String(buf);
 				}
-				this.isP1 = false;
+				_isP1 = false;
 				break;
 			}
 			else if (buf.equals("invalidl")) {
@@ -163,9 +162,9 @@ public final class Client {
 	}
 
 	public void close() {
-		if (this.sock != null) {
+		if (_sock != null) {
 			try {
-				this.sock.close();
+				_sock.close();
 			} catch (IOException e) {
 			}
 		}
@@ -176,7 +175,7 @@ public final class Client {
 	}
 
 	public boolean isP1() {
-		return this.isP1;
+		return _isP1;
 	}
 
 	public void sendGiveup() {
@@ -211,7 +210,7 @@ public final class Client {
 	}
 
 	private String handleChildSynAck() throws Exception {
-		String login = this.username + "," + this.password;
+		String login = _username + "," + _password;
 		sendToServer(login);
 		String ack = "";
 		try {
@@ -228,7 +227,7 @@ public final class Client {
 	private void createSocketServer(String port) throws Exception {
 		port = TicTacToe.stringToLength(port, SERVERPORT.length());
 		try {
-			this.sock = new Socket(SERVERIP, Integer.parseInt(port));
+			_sock = new Socket(SERVERIP, Integer.parseInt(port));
 		} catch (UnknownHostException e) {
 			System.err.println("Can't create socket. Unknown host.");
 			throw new Exception();
@@ -263,7 +262,7 @@ public final class Client {
 		for (; i < Client.MAXBUFLEN; i++)
 			message[i] = 0;
 		try {
-			OutputStream os = this.sock.getOutputStream();
+			OutputStream os = _sock.getOutputStream();
 			os.write(message, 0, Client.MAXBUFLEN);
 			os.flush();
 		} catch (IOException e) {
@@ -277,8 +276,8 @@ public final class Client {
 			Exception {
 		byte message[] = new byte[Client.MAXBUFLEN];
 		try {
-			InputStream in = this.sock.getInputStream();
-			this.sock.setSoTimeout(sec * 1000);
+			InputStream in = _sock.getInputStream();
+			_sock.setSoTimeout(sec * 1000);
 			int status;
 			for (int numbytes = 0; numbytes < Client.MAXBUFLEN; numbytes += status) {
 				status = in.read(message, numbytes, Client.MAXBUFLEN - numbytes);
@@ -301,7 +300,7 @@ public final class Client {
 	public String receiveFromServer() throws Exception {
 		byte message[] = new byte[Client.MAXBUFLEN];
 		try {
-			InputStream in = this.sock.getInputStream();
+			InputStream in = _sock.getInputStream();
 			int status;
 			for (int numbytes = 0; numbytes < Client.MAXBUFLEN; numbytes += status) {
 				status = in.read(message, numbytes, Client.MAXBUFLEN - numbytes);

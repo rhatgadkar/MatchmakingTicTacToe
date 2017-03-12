@@ -14,24 +14,24 @@ public final class Board {
 	private class Coordinate {
 		char symbol;
 	}
-	private Coordinate grid[][];
+	private Coordinate _grid[][];
 
 	public Board() {
-		this.grid = new Coordinate[Board.ROWS][Board.COLS];
+		_grid = new Coordinate[Board.ROWS][Board.COLS];
 		clear();
 	}
 
 	public char getSymbolAtCoord(int row, int col) {
 		if (row >= Board.ROWS || row < 0 || col >= Board.COLS || col < 0)
 			return 0;
-		return grid[row][col].symbol;
+		return _grid[row][col].symbol;
 	}
 
 	public void clear() {
 		for (int r = 0; r < Board.ROWS; r++) {
 			for (int c = 0; c < Board.COLS; c++) {
-				this.grid[r][c] = new Coordinate();
-				this.grid[r][c].symbol = '.';
+				_grid[r][c] = new Coordinate();
+				_grid[r][c].symbol = '.';
 			}
 		}
 	}
@@ -134,23 +134,23 @@ public final class Board {
 	private Coordinate getPos(int pos) {
 		switch (pos) {
 			case 1:
-				return this.grid[0][0];
+				return _grid[0][0];
 			case 2:
-				return this.grid[0][1];
+				return _grid[0][1];
 			case 3:
-				return this.grid[0][2];
+				return _grid[0][2];
 			case 4:
-				return this.grid[1][0];
+				return _grid[1][0];
 			case 5:
-				return this.grid[1][1];
+				return _grid[1][1];
 			case 6:
-				return this.grid[1][2];
+				return _grid[1][2];
 			case 7:
-				return this.grid[2][0];
+				return _grid[2][0];
 			case 8:
-				return this.grid[2][1];
+				return _grid[2][1];
 			case 9:
-				return this.grid[2][2];
+				return _grid[2][2];
 		}
 		return null;
 	}
@@ -158,7 +158,7 @@ public final class Board {
 	public boolean isTie() {
 		for (int r = 0; r < Board.ROWS; r++) {
 			for (int c = 0; c < Board.COLS; c++) {
-				if (this.grid[r][c].symbol == '.')
+				if (_grid[r][c].symbol == '.')
 					return false;
 			}
 		}

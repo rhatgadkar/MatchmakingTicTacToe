@@ -8,38 +8,39 @@ import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.JOptionPane;
 
+@SuppressWarnings("serial")
 public class PasswordWindow extends JPanel implements ActionListener {
 	private static String OK = "ok";
 	private static String QUIT = "quit";
 	private static int VAR_SIZE = 21;
 
-	private JTextField usernameField;
-	private JPasswordField passwordField;
+	private JTextField _usernameField;
+	private JPasswordField _passwordField;
 
 	public volatile String Username;
 	public volatile String Password;
 
 	public PasswordWindow() {
-		this.usernameField = new JTextField(PasswordWindow.VAR_SIZE - 1);
-		this.passwordField = new JPasswordField(PasswordWindow.VAR_SIZE - 1);
+		_usernameField = new JTextField(PasswordWindow.VAR_SIZE - 1);
+		_passwordField = new JPasswordField(PasswordWindow.VAR_SIZE - 1);
 
 		JLabel usernameLabel = new JLabel("Enter username (max " +
 				Integer.toString(VAR_SIZE - 1) +
 				" letters, only letters and digits allowed):");
-		usernameLabel.setLabelFor(this.usernameField);
+		usernameLabel.setLabelFor(_usernameField);
 
 		JLabel passwordLabel = new JLabel("Enter password (max " +
 				Integer.toString(VAR_SIZE - 1) +
 				" letters, only letters and digits allowed):");
-		passwordLabel.setLabelFor(this.passwordField);
+		passwordLabel.setLabelFor(_passwordField);
 
 		JPanel buttonPane = createButtonPanel();
 
 		JPanel textPane = new JPanel(new GridLayout(0, 1));
 		textPane.add(usernameLabel);
-		textPane.add(this.usernameField);
+		textPane.add(_usernameField);
 		textPane.add(passwordLabel);
-		textPane.add(this.passwordField);
+		textPane.add(_passwordField);
 
 		add(textPane);
 		add(buttonPane);
@@ -64,8 +65,8 @@ public class PasswordWindow extends JPanel implements ActionListener {
 		String cmd = e.getActionCommand();
 
 		if (PasswordWindow.OK.equals(cmd)) {
-			String currUser = this.usernameField.getText();
-			String currPass = new String(this.passwordField.getPassword());
+			String currUser = _usernameField.getText();
+			String currPass = new String(_passwordField.getPassword());
 			if (currUser.length() >= VAR_SIZE || currPass.length() >= VAR_SIZE) {
 				JOptionPane.showMessageDialog(null,
 						"Username and Password must be at most " +
@@ -90,8 +91,8 @@ public class PasswordWindow extends JPanel implements ActionListener {
 					}
 				}
 			}
-			Username = new String(this.usernameField.getText());
-			Password = new String(this.passwordField.getPassword());
+			Username = new String(_usernameField.getText());
+			Password = new String(_passwordField.getPassword());
 		}
 
 		if (PasswordWindow.QUIT.equals(cmd)) {
