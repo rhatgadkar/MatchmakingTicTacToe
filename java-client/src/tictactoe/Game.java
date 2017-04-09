@@ -66,6 +66,18 @@ public class Game {
 		
 		@Override
 		public void run() {
+			/**
+			 * Reads from the client socket and saves it into _recv.recvBuf.
+			 * The data is a string sent from the other player.
+			 * The game is over when:
+			 * - the server is disconnected
+			 * - a "giveup" is received from the other player, resulting in the
+			 *   current player winning the game
+			 * - a string beginning with 'w' or 't' is received from the other
+			 *   player, signaling a loss for the current player or a tie game
+			 * If the game is not over, reads from the client socket continue
+			 * to get saved into _recv.recvBuf.
+			 */
 			while (!TicTacToe.NotInGame.get()) {
 				String test = "";
 				try {
@@ -120,6 +132,23 @@ public class Game {
 	}
 	
 	private void currPlayerMove(boolean p1turn, Thread gt) {
+		/**
+		 * Handle the event when it is the current player's move.  The current
+		 * player has 30 seconds to play a move.  A current player's move is
+		 * read from mouse input on a JPanel.
+		 * The game is over when:
+		 * - 30 seconds have expired, a "giveup" message will be sent to
+		 *   the server, signaling the current player has given up
+		 * - the current player pressed the "Quit" button, resulting in the
+		 *   current player giving up and a "giveup" message sent to the server
+		 * - the current player exited the program, resulting in the current
+		 *   player giving up and a "giveup" message sent to the server
+		 * - the other player gave up (determined by CheckGiveupThread)
+		 * - the server is disconnected
+		 * - the current player's move resulted in a win or tie game
+		 * If the game is not over, the current player's move gets sent to the
+		 * server and then it becomes the other player's move.
+		 */
 		final TimerThread.Msg msg = new TimerThread.Msg();
 		msg.gotMsg = false;
 		String errorMsg =
@@ -250,6 +279,22 @@ public class Game {
 	}
 	
 	private void otherPlayerMove(boolean p1turn, Thread gt) {
+		/**
+		 * Handles the event when it is the other player's turn.  Up to 45
+		 * seconds are spent waiting for a move from the other player.
+		 * The game is over when:
+		 * - the current player pressed the "Quit" button, resulting in the
+		 *   current player giving up and a "giveup" message sent to the server
+		 * - the current player exited the program, resulting in the current
+		 *   player giving up and a "giveup" message sent to the server
+		 * - the other player gave up (determined by CheckGiveupThread)
+		 * - the server is disconnected
+		 * - a move had not been received within 45 seconds, resulting in a
+		 *   possible server disconnect from the other player, no win/loss
+		 *   sent to server
+		 * If the game is not over, the other player's move gets received from
+		 * the server and then it becomes the current player's move. 
+		 */
 		final TimerThread.Msg msg = new TimerThread.Msg();
 		msg.gotMsg = false;
 		String errorMsg =
@@ -384,14 +429,10 @@ public class Game {
 
 			_ttt.getDisplay().doRepaint();
 
-			// insert at position
-			if ((p1turn && _c.isP1()) || (!p1turn && !_c.isP1())) {
+			if ((p1turn && _c.isP1()) || (!p1turn && !_c.isP1()))
 				currPlayerMove(p1turn, gt);
-			}
-			// wait for other player to make move
-			else {
+			else
 				otherPlayerMove(p1turn, gt);
-			}
 			p1turn = !p1turn;
 		}
 	}
