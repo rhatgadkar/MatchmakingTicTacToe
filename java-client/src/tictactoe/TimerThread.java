@@ -33,5 +33,7 @@ public class TimerThread implements Runnable {
 				}
 			}
 		}
+		if (!_msg.gotMsg && !TicTacToe.NotInGame.get())
+			TicTacToe.NotInGame.set(true);
 	}
 }
