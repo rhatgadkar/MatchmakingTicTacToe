@@ -56,7 +56,12 @@ public final class TicTacToe extends JPanel {
 		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		while (true) {
-			TicTacToe ttt = new TicTacToe();
+			Board b = new Board();
+			Client c = new Client();
+			Display d = new Display(b);
+			d.setPreferredSize(new Dimension(Display.WIDTH,
+					Display.HEIGHT));
+			TicTacToe ttt = new TicTacToe(b, c, d);
 			window.setContentPane(ttt);
 			window.pack();
 			window.setVisible(true);
@@ -93,13 +98,11 @@ public final class TicTacToe extends JPanel {
 		return p;
 	}
 
-	public TicTacToe() {
-		_board = new Board();
-		_c = new Client();
+	public TicTacToe(Board b, Client c, Display d) {
+		_board = b;
+		_c = c;
 		_game = new Game(this, _c, _board);
-		_display = new Display(_game.getBoard());
-		_display.setPreferredSize(new Dimension(Display.WIDTH,
-				Display.HEIGHT));
+		_display = d;
 		_turnfield = new JLabel();
 		_playerfield = new JLabel();
 		_timerfield = new JLabel();

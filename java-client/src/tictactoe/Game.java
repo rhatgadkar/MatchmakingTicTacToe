@@ -98,8 +98,21 @@ public class Game {
 				_recv.recvBufLock.lock();
 				try {
 					_recv.recvBuf = TicTacToe.stringToLength(test, "giveup".length());
-					if (_recv.recvBuf.equals("giveup"))
-						break;
+					if (_recv.recvBuf.equals("giveup")) {
+						_ttt.getDisplay().GameOverMsgLock.lock();
+						try {
+							TicTacToe.NotInGame.set(true);
+							if (_c.isP1())
+								_ttt.getDisplay().GameOverMsg =
+										"Player 2 has given up. You win.";
+							else
+								_ttt.getDisplay().GameOverMsg =
+										"Player 1 has given up. You win.";
+						} finally {
+							_ttt.getDisplay().GameOverMsgLock.unlock();
+						}
+						return;
+					}
 					if (_recv.recvBuf == "")
 						continue;
 					if (_recv.recvBuf.charAt(0) == 'w' ||
@@ -113,21 +126,57 @@ public class Game {
 					_recv.recvBufLock.unlock();
 				}
 			}
-			if (!TicTacToe.NotInGame.get()) {
-				_ttt.getDisplay().GameOverMsgLock.lock();
-				try {
-					TicTacToe.NotInGame.set(true);
-					if (_c.isP1())
+		}
+	}
+	
+	private void handleGameOver(boolean p1turn, boolean currPlayerTurn) {
+		_ttt.getDisplay().GameOverMsgLock.lock();
+		try {
+			if (_ttt.getDisplay().GameOverMsg != null &&
+					_ttt.getDisplay().GameOverMsg.equals("Click to start.")) {
+				// quitbutton was triggered.
+				if (_c.isP1())
+					_ttt.getDisplay().GameOverMsg =
+							"You have given up. Player 2 wins.";
+				else
+					_ttt.getDisplay().GameOverMsg =
+							"You have given up. Player 1 wins.";
+				_c.sendGiveup();
+			}
+			else if (_ttt.getDisplay().GameOverMsg != null &&
+					_ttt.getDisplay().GameOverMsg.contains("You win"))
+				// other client triggered quitbutton
+				;
+			else if (_ttt.getDisplay().GameOverMsg != null &&
+					_ttt.getDisplay().GameOverMsg.equals("disconnect")) {
+				// server disconnect
+				_ttt.getDisplay().GameOverMsg = "Connection loss.";
+				_c.sendBye();
+			}
+			else if (_ttt.getDisplay().GameOverMsg != null &&
+					(_ttt.getDisplay().GameOverMsg.contains("wins") ||
+					_ttt.getDisplay().GameOverMsg.contains("Tie"))) {
+				;
+			}
+			else {
+				// user didn't play move within 30 seconds or
+				// not receive move within 45 seconds
+				if (currPlayerTurn) {
+					if (p1turn)
 						_ttt.getDisplay().GameOverMsg =
-								"Player 2 has given up. You win.";
+								"You have not played a move. Player 2 wins.";
 					else
 						_ttt.getDisplay().GameOverMsg =
-								"Player 1 has given up. You win.";
-				} finally {
-					_ttt.getDisplay().GameOverMsgLock.unlock();
+								"You have not played a move. Player 1 wins.";
+					_c.sendGiveup();
 				}
-				return;
+				else {
+					_ttt.getDisplay().GameOverMsg = "Connection loss.";
+					_c.sendBye();
+				}
 			}
+		} finally {
+			_ttt.getDisplay().GameOverMsgLock.unlock();
 		}
 	}
 	
@@ -151,10 +200,7 @@ public class Game {
 		 */
 		final TimerThread.Msg msg = new TimerThread.Msg();
 		msg.gotMsg = false;
-		String errorMsg =
-			"You have not played a move in 30 seconds. You have given up.";
-		Runnable timer = new TimerThread(msg, 30, errorMsg, null,
-				_ttt.getTimerfield());
+		Runnable timer = new TimerThread(msg, 30, _ttt.getTimerfield());
 		Thread t = new Thread(timer);
 		t.start();
 
@@ -237,41 +283,7 @@ public class Game {
 				System.err.println("Could not join giveup thread.");
 				System.exit(1);
 			}
-			_ttt.getDisplay().GameOverMsgLock.lock();
-			try {
-				if (_ttt.getDisplay().GameOverMsg != null &&
-						_ttt.getDisplay().GameOverMsg.equals("Click to start.")) {
-					// quitbutton was triggered.
-					if (_c.isP1())
-						_ttt.getDisplay().GameOverMsg =
-								"You have given up. Player 2 wins.";
-					else
-						_ttt.getDisplay().GameOverMsg =
-								"You have given up. Player 1 wins.";
-				}
-				else if (_ttt.getDisplay().GameOverMsg != null &&
-						_ttt.getDisplay().GameOverMsg.contains("You win"))
-					// other client triggered quitbutton
-					;
-				else if (_ttt.getDisplay().GameOverMsg != null &&
-						_ttt.getDisplay().GameOverMsg.equals("disconnect")) {
-					// server disconnect
-					_ttt.getDisplay().GameOverMsg = "Connection loss.";
-					_c.sendBye();
-				}
-				else {
-					// user didn't play move within 30 seconds
-					if (p1turn)
-						_ttt.getDisplay().GameOverMsg =
-								"You have not played a move. Player 2 wins.";
-					else
-						_ttt.getDisplay().GameOverMsg =
-								"You have not played a move. Player 1 wins.";
-				}
-			} finally {
-				_ttt.getDisplay().GameOverMsgLock.unlock();
-			}
-			_c.sendGiveup();
+			handleGameOver(p1turn, true);
 			return;
 		}
 		else
@@ -297,10 +309,7 @@ public class Game {
 		 */
 		final TimerThread.Msg msg = new TimerThread.Msg();
 		msg.gotMsg = false;
-		String errorMsg =
-			"A move has not been received in 45 seconds. Closing connection.";
-		Runnable timer = new TimerThread(msg, 45, errorMsg,
-				_ttt.getDisplay(), null);
+		Runnable timer = new TimerThread(msg, 45, null);
 		Thread t = new Thread(timer);
 		t.start();
 
@@ -340,27 +349,7 @@ public class Game {
 				System.err.println("Could not join giveup thread.");
 				System.exit(1);
 			}
-			_ttt.getDisplay().GameOverMsgLock.lock();
-			try {
-				if (_ttt.getDisplay().GameOverMsg != null &&
-						_ttt.getDisplay().GameOverMsg.equals("Click to start.")) {
-					if (_c.isP1())
-						_ttt.getDisplay().GameOverMsg =
-								"You have given up. Player 2 wins.";
-					else
-						_ttt.getDisplay().GameOverMsg =
-								"You have given up. Player 1 wins.";
-					_c.sendGiveup();
-				}
-				else if (_ttt.getDisplay().GameOverMsg != null &&
-						_ttt.getDisplay().GameOverMsg.equals("disconnect")) {
-					// server disconnect
-					_ttt.getDisplay().GameOverMsg = "Connection loss.";
-					_c.sendBye();
-				}
-			} finally {
-				_ttt.getDisplay().GameOverMsgLock.unlock();
-			}
+			handleGameOver(p1turn, false);
 			return;
 		}
 
@@ -370,8 +359,6 @@ public class Game {
 		} finally {
 			_recv.recvBufLock.unlock();
 		}
-
-		
 
 		if (p1turn && !_board.insert(_p1.getSymbol(), input)) {
 			System.err.println("Error with receivePosition with input: " +
@@ -435,6 +422,20 @@ public class Game {
 				otherPlayerMove(p1turn, gt);
 			p1turn = !p1turn;
 		}
+		
+		try {
+			gt.join();
+		} catch (InterruptedException e) {
+			System.err.println("Could not join giveup thread.");
+			System.exit(1);
+		}
 	}
-
 }
+
+/**
+ * unit tests: (GameOverMsg set appropriately, start() should exit, NotInGame set, etc.)
+ * 1. receive a 'w'
+ * 2. receive a 't'
+ * 3. receive a 'giveup'
+ * 4. receive a normal move
+*/
