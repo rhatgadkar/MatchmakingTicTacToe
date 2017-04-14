@@ -8,7 +8,7 @@ import java.net.UnknownHostException;
 import java.net.SocketTimeoutException;
 import javax.swing.JOptionPane;
 
-public final class Client {
+public final class Client implements IClient {
 	public final static int MAXBUFLEN = 100;
 	private final static String SERVERIP = "54.219.156.253";
 //	private final static String SERVERIP = "192.168.218.140";
@@ -19,11 +19,18 @@ public final class Client {
 	private String _username;
 	private String _password;
 
-	public boolean DoneInit;
-	public String Record;
+	private boolean _doneInit;
+	public boolean getDoneInit() {
+		return _doneInit;
+	}
+	
+	private String _record;
+	public String getRecord() {
+		return _record;
+	}
 
 	public Client() {
-		DoneInit = false;
+		_doneInit = false;
 	}
 
 	public void init(String username, String password) {
@@ -136,13 +143,13 @@ public final class Client {
 					continue;
 				}
 				System.out.println("Current record: " + buf);
-				this.Record = new String(buf);
+				_record = new String(buf);
 				break;
 			}
 			else if (buf.charAt(0) == 'r' || buf.charAt(0) == ',') {
 				if (buf.charAt(0) == 'r') {
 					System.out.println("Current record: " + buf);
-					this.Record = new String(buf);
+					_record = new String(buf);
 				}
 				_isP1 = false;
 				break;
@@ -160,7 +167,7 @@ public final class Client {
 			JOptionPane.showMessageDialog(null, "Connection to server failed.");
 			System.exit(1);
 		}
-		DoneInit = true;
+		_doneInit = true;
 	}
 
 	public void close() {

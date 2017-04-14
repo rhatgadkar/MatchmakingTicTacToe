@@ -10,15 +10,15 @@ public class Game {
 	private Player _p1;
 	private Player _p2;
 	private Recv _recv;
-	private Client _c;
-	private TicTacToe _ttt;
+	private IClient _c;
+	private ITicTacToe _ttt;
 	
 	private class Recv {
 		public String recvBuf;
 		public ReentrantLock recvBufLock = new ReentrantLock();
 	}
 	
-	public Game(TicTacToe ttt, Client c, Board b) {
+	public Game(ITicTacToe ttt, IClient c, Board b) {
 		_ttt = ttt;
 		_board = b;
 		_c = c;
@@ -40,26 +40,26 @@ public class Game {
 				_board.insert(Player.P2_SYMBOL, pos);
 			else
 				_board.insert(Player.P1_SYMBOL, pos);
-			_ttt.getDisplay().doRepaint();
+			_ttt.repaintDisplay();
 			if (symbol == 'w') {
 				JOptionPane.showMessageDialog(null, "Game over. You lose.");
-				_ttt.getDisplay().GameOverMsgLock.lock();
+				_ttt.lockGameOverMsg();
 				try {
 					if (isP1)
-						_ttt.getDisplay().GameOverMsg = "Player 2 wins.";
+						_ttt.setGameOverMsg("Player 2 wins.");
 					else
-						_ttt.getDisplay().GameOverMsg = "Player 1 wins.";
+						_ttt.setGameOverMsg("Player 1 wins.");
 				} finally {
-					_ttt.getDisplay().GameOverMsgLock.unlock();
+					_ttt.unlockGameOverMsg();
 				}
 			}
 			else {
 				JOptionPane.showMessageDialog(null, "Game over. Tie game.");
-				_ttt.getDisplay().GameOverMsgLock.lock();
+				_ttt.lockGameOverMsg();
 				try {
-					_ttt.getDisplay().GameOverMsg = "Tie game.";
+					_ttt.setGameOverMsg("Tie game.");
 				} finally {
-					_ttt.getDisplay().GameOverMsgLock.unlock();
+					_ttt.unlockGameOverMsg();
 				}
 			}
 		}
@@ -86,11 +86,11 @@ public class Game {
 					continue;
 				} catch (Exception e) {
 					// server disconnect
-					_ttt.getDisplay().GameOverMsgLock.lock();
+					_ttt.lockGameOverMsg();
 					try {
-						_ttt.getDisplay().GameOverMsg = "disconnect";
+						_ttt.setGameOverMsg("disconnect");
 					} finally {
-						_ttt.getDisplay().GameOverMsgLock.unlock();
+						_ttt.unlockGameOverMsg();
 					}
 					TicTacToe.NotInGame.set(true);
 					return;
@@ -99,17 +99,17 @@ public class Game {
 				try {
 					_recv.recvBuf = TicTacToe.stringToLength(test, "giveup".length());
 					if (_recv.recvBuf.equals("giveup")) {
-						_ttt.getDisplay().GameOverMsgLock.lock();
+						_ttt.lockGameOverMsg();
 						try {
 							TicTacToe.NotInGame.set(true);
 							if (_c.isP1())
-								_ttt.getDisplay().GameOverMsg =
-										"Player 2 has given up. You win.";
+								_ttt.setGameOverMsg(
+										"Player 2 has given up. You win.");
 							else
-								_ttt.getDisplay().GameOverMsg =
-										"Player 1 has given up. You win.";
+								_ttt.setGameOverMsg(
+										"Player 1 has given up. You win.");
 						} finally {
-							_ttt.getDisplay().GameOverMsgLock.unlock();
+							_ttt.unlockGameOverMsg();
 						}
 						return;
 					}
@@ -130,32 +130,32 @@ public class Game {
 	}
 	
 	private void handleGameOver(boolean p1turn, boolean currPlayerTurn) {
-		_ttt.getDisplay().GameOverMsgLock.lock();
+		_ttt.lockGameOverMsg();
 		try {
-			if (_ttt.getDisplay().GameOverMsg != null &&
-					_ttt.getDisplay().GameOverMsg.equals("Click to start.")) {
+			if (_ttt.getGameOverMsg() != null &&
+					_ttt.getGameOverMsg().equals("Click to start.")) {
 				// quitbutton was triggered.
 				if (_c.isP1())
-					_ttt.getDisplay().GameOverMsg =
-							"You have given up. Player 2 wins.";
+					_ttt.setGameOverMsg(
+							"You have given up. Player 2 wins.");
 				else
-					_ttt.getDisplay().GameOverMsg =
-							"You have given up. Player 1 wins.";
+					_ttt.setGameOverMsg(
+							"You have given up. Player 1 wins.");
 				_c.sendGiveup();
 			}
-			else if (_ttt.getDisplay().GameOverMsg != null &&
-					_ttt.getDisplay().GameOverMsg.contains("You win"))
+			else if (_ttt.getGameOverMsg() != null &&
+					_ttt.getGameOverMsg().contains("You win"))
 				// other client triggered quitbutton
 				;
-			else if (_ttt.getDisplay().GameOverMsg != null &&
-					_ttt.getDisplay().GameOverMsg.equals("disconnect")) {
+			else if (_ttt.getGameOverMsg() != null &&
+					_ttt.getGameOverMsg().equals("disconnect")) {
 				// server disconnect
-				_ttt.getDisplay().GameOverMsg = "Connection loss.";
+				_ttt.setGameOverMsg("Connection loss.");
 				_c.sendBye();
 			}
-			else if (_ttt.getDisplay().GameOverMsg != null &&
-					(_ttt.getDisplay().GameOverMsg.contains("wins") ||
-					_ttt.getDisplay().GameOverMsg.contains("Tie"))) {
+			else if (_ttt.getGameOverMsg() != null &&
+					(_ttt.getGameOverMsg().contains("wins") ||
+					_ttt.getGameOverMsg().contains("Tie"))) {
 				;
 			}
 			else {
@@ -163,20 +163,20 @@ public class Game {
 				// not receive move within 45 seconds
 				if (currPlayerTurn) {
 					if (p1turn)
-						_ttt.getDisplay().GameOverMsg =
-								"You have not played a move. Player 2 wins.";
+						_ttt.setGameOverMsg(
+								"You have not played a move. Player 2 wins.");
 					else
-						_ttt.getDisplay().GameOverMsg =
-								"You have not played a move. Player 1 wins.";
+						_ttt.setGameOverMsg(
+								"You have not played a move. Player 1 wins.");
 					_c.sendGiveup();
 				}
 				else {
-					_ttt.getDisplay().GameOverMsg = "Connection loss.";
+					_ttt.setGameOverMsg("Connection loss.");
 					_c.sendBye();
 				}
 			}
 		} finally {
-			_ttt.getDisplay().GameOverMsgLock.unlock();
+			_ttt.unlockGameOverMsg();
 		}
 	}
 	
@@ -206,10 +206,10 @@ public class Game {
 
 		int input = -1;
 		if (p1turn) {
-			input = _ttt.getDisplay().getInput(_p1.getSymbol());
+			input = _ttt.getInput(_p1.getSymbol());
 		}
 		if (!p1turn) {
-			input = _ttt.getDisplay().getInput(_p2.getSymbol());
+			input = _ttt.getInput(_p2.getSymbol());
 		}
 
 		msg.gotMsg = true;
@@ -223,7 +223,7 @@ public class Game {
 		_ttt.setTimerfieldText("");
 
 		if (_board.isWin(input) && !TicTacToe.NotInGame.get()) {
-			_ttt.getDisplay().doRepaint();
+			_ttt.repaintDisplay();
 			TicTacToe.NotInGame.set(true);
 			try {
 				gt.join();
@@ -235,25 +235,25 @@ public class Game {
 			JOptionPane.showMessageDialog(null, "Game over. You win.");
 
 			if (p1turn) {
-				_ttt.getDisplay().GameOverMsgLock.lock();
+				_ttt.lockGameOverMsg();
 				try {
-					_ttt.getDisplay().GameOverMsg = "Player 1 wins.";
+					_ttt.setGameOverMsg("Player 1 wins.");
 				} finally {
-					_ttt.getDisplay().GameOverMsgLock.unlock();
+					_ttt.unlockGameOverMsg();
 				}
 			}
 			else {
-				_ttt.getDisplay().GameOverMsgLock.lock();
+				_ttt.lockGameOverMsg();
 				try {
-					_ttt.getDisplay().GameOverMsg = "Player 2 wins.";
+					_ttt.setGameOverMsg("Player 2 wins.");
 				} finally {
-					_ttt.getDisplay().GameOverMsgLock.unlock();
+					_ttt.unlockGameOverMsg();
 				}
 			}
 			return;
 		}
 		else if (_board.isTie() && !TicTacToe.NotInGame.get()) {
-			_ttt.getDisplay().doRepaint();
+			_ttt.repaintDisplay();
 			TicTacToe.NotInGame.set(true);
 			try {
 				gt.join();
@@ -264,11 +264,11 @@ public class Game {
 			_c.sendTie(input);
 			JOptionPane.showMessageDialog(null, "Game over. Tie game.");
 
-			_ttt.getDisplay().GameOverMsgLock.lock();
+			_ttt.lockGameOverMsg();
 			try {
-				_ttt.getDisplay().GameOverMsg = "Tie game.";
+				_ttt.setGameOverMsg("Tie game.");
 			} finally {
-				_ttt.getDisplay().GameOverMsgLock.unlock();
+				_ttt.unlockGameOverMsg();
 			}
 			return;
 		}
@@ -377,14 +377,14 @@ public class Game {
 			_ttt.setPlayerfieldText("MatchMaking TicTacToe");
 			while (TicTacToe.NotInGame.get())
 				;
-			_ttt.getDisplay().doRepaint();
+			_ttt.repaintDisplay();
 		}
 
 		_ttt.setPlayerfieldText("Searching for opponent...");
 		_c.init(username, password);
 
 		if (!username.isEmpty() && !password.isEmpty()) {
-			String[] initialSplit = _c.Record.split(",");
+			String[] initialSplit = _c.getRecord().split(",");
 			String winRecord = initialSplit[0].split("r")[1];
 			String lossRecord = initialSplit[1];
 			_ttt.setWinfieldText("W: " + winRecord);
@@ -414,7 +414,7 @@ public class Game {
 			else
 				_ttt.setTurnfieldText("Your turn.");
 
-			_ttt.getDisplay().doRepaint();
+			_ttt.repaintDisplay();
 
 			if ((p1turn && _c.isP1()) || (!p1turn && !_c.isP1()))
 				currPlayerMove(p1turn, gt);

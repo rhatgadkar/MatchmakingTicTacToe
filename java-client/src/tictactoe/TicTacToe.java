@@ -12,7 +12,7 @@ import javax.swing.JButton;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @SuppressWarnings("serial")
-public final class TicTacToe extends JPanel {
+public final class TicTacToe extends JPanel implements ITicTacToe {
 
 	public static AtomicBoolean NotInGame = new AtomicBoolean(true);
 
@@ -32,9 +32,29 @@ public final class TicTacToe extends JPanel {
 	private JButton _quitbutton;
 	private JLabel _winrecordfield;
 	private JLabel _lossrecordfield;
-
-	public Display getDisplay() {
-		return _display;
+	
+	public void repaintDisplay() {
+		_display.repaint();
+	}
+	
+	public void lockGameOverMsg() {
+		_display.GameOverMsgLock.lock();
+	}
+	
+	public void unlockGameOverMsg() {
+		_display.GameOverMsgLock.unlock();
+	}
+	
+	public void setGameOverMsg(String newMsg) {
+		_display.GameOverMsg = newMsg;
+	}
+	
+	public String getGameOverMsg() {
+		return _display.GameOverMsg;
+	}
+	
+	public int getInput(char symbol) {
+		return _display.getInput(symbol);
 	}
 
 	public static void main(String[] args) {
@@ -56,19 +76,14 @@ public final class TicTacToe extends JPanel {
 		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		while (true) {
-			Board b = new Board();
-			Client c = new Client();
-			Display d = new Display(b);
-			d.setPreferredSize(new Dimension(Display.WIDTH,
-					Display.HEIGHT));
-			TicTacToe ttt = new TicTacToe(b, c, d);
+			TicTacToe ttt = new TicTacToe();
 			window.setContentPane(ttt);
 			window.pack();
 			window.setVisible(true);
 
 			ttt.getGame().start(username, password);
 			System.out.println("Exited game.start()");
-			ttt.getDisplay().doRepaint();
+			ttt.repaintDisplay();
 
 			while (TicTacToe.NotInGame.get())
 				;
@@ -98,11 +113,13 @@ public final class TicTacToe extends JPanel {
 		return p;
 	}
 
-	public TicTacToe(Board b, Client c, Display d) {
-		_board = b;
-		_c = c;
+	public TicTacToe() {
+		_board = new Board();
+		_c = new Client();
 		_game = new Game(this, _c, _board);
-		_display = d;
+		_display = new Display(_game.getBoard());
+		_display.setPreferredSize(new Dimension(Display.WIDTH,
+				Display.HEIGHT));
 		_turnfield = new JLabel();
 		_playerfield = new JLabel();
 		_timerfield = new JLabel();
@@ -116,7 +133,7 @@ public final class TicTacToe extends JPanel {
 			private Display _display;
 			private Client _c;
 			public void actionPerformed(ActionEvent e) {
-				if (TicTacToe.NotInGame.get() || !_c.DoneInit)
+				if (TicTacToe.NotInGame.get() || !_c.getDoneInit())
 					System.exit(0);
 				else {
 					_display.GameOverMsgLock.lock();

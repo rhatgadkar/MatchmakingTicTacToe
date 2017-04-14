@@ -72,10 +72,6 @@ public class Display extends JPanel implements MouseListener {
 		return _acceptedInput.input;
 	}
 
-	public void doRepaint() {
-		repaint();
-	}
-
 	public void paintComponent(Graphics g) {
 		GameOverMsgLock.lock();
 		try {
