@@ -3,59 +3,62 @@ package tictactoe;
 import java.net.SocketTimeoutException;
 
 public class MockClient implements IClient {
+	
+	private boolean _isP1;
+	private String _opponentMove;
+	private String _finalMsg;
+	
+	public MockClient(boolean isP1, String opponentMove) {
+		_isP1 = isP1;
+		_opponentMove = opponentMove;
+		_finalMsg = "";
+	}
 
 	@Override
 	public String receiveFrom(int i) throws SocketTimeoutException, Exception {
-		// TODO Auto-generated method stub
-		return null;
+		return _opponentMove;
 	}
 
 	@Override
 	public boolean isP1() {
-		// TODO Auto-generated method stub
-		return false;
+		return _isP1;
 	}
 
 	@Override
 	public void sendGiveup() {
-		// TODO Auto-generated method stub
-		
+		_finalMsg = "giveup";
 	}
 
 	@Override
 	public void sendBye() {
-		// TODO Auto-generated method stub
-		
+		_finalMsg = "bye";		
 	}
 
 	@Override
-	public void sendWin(int input) {
-		// TODO Auto-generated method stub
-		
+	public void sendWin(int pos) {
+		_finalMsg = "w" + Integer.toString(pos);		
 	}
 
 	@Override
-	public void sendTie(int input) {
-		// TODO Auto-generated method stub
-		
+	public void sendTie(int pos) {
+		_finalMsg = "t" + Integer.toString(pos);		
 	}
 
 	@Override
-	public void sendPosition(int input) {
-		// TODO Auto-generated method stub
-		
+	public void sendPosition(int pos) {
+		_finalMsg = Integer.toString(pos);
 	}
 
 	@Override
-	public void init(String username, String password) {
-		// TODO Auto-generated method stub
-		
+	public void init(String username, String password) {		
 	}
 
 	@Override
 	public String getRecord() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
+	public String getFinalMsg() {
+		return _finalMsg;
+	}
 }

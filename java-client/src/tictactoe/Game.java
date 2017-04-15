@@ -431,11 +431,3 @@ public class Game {
 		}
 	}
 }
-
-/**
- * unit tests: (GameOverMsg set appropriately, start() should exit, NotInGame set, etc.)
- * 1. receive a 'w'
- * 2. receive a 't'
- * 3. receive a 'giveup'
- * 4. receive a normal move
-*/

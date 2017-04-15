@@ -12,11 +12,11 @@ public interface IClient {
 
 	void sendBye();
 
-	void sendWin(int input);
+	void sendWin(int pos);
 
-	void sendTie(int input);
+	void sendTie(int pos);
 
-	void sendPosition(int input);
+	void sendPosition(int pos);
 
 	void init(String username, String password);
 

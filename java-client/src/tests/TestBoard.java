@@ -9,11 +9,11 @@ import tictactoe.Player;
 public class TestBoard {
 
 	@Test
-	/**
-	 * Verify Board can be successfully created and all the positions are
-	 * initialized to '.'.
-	 */
 	public void testBoard() {
+		/**
+		 * Verify Board can be successfully created and all the positions are
+		 * initialized to '.'.
+		 */
 		Board board = new Board();
 		for (int r = 0; r < Board.ROWS; r++) {
 			for (int c = 0; c < Board.COLS; c++) {
@@ -23,13 +23,13 @@ public class TestBoard {
 	}
 
 	@Test
-	/**
-	 * Verify symbols in valid/invalid Board positions are successfully
-	 * retrieved.  Position 5 is Player.P1_SYMBOL, position '2' is
-	 * Player.P2_SYMBOL, and the rest are
-	 * '.'.
-	 */
 	public void testGetSymbolAtCoord() {
+		/**
+		 * Verify symbols in valid/invalid Board positions are successfully
+		 * retrieved.  Position 5 is Player.P1_SYMBOL, position '2' is
+		 * Player.P2_SYMBOL, and the rest are
+		 * '.'.
+		 */
 		Board board = new Board();
 		Assert.assertEquals(board.getSymbolAtCoord(Board.ROWS, 0), 0);
 		Assert.assertEquals(board.getSymbolAtCoord(Board.ROWS + 1, 0), 0);
@@ -53,11 +53,11 @@ public class TestBoard {
 	}
 
 	@Test
-	/**
-	 * Initialize pos 5 to Player.P1_SYMBOL and pos 2 to Player.P2_SYMBOL.
-	 * After calling clear(), verify entire board is '.'.
-	 */
 	public void testClear() {
+		/**
+		 * Initialize pos 5 to Player.P1_SYMBOL and pos 2 to Player.P2_SYMBOL.
+		 * After calling clear(), verify entire board is '.'.
+		 */
 		Board board = new Board();
 		board.insert(Player.P1_SYMBOL, 5);
 		board.insert(Player.P2_SYMBOL, 2);
@@ -70,12 +70,12 @@ public class TestBoard {
 	}
 
 	@Test
-	/**
-	 * Initialize pos 5 to Player.P1_SYMBOL and pos 2 to Player.P2_SYMBOL.
-	 * Verify pos 5 and pos 2 have Player.P1_SYMBOL and Player.P2_SYMBOL
-	 * respectively. The rest of the positions should be '.'.
-	 */
 	public void testInsert() {
+		/**
+		 * Initialize pos 5 to Player.P1_SYMBOL and pos 2 to Player.P2_SYMBOL.
+		 * Verify pos 5 and pos 2 have Player.P1_SYMBOL and Player.P2_SYMBOL
+		 * respectively. The rest of the positions should be '.'.
+		 */
 		Board board = new Board();
 		board.insert(Player.P1_SYMBOL, 5);
 		board.insert(Player.P2_SYMBOL, 2);
@@ -95,11 +95,11 @@ public class TestBoard {
 	}
 
 	@Test
-	/**
-	 * Test vertical, horizontal, and diagonal wins for Player.P1_SYMBOL and
-	 * Player.P2_SYMBOL.
-	 */
 	public void testIsWin() {
+		/**
+		 * Test vertical, horizontal, and diagonal wins for Player.P1_SYMBOL and
+		 * Player.P2_SYMBOL.
+		 */
 		Board board = new Board();
 		// horizontal Player.P1_SYMBOL win
 		board.insert(Player.P1_SYMBOL, 1);
@@ -146,10 +146,10 @@ public class TestBoard {
 	}
 
 	@Test
-	/**
-	 * Test tie game.
-	 */
 	public void testIsTie() {
+		/**
+		 * Test tie game.
+		 */
 		Board board = new Board();
 		board.insert(Player.P1_SYMBOL, 1);
 		board.insert(Player.P2_SYMBOL, 2);
