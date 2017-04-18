@@ -3,8 +3,6 @@ package tictactoe;
 import java.net.SocketTimeoutException;
 import java.util.concurrent.locks.ReentrantLock;
 
-import javax.swing.JOptionPane;
-
 public class Game {
 	private Board _board;
 	private Player _p1;
@@ -42,7 +40,7 @@ public class Game {
 				_board.insert(Player.P1_SYMBOL, pos);
 			_ttt.repaintDisplay();
 			if (symbol == 'w') {
-				JOptionPane.showMessageDialog(null, "Game over. You lose.");
+				_ttt.showGameOverDialog("Game over. You lose.");
 				_ttt.lockGameOverMsg();
 				try {
 					if (isP1)
@@ -54,7 +52,7 @@ public class Game {
 				}
 			}
 			else {
-				JOptionPane.showMessageDialog(null, "Game over. Tie game.");
+				_ttt.showGameOverDialog("Game over. Tie game.");
 				_ttt.lockGameOverMsg();
 				try {
 					_ttt.setGameOverMsg("Tie game.");
@@ -232,7 +230,7 @@ public class Game {
 				System.exit(1);
 			}
 			_c.sendWin(input);
-			JOptionPane.showMessageDialog(null, "Game over. You win.");
+			_ttt.showGameOverDialog("Game over. You win.");
 
 			if (p1turn) {
 				_ttt.lockGameOverMsg();
@@ -262,7 +260,7 @@ public class Game {
 				System.exit(1);
 			}
 			_c.sendTie(input);
-			JOptionPane.showMessageDialog(null, "Game over. Tie game.");
+			_ttt.showGameOverDialog("Game over. Tie game.");
 
 			_ttt.lockGameOverMsg();
 			try {

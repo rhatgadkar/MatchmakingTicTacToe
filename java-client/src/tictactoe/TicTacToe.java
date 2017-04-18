@@ -6,6 +6,8 @@ import java.awt.FlowLayout;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JButton;
@@ -32,6 +34,8 @@ public final class TicTacToe extends JPanel implements ITicTacToe {
 	private JButton _quitbutton;
 	private JLabel _winrecordfield;
 	private JLabel _lossrecordfield;
+	private String _username;
+	private String _password;
 	
 	public void repaintDisplay() {
 		_display.repaint();
@@ -56,9 +60,8 @@ public final class TicTacToe extends JPanel implements ITicTacToe {
 	public int getInput(char symbol) {
 		return _display.getInput(symbol);
 	}
-
-	public static void main(String[] args) {
-		// login
+	
+	public void handlePlayerLogin(String[] args) {
 		JFrame login = new JFrame("Login");
 		login.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		PasswordWindow loginPrompt = new PasswordWindow();
@@ -67,27 +70,41 @@ public final class TicTacToe extends JPanel implements ITicTacToe {
 		login.setVisible(true);
 		while (loginPrompt.Username == null && loginPrompt.Password == null)
 			;
-		String username = new String(loginPrompt.Username);
-		String password = new String(loginPrompt.Password);
+		_username = new String(loginPrompt.Username);
+		_password = new String(loginPrompt.Password);
 		login.setVisible(false);
 		login.dispose();
-
+	}
+	
+	public void runGame() {
 		JFrame window = new JFrame("Matchmaking TicTacToe");
 		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		while (true) {
-			TicTacToe ttt = new TicTacToe();
-			window.setContentPane(ttt);
+			initializeInterface();
+			window.setContentPane(this);
 			window.pack();
 			window.setVisible(true);
 
-			ttt.getGame().start(username, password);
+			_game.start(_username, _password);
 			System.out.println("Exited game.start()");
-			ttt.repaintDisplay();
+			repaintDisplay();
 
 			while (TicTacToe.NotInGame.get())
 				;
+			removeAll();
 		}
+	}
+
+	public static void main(String[] args) {		
+		ITicTacToe ttt;
+		if (args.length == 0)
+			ttt = new TicTacToe();
+		else
+			ttt = new FvtTicTacToe();
+		
+		ttt.handlePlayerLogin(args);
+		ttt.runGame();
 	}
 
 	private JPanel createTopPanel() {
@@ -113,7 +130,7 @@ public final class TicTacToe extends JPanel implements ITicTacToe {
 		return p;
 	}
 
-	public TicTacToe() {
+	private void initializeInterface() {
 		_board = new Board();
 		_c = new Client();
 		_game = new Game(this, _c, _board);
@@ -183,5 +200,10 @@ public final class TicTacToe extends JPanel implements ITicTacToe {
 
 	public Game getGame() {
 		return _game;
+	}
+
+	@Override
+	public void showGameOverDialog(String message) {
+		JOptionPane.showMessageDialog(this, message);
 	}
 }

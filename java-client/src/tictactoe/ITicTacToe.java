@@ -10,11 +10,13 @@ public interface ITicTacToe {
 	public void setWinfieldText(String text);
 	public void setLossfieldText(String text);
 	public JLabel getTimerfield();
-	public Game getGame();
 	public void repaintDisplay();
 	public void lockGameOverMsg();
 	public void unlockGameOverMsg();
 	public void setGameOverMsg(String newMsg);
 	public String getGameOverMsg();
 	public int getInput(char symbol);
+	public void runGame();
+	public void handlePlayerLogin(String[] args);
+	public void showGameOverDialog(String message);
 }

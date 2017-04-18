@@ -90,11 +90,6 @@ public class MockTicTacToe implements ITicTacToe {
 	}
 
 	@Override
-	public Game getGame() {
-		return _game;
-	}
-
-	@Override
 	public void repaintDisplay() {
 	}
 
@@ -146,6 +141,26 @@ public class MockTicTacToe implements ITicTacToe {
 	
 	public String getFinalMessage() {
 		return _c.getFinalMsg();
+	}
+
+	@Override
+	public void runGame() {		
+	}
+
+	@Override
+	public void handlePlayerLogin(String[] args) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public Game getGame() {
+		return _game;
+	}
+
+	@Override
+	public void showGameOverDialog(String message) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }
