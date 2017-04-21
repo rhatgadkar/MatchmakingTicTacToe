@@ -76,7 +76,7 @@ public class FvtTicTacToe implements ITicTacToe {
 	public int getInput(char symbol) {
 		int input = -1;
 		int movesIter = 0;
-		
+
 		while (!TicTacToe.NotInGame.get()) {
 			// add 250 millisecond delay before getting move
 			try {
@@ -91,7 +91,7 @@ public class FvtTicTacToe implements ITicTacToe {
 				continue;
 			}
 			else
-				input = Integer.parseInt(_moves[movesIter]);
+				input = _moves[movesIter].charAt(0) - '0';
 			
 			if (!_board.insert(symbol, input)) {
 				movesIter++;
