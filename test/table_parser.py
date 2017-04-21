@@ -1,12 +1,47 @@
-import commands
-
-
-PSQL_CMD = "psql -d mydb -c 'SELECT * FROM tttrecords;'"
-PS_CMD = "ps ww"
-
-
 def get_table_data(input_str, pop_before_data_start=0,
                    pop_after_data_end=0, sep=' '):
+    """
+    Returns a table header and its data given from an input string.
+
+    Input                  Description                                     Type
+    ---------------------------------------------------------------------------
+    input_str              The raw table output                             str
+    pop_before_data_start  Number of lines to pop from input_str before     int
+                           data rows begin after getting table header
+    pop_after_data_end     Number of lines to pop from input_str after      int
+                           having gotten the data rows from the table
+    sep                    Symbol that is used to separate the colums of    str
+                           the table
+
+    Example PSQL table output:
+        username | win | loss 
+        ----------+-----+------
+         a        |   3 |    3
+         b        |   3 |    3
+         s1       |   6 |    2
+        (3 rows)
+
+        get_table_data(...) arguments:
+        pop_before_data_start=1, pop_after_data_end=2, sep='|'
+
+        Output of get_table_data(...) with provided arguments:
+        ['username', 'win', 'loss']
+        [['a', '3', '3'], ['b', '3', '3'], ['s1', '6', '2']]
+
+    Example 'ps ww' table output:
+         PID TTY      STAT   TIME COMMAND
+        2274 pts/6    Ss     0:00 /bin/bash
+        2723 pts/6    S+     0:00 python table_parser.py aws-ubuntu1404.pem
+        2727 pts/6    S+     0:00 sh -c { ps ww; } 2>&1
+        2728 pts/6    R+     0:00 ps ww
+
+        get_table_data(...) arguments:
+        pop_before_data_start=0, pop_after_data_end=0, sep=' '
+
+        Output of get_table_data(...) with provided arguments:
+        ['PID', 'TTY', 'STAT', 'TIME', 'COMMAND']
+        [['2274', 'pts/6', 'Ss', '0:00', '/bin/bash'], ['2723', 'pts/6', 'S+', '0:00', 'python table_parser.py aws-ubuntu1404.pem'], ['2727', 'pts/6', 'S+', '0:00', 'sh -c { ps ww; } 2>&1'], ['2728', 'pts/6', 'R+', '0:00', 'ps ww']]
+    """
     table_rows = input_str.split('\n')
     table_headers = table_rows[0].split(sep)
     table_headers = [item for item in table_headers if item != '']
@@ -43,21 +78,3 @@ def get_psql_table_data(input_str):
 
 def get_ps_table_data(input_str):
     return get_table_data(input_str)
-
-
-import argparse
-parser = argparse.ArgumentParser()
-parser.add_argument("identity_file", help="SSH private key (identity) file",
-                    type=str)
-parser.add_argument("server_addr", help="Server address to SSH into", type=str)
-args = parser.parse_args()
-ssh_cmd = 'ssh -i ' + args.identity_file + ' ' + args.server_addr
-get_tttrecords_cmd = ssh_cmd + ' "' + PSQL_CMD + '"'
-raw_data = commands.getoutput(get_tttrecords_cmd)
-(table_headers, table_rows) = get_psql_table_data(raw_data)
-print table_headers
-print table_rows
-raw_data = commands.getoutput(PS_CMD)
-(table_header, table_rows) = get_ps_table_data(raw_data)
-print table_header
-print table_rows

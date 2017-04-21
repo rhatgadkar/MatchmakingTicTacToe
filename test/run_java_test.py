@@ -1,16 +1,11 @@
 from os import system
 import sys
 
-cmd = 'java -cp test-java-client/ TicTacToe 1 2 3 4 5 6 7 8 9'
 
-if len(sys.argv) < 1 or len(sys.argv) > 2:
-	print 'There can only be 1 or 2 arguments.'
-	sys.exit()
-if len(sys.argv) == 2:
-	cmd = cmd + ' ' + sys.argv[1]
-
+CMD = 'java -cp %s tictactoe.TicTacToe %s'
+CMD = CMD % (sys.argv[1], sys.argv[2:])
 while True:
-    a = system(cmd)
+    a = system(CMD)
     if a != 0:
         break
-print 'Error happened. Couldn\'t start test-java-client. Exiting.'
+print 'Error happened. Couldn\'t start java client. Exiting.'
