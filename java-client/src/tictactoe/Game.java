@@ -398,8 +398,10 @@ public class Game {
 			_ttt.setWinfieldText("W: " + winRecord);
 			_ttt.setLossfieldText("L: " + lossRecord);
 		}
-		if (opponentUsername != "")
+		if (PasswordWindow.isValidCredential(opponentUsername))
 			_ttt.setOpponentText("Opponent: " + opponentUsername);
+		else
+			_ttt.setOpponentText("Guest Opponent");
 
 		if (_c.isP1())
 			_ttt.setPlayerfieldText("You are player 1 (" +

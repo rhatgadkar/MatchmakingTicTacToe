@@ -14,6 +14,7 @@ import javax.swing.JOptionPane;
 public class PasswordWindow extends JPanel implements ActionListener {
 	private static String OK = "ok";
 	private static String QUIT = "quit";
+	private static String GUEST = "guest";
 	private static int VAR_SIZE = 21;
 
 	private JTextField _usernameField;
@@ -47,18 +48,37 @@ public class PasswordWindow extends JPanel implements ActionListener {
 		add(textPane);
 		add(buttonPane);
 	}
+	
+	public static boolean isValidCredential(String credential) {
+		if (credential == "")
+			return false;
+		if (credential.length() >= VAR_SIZE)
+			return false;
+		
+		for (int i = 0; i < credential.length(); i++) {
+			if (!Character.isDigit(credential.charAt(i)) &&
+					!Character.isLetter(credential.charAt(i))) {
+				return false;
+			}
+		}
+		return true;
+	}
 
 	private JPanel createButtonPanel() {
 		JPanel p = new JPanel(new GridLayout(0, 1));
 		JButton okButton = new JButton("OK");
+		JButton guestButton = new JButton("GUEST");
 		JButton quitButton = new JButton("QUIT");
 
 		okButton.setActionCommand(PasswordWindow.OK);
+		guestButton.setActionCommand(PasswordWindow.GUEST);
 		quitButton.setActionCommand(PasswordWindow.QUIT);
 		okButton.addActionListener(this);
 		quitButton.addActionListener(this);
+		guestButton.addActionListener(this);
 
 		p.add(okButton);
+		p.add(guestButton);
 		p.add(quitButton);
 		return p;
 	}
@@ -69,32 +89,21 @@ public class PasswordWindow extends JPanel implements ActionListener {
 		if (PasswordWindow.OK.equals(cmd)) {
 			String currUser = _usernameField.getText();
 			String currPass = new String(_passwordField.getPassword());
-			if (currUser.length() >= VAR_SIZE || currPass.length() >= VAR_SIZE) {
-				JOptionPane.showMessageDialog(null,
-						"Username and Password must be at most " +
-						Integer.toString(VAR_SIZE - 1) + " characters long.");
+			if (!PasswordWindow.isValidCredential(currUser)) {
+				JOptionPane.showMessageDialog(this, "Invalid username.");
 				return;
 			}
-			if (currUser.length() != 0 && currPass.length() != 0) {
-				for (int i = 0; i < currUser.length(); i++) {
-					if (!Character.isDigit(currUser.charAt(i)) &&
-							!Character.isLetter(currUser.charAt(i))) {
-						JOptionPane.showMessageDialog(null,
-								"Username and Password must only contain letters and digits.");
-						return;
-					}
-				}
-				for (int i = 0; i < currPass.length(); i++) {
-					if (!Character.isDigit(currPass.charAt(i)) &&
-							!Character.isLetter(currPass.charAt(i))) {
-						JOptionPane.showMessageDialog(null,
-								"Username and Password must only contain letters and digits.");
-						return;
-					}
-				}
+			if (!PasswordWindow.isValidCredential(currPass)) {
+				JOptionPane.showMessageDialog(this, "Invalid password.");
+				return;
 			}
 			Username = new String(_usernameField.getText());
 			Password = new String(_passwordField.getPassword());
+		}
+		
+		if (PasswordWindow.GUEST.equals(cmd)) {
+			Username = new String("");
+			Password = new String("");
 		}
 
 		if (PasswordWindow.QUIT.equals(cmd)) {
