@@ -36,6 +36,7 @@ public final class Client implements IClient {
 	public void init(String username, String password) {
 		_username = username;
 		_password = password;
+		_record = "";
 		String buf = "";
 
 		int retries;

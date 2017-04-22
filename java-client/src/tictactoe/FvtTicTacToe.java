@@ -126,4 +126,10 @@ public class FvtTicTacToe implements ITicTacToe {
 		System.out.println(message);
 	}
 
+	@Override
+	public void setOpponentText(String text) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

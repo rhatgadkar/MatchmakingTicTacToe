@@ -163,4 +163,10 @@ public class MockTicTacToe implements ITicTacToe {
 		
 	}
 
+	@Override
+	public void setOpponentText(String text) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

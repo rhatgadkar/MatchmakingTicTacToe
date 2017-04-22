@@ -381,13 +381,25 @@ public class Game {
 		_ttt.setPlayerfieldText("Searching for opponent...");
 		_c.init(username, password);
 
+		String[] initialSplit = _c.getRecord().split(",");
+		String winRecord = "";
+		String lossRecord = "";
+		String opponentUsername = "";
+		try {
+			winRecord = initialSplit[0].split("r")[1];
+			lossRecord = initialSplit[1];
+		} catch (Exception e) {
+		}
+		try {
+			opponentUsername = initialSplit[2];
+		} catch (Exception e) {
+		}
 		if (!username.isEmpty() && !password.isEmpty()) {
-			String[] initialSplit = _c.getRecord().split(",");
-			String winRecord = initialSplit[0].split("r")[1];
-			String lossRecord = initialSplit[1];
 			_ttt.setWinfieldText("W: " + winRecord);
 			_ttt.setLossfieldText("L: " + lossRecord);
 		}
+		if (opponentUsername != "")
+			_ttt.setOpponentText("Opponent: " + opponentUsername);
 
 		if (_c.isP1())
 			_ttt.setPlayerfieldText("You are player 1 (" +
