@@ -145,6 +145,8 @@ def default_test(identity_file):
 
 def main(args):
     """
+    This is the entry point for running the functional tests.
+
     arg 1: Java client working directory
     arg 2: SSH private key file
     """
