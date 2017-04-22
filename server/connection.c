@@ -192,6 +192,7 @@ struct client_thread_params
 	int* shm_ports_used;
 	int thread_canceled;
 	char username[MAXBUFLEN];
+	char p1_username[MAXBUFLEN];
 	char p1_record_str[MAXBUFLEN];
 	char rec;
 };
@@ -291,13 +292,26 @@ void* client_thread(void* parameters)
 		memset(p2_win, 0, MAXBUFLEN);
 		memset(p2_loss, 0, MAXBUFLEN);
 		memset(record_str, 0, MAXBUFLEN);
-		if (login[0] == ',')
-			record_str[0] = ',';
+		if (login[0] == ',' && params->p1_username[0] == 0)
+		{
+			strcat(record_str, "r,,");
+		}
+		else if (login[0] == ',' && params->p1_username[0] != 0)
+		{
+			strcat(record_str, "r,,");
+			strcat(record_str, params->p1_username);
+		}
 		else
 		{
 			get_win_loss_record(username, p2_win, p2_loss);
-			status = snprintf(record_str, MAXBUFLEN,
-					"r%s,%s", p2_win, p2_loss);
+			// record_str contains: p2_win,p2_loss,p1_username
+			if (params->p1_username[0] != 0)
+				status = snprintf(record_str, MAXBUFLEN,
+						"r%s,%s,%s", p2_win, p2_loss,
+						params->p1_username);
+			else
+				status = snprintf(record_str, MAXBUFLEN,
+						"r%s,%s,", p2_win, p2_loss);
 			if (status < 0)
 			{
 				fprintf(stderr, "snprintf failed\n");
@@ -316,6 +330,9 @@ void* client_thread(void* parameters)
 			params->thread_canceled = 1;
 			return NULL;
 		}
+		// params->p1_record_str contains: p1_win,p1_loss,p2_username
+		if (username[0] != 0)
+			strcat(params->p1_record_str, (const char *)username);
 		printf("sending to client 1: %s\n", params->p1_record_str);
 		status = send_to_address(*(params->sockfd_other_client),
 				(const char *)params->p1_record_str);
@@ -559,12 +576,34 @@ void handle_match_msg(int sockfd, int* shm_iter, int* shm_ports_used)
 	second_thread_params.thread_canceled = 0;
 	memset(second_thread_params.username, 0, MAXBUFLEN);
 	memset(second_thread_params.p1_record_str, 0, MAXBUFLEN);
-	if (login[0] == ',')
-		second_thread_params.p1_record_str[0] = ',';
+	memset(second_thread_params.p1_username, 0, MAXBUFLEN);
+	if (login[0] == ',' && first_thread_params.username[0] == 0)
+	{
+		strcat(second_thread_params.p1_record_str, "r,,");
+		second_thread_params.p1_username[0] = 0;
+	}
+	else if (login[0] == ',' && first_thread_params.username[0] != 0)
+	{
+		strcat(second_thread_params.p1_record_str, "r,,");
+		status = snprintf(second_thread_params.p1_username, MAXBUFLEN,
+				"%s", first_thread_params.username);
+		if (status < 0)
+		{
+			fprintf(stderr, "snprintf failed\n");
+			return;
+		}
+	}
 	else
 	{
 		status = snprintf(second_thread_params.p1_record_str, MAXBUFLEN,
-				"r%s,%s", p1_win, p1_loss);
+				"r%s,%s,", p1_win, p1_loss);
+		if (status < 0)
+		{
+			fprintf(stderr, "snprintf failed\n");
+			return;
+		}
+		status = snprintf(second_thread_params.p1_username, MAXBUFLEN,
+				"%s", username);
 		if (status < 0)
 		{
 			fprintf(stderr, "snprintf failed\n");
