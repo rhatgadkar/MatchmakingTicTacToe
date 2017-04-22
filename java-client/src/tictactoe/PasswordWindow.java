@@ -50,7 +50,7 @@ public class PasswordWindow extends JPanel implements ActionListener {
 	}
 	
 	public static boolean isValidCredential(String credential) {
-		if (credential.length() == 0)
+		if (credential == null || credential.length() == 0)
 			return false;
 		if (credential.length() >= VAR_SIZE)
 			return false;
