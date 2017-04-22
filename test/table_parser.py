@@ -21,6 +21,7 @@ def get_table_data(input_str, pop_before_data_start=0,
          s1       |   6 |    2
         (3 rows)
 
+
         get_table_data(...) arguments:
         pop_before_data_start=1, pop_after_data_end=2, sep='|'
 
