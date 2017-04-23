@@ -55,7 +55,7 @@ public class MockClient implements IClient {
 
 	@Override
 	public String getRecord() {
-		return null;
+		return "r,,";
 	}
 
 	public String getFinalMsg() {

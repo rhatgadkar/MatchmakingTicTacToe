@@ -38,7 +38,7 @@ public class TestGame {
 		 * Receive move at position 7.
 		 * Verify after Game.start() returns that:
 		 * - position 7 contains 'x'
-		 * - GameOverMsg == "Player 1 wins."
+		 * - GameOverMsg == "Player 1 wins. You lose."
 		 * - TicTacToe.NotInGame.get() == True
 		 * - nothing is sent
 		 */
@@ -54,7 +54,7 @@ public class TestGame {
 		ttt.getGame().start("",  "");
 		
 		Assert.assertEquals('x', b.getSymbolAtCoord(2, 0));
-		Assert.assertEquals("Player 1 wins.", ttt.getGameOverMsg());
+		Assert.assertEquals("Player 1 wins. You lose.", ttt.getGameOverMsg());
 		Assert.assertTrue(TicTacToe.NotInGame.get());
 		Assert.assertEquals("", ttt.getFinalMessage());
 	}
@@ -135,7 +135,7 @@ public class TestGame {
 		 * Receive move at position 3.
 		 * Verify after Game.start() returns that:
 		 * - position 3 contains 'x'
-		 * - GameOverMsg = "You have given up. Player 1 wins."
+		 * - GameOverMsg = "You have given up. You lose."
 		 * - TicTacToe.NotInGame.get() == True
 		 * - "giveup" is sent
 		 */
@@ -148,7 +148,7 @@ public class TestGame {
 		ttt.getGame().start("", "");
 		
 		Assert.assertEquals('x', b.getSymbolAtCoord(0, 2));
-		Assert.assertEquals("You have given up. Player 1 wins.",
+		Assert.assertEquals("You have given up. You lose.",
 				ttt.getGameOverMsg());
 		Assert.assertTrue(TicTacToe.NotInGame.get());
 		Assert.assertEquals("giveup", ttt.getFinalMessage());
@@ -167,7 +167,7 @@ public class TestGame {
 		 * Send move at position 7.
 		 * Verify after Game.start() returns that:
 		 * - position 7 contains 'x'
-		 * - GameOverMsg == "Player 1 wins."
+		 * - GameOverMsg == "You win."
 		 * - TicTacToe.NotInGame.get() == True
 		 * - "w7" is sent
 		 */
@@ -183,7 +183,7 @@ public class TestGame {
 		ttt.getGame().start("",  "");
 		
 		Assert.assertEquals('x', b.getSymbolAtCoord(2, 0));
-		Assert.assertEquals("Player 1 wins.", ttt.getGameOverMsg());
+		Assert.assertEquals("You win.", ttt.getGameOverMsg());
 		Assert.assertTrue(TicTacToe.NotInGame.get());
 		Assert.assertEquals("w7", ttt.getFinalMessage());
 	}
@@ -234,7 +234,7 @@ public class TestGame {
 		 * 
 		 * Send "giveup".
 		 * Verify after Game.start() returns that:
-		 * - GameOverMsg = "You have given up. Player 2 wins."
+		 * - GameOverMsg = "You have given up. You lose."
 		 * - TicTacToe.NotInGame.get() == True
 		 * - "giveup" is sent
 		 */
@@ -244,7 +244,7 @@ public class TestGame {
 		MockTicTacToe ttt = new MockTicTacToe(true, -1, "8", b);
 		ttt.getGame().start("", "");
 		
-		Assert.assertEquals("You have given up. Player 2 wins.",
+		Assert.assertEquals("You have given up. You lose.",
 				ttt.getGameOverMsg());
 		Assert.assertTrue(TicTacToe.NotInGame.get());
 		Assert.assertEquals("giveup", ttt.getFinalMessage());
@@ -318,7 +318,7 @@ public class TestGame {
 		 * 
 		 * Receive "giveup".
 		 * Verify after Game.start() returns that:
-		 * - GameOverMsg = "You have not played a move. Player 2 wins."
+		 * - GameOverMsg = "You have not played a move. You lose."
 		 * - TicTacToe.NotInGame.get() == True
 		 * - "giveup" is sent
 		 */
@@ -328,7 +328,7 @@ public class TestGame {
 		MockTicTacToe ttt = new MockTicTacToe(true, 0, "8", b);
 		ttt.getGame().start("", "");
 		
-		Assert.assertEquals("You have not played a move. Player 2 wins.",
+		Assert.assertEquals("You have not played a move. You lose.",
 				ttt.getGameOverMsg());
 		Assert.assertTrue(TicTacToe.NotInGame.get());
 		Assert.assertEquals("giveup", ttt.getFinalMessage());
