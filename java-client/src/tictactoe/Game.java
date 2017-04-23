@@ -382,8 +382,6 @@ public class Game {
 		}
 		try {
 			opponentUsername = initialSplit[2];
-			System.out.println("opponentUsername[0]: " + (int)opponentUsername.charAt(1));
-			System.out.println(opponentUsername.length());
 		} catch (Exception e) {
 		}
 		if (!username.isEmpty() && !password.isEmpty()) {
