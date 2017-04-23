@@ -32,6 +32,12 @@ public final class Client implements IClient {
 	public Client() {
 		_doneInit = false;
 	}
+	
+	public static String stringToLength(String input, int length) {
+		StringBuilder sb = new StringBuilder(input);
+		sb.setLength(length);
+		return sb.toString();
+	}
 
 	public void init(String username, String password) {
 		_username = username;
@@ -46,7 +52,7 @@ public final class Client implements IClient {
 			} catch (Exception e) {
 			}
 
-			if (TicTacToe.NotInGame.get())
+			if (Game.NotInGame.get())
 				break;
 
 			// connect to parent server
@@ -108,7 +114,6 @@ public final class Client implements IClient {
 				retries = 0;
 				continue;
 			}
-			buf = TicTacToe.stringToLength(buf, "player-1".length());
 
 			try {
 				_sock.setSoTimeout(0);
@@ -117,7 +122,8 @@ public final class Client implements IClient {
 			}
 
 			// get assigned player-1 or player-2
-			if (buf.equals("player-1")) {
+			if (buf.contains("player-1")) {
+				// client is P1
 				_isP1 = true;
 				boolean retryConn = false;
 				do {
@@ -134,8 +140,7 @@ public final class Client implements IClient {
 						retryConn = true;
 						break;
 					}
-				} while (buf.charAt(0) != 'r' && buf.charAt(0) != ',' &&
-						buf.charAt(0) != 'b');
+				} while (buf.charAt(0) != 'r' && buf.charAt(0) != 'b');
 				if (retryConn)
 					continue;
 				if (buf.charAt(0) == 'b') {
@@ -147,11 +152,10 @@ public final class Client implements IClient {
 				_record = new String(buf);
 				break;
 			}
-			else if (buf.charAt(0) == 'r' || buf.charAt(0) == ',') {
-				if (buf.charAt(0) == 'r') {
-					System.out.println("Current record: " + buf);
-					_record = new String(buf);
-				}
+			else if (buf.charAt(0) == 'r') {
+				// client is P2
+				System.out.println("Current record: " + buf);
+				_record = new String(buf);
 				_isP1 = false;
 				break;
 			}
@@ -235,7 +239,7 @@ public final class Client implements IClient {
 	}
 
 	private void createSocketServer(String port) throws Exception {
-		port = TicTacToe.stringToLength(port, SERVERPORT.length());
+		port = Client.stringToLength(port, SERVERPORT.length());
 		try {
 			_sock = new Socket(SERVERIP, Integer.parseInt(port));
 		} catch (UnknownHostException e) {

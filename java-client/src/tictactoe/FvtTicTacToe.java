@@ -18,7 +18,7 @@ public class FvtTicTacToe implements ITicTacToe {
 		_game = new Game(this, _c, _board);
 		_display = new Display(_game.getBoard());
 		// after "Click to start", NotInGame==false and GameOverMsg==null
-		TicTacToe.NotInGame.set(false);
+		Game.NotInGame.set(false);
 		_display.GameOverMsgLock.lock();
 		try {
 			_display.GameOverMsg = null;
@@ -78,7 +78,7 @@ public class FvtTicTacToe implements ITicTacToe {
 		int input = -1;
 		int movesIter = 0;
 
-		while (!TicTacToe.NotInGame.get()) {
+		while (!Game.NotInGame.get()) {
 			// add 250 millisecond delay before getting move
 			try {
 				Thread.sleep(250);

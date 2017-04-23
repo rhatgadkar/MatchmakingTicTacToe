@@ -32,7 +32,7 @@ public class Display extends JPanel implements MouseListener {
 		_acceptedInput = new InputMsg();
 		_acceptedInput.input = -1;
 		_symbol = 0;
-		if (TicTacToe.NotInGame.get()) {
+		if (Game.NotInGame.get()) {
 			GameOverMsgLock.lock();
 			try {
 				GameOverMsg = "Click to start.";
@@ -50,7 +50,7 @@ public class Display extends JPanel implements MouseListener {
 		}
 		@Override
 		public void run() {
-			while (_msg.input == -1 && !TicTacToe.NotInGame.get())
+			while (_msg.input == -1 && !Game.NotInGame.get())
 				;
 		}
 	}
@@ -140,11 +140,11 @@ public class Display extends JPanel implements MouseListener {
 				}
 			}
 		}
-		else if (TicTacToe.NotInGame.get()) {
+		else if (Game.NotInGame.get()) {
 			GameOverMsgLock.lock();
 			try {
 				if (GameOverMsg != null) {
-					TicTacToe.NotInGame.set(false);
+					Game.NotInGame.set(false);
 					GameOverMsg = null;
 				}
 			} finally {

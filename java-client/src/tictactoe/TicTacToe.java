@@ -11,18 +11,9 @@ import javax.swing.JOptionPane;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JButton;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @SuppressWarnings("serial")
 public final class TicTacToe extends JPanel implements ITicTacToe {
-
-	public static AtomicBoolean NotInGame = new AtomicBoolean(true);
-
-	public static String stringToLength(String input, int length) {
-		StringBuilder sb = new StringBuilder(input);
-		sb.setLength(length);
-		return sb.toString();
-	}
 
 	private Board _board;
 	private Client _c;
@@ -91,7 +82,7 @@ public final class TicTacToe extends JPanel implements ITicTacToe {
 			System.out.println("Exited game.start()");
 			repaintDisplay();
 
-			while (TicTacToe.NotInGame.get())
+			while (Game.NotInGame.get())
 				;
 			removeAll();
 		}
@@ -154,12 +145,12 @@ public final class TicTacToe extends JPanel implements ITicTacToe {
 			private Display _display;
 			private Client _c;
 			public void actionPerformed(ActionEvent e) {
-				if (TicTacToe.NotInGame.get() || !_c.getDoneInit())
+				if (Game.NotInGame.get() || !_c.getDoneInit())
 					System.exit(0);
 				else {
 					_display.GameOverMsgLock.lock();
 					try {
-						TicTacToe.NotInGame.set(true);
+						Game.NotInGame.set(true);
 						_display.GameOverMsg = "Click to start.";
 					} finally {
 						_display.GameOverMsgLock.unlock();

@@ -1,6 +1,7 @@
 package tictactoe;
 
 import java.net.SocketTimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Game {
@@ -10,6 +11,8 @@ public class Game {
 	private Recv _recv;
 	private IClient _c;
 	private ITicTacToe _ttt;
+	
+	public static AtomicBoolean NotInGame = new AtomicBoolean(true);
 	
 	private class Recv {
 		public String recvBuf;
@@ -76,7 +79,7 @@ public class Game {
 			 * If the game is not over, reads from the client socket continue
 			 * to get saved into _recv.recvBuf.
 			 */
-			while (!TicTacToe.NotInGame.get()) {
+			while (!Game.NotInGame.get()) {
 				String test = "";
 				try {
 					test = _c.receiveFrom(1);
@@ -90,16 +93,16 @@ public class Game {
 					} finally {
 						_ttt.unlockGameOverMsg();
 					}
-					TicTacToe.NotInGame.set(true);
+					Game.NotInGame.set(true);
 					return;
 				}
 				_recv.recvBufLock.lock();
 				try {
-					_recv.recvBuf = TicTacToe.stringToLength(test, "giveup".length());
+					_recv.recvBuf = Client.stringToLength(test, "giveup".length());
 					if (_recv.recvBuf.equals("giveup")) {
 						_ttt.lockGameOverMsg();
 						try {
-							TicTacToe.NotInGame.set(true);
+							Game.NotInGame.set(true);
 							if (_c.isP1())
 								_ttt.setGameOverMsg(
 										"Player 2 has given up. You win.");
@@ -117,7 +120,7 @@ public class Game {
 							_recv.recvBuf.charAt(0) == 't') {
 						handleRecvWinTie(_recv.recvBuf.charAt(0),
 								_recv.recvBuf.charAt(1) - '0', _c.isP1());
-						TicTacToe.NotInGame.set(true);
+						Game.NotInGame.set(true);
 						return;
 					}
 				} finally {
@@ -213,9 +216,9 @@ public class Game {
 
 		_ttt.setTimerfieldText("");
 
-		if (_board.isWin(input) && !TicTacToe.NotInGame.get()) {
+		if (_board.isWin(input) && !Game.NotInGame.get()) {
 			_ttt.repaintDisplay();
-			TicTacToe.NotInGame.set(true);
+			Game.NotInGame.set(true);
 			try {
 				gt.join();
 			} catch (InterruptedException e) {
@@ -233,9 +236,9 @@ public class Game {
 			}
 			return;
 		}
-		else if (_board.isTie() && !TicTacToe.NotInGame.get()) {
+		else if (_board.isTie() && !Game.NotInGame.get()) {
 			_ttt.repaintDisplay();
-			TicTacToe.NotInGame.set(true);
+			Game.NotInGame.set(true);
 			try {
 				gt.join();
 			} catch (InterruptedException e) {
@@ -257,7 +260,7 @@ public class Game {
 			// action happened before user could provide input or
 			// user not input move within 30 seconds
 			
-			TicTacToe.NotInGame.set(true);
+			Game.NotInGame.set(true);
 			try {
 				gt.join();
 			} catch (InterruptedException e) {
@@ -302,7 +305,7 @@ public class Game {
 			_recv.recvBufLock.unlock();
 		}
 		
-		while (!TicTacToe.NotInGame.get()) {
+		while (!Game.NotInGame.get()) {
 			_recv.recvBufLock.lock();
 			try {
 				if (_recv.recvBuf == "")
@@ -323,7 +326,7 @@ public class Game {
 			System.exit(1);
 		}
 		
-		if (TicTacToe.NotInGame.get()) {
+		if (Game.NotInGame.get()) {
 			try {
 				gt.join();
 			} catch (InterruptedException e) {
@@ -354,9 +357,9 @@ public class Game {
 	}
 	
 	public void start(String username, String password) {
-		if (TicTacToe.NotInGame.get()) {
+		if (Game.NotInGame.get()) {
 			_ttt.setPlayerfieldText("MatchMaking TicTacToe");
-			while (TicTacToe.NotInGame.get())
+			while (Game.NotInGame.get())
 				;
 			_ttt.repaintDisplay();
 		}
@@ -364,6 +367,10 @@ public class Game {
 		_ttt.setPlayerfieldText("Searching for opponent...");
 		_c.init(username, password);
 
+		/**
+		 * record string is formatted like this:
+		 * r[wins],[losses],[opponent name]
+		*/
 		String[] initialSplit = _c.getRecord().split(",");
 		String winRecord = "";
 		String lossRecord = "";
@@ -375,6 +382,8 @@ public class Game {
 		}
 		try {
 			opponentUsername = initialSplit[2];
+			System.out.println("opponentUsername[0]: " + (int)opponentUsername.charAt(1));
+			System.out.println(opponentUsername.length());
 		} catch (Exception e) {
 		}
 		if (!username.isEmpty() && !password.isEmpty()) {
@@ -398,7 +407,7 @@ public class Game {
 		gt.start();
 
 		boolean p1turn = true;
-		while (!TicTacToe.NotInGame.get()) {
+		while (!Game.NotInGame.get()) {
 			// draw board
 			if (p1turn && _c.isP1())
 				_ttt.setTurnfieldText("Your turn.");

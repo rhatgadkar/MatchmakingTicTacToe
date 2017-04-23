@@ -30,7 +30,7 @@ public class MockTicTacToe implements ITicTacToe {
 		_display = new Display(_game.getBoard());
 		_currMove = currMove;
 		// after "Click to start", NotInGame==false and GameOverMsg==null
-		TicTacToe.NotInGame.set(false);
+		Game.NotInGame.set(false);
 		_display.GameOverMsgLock.lock();
 		try {
 			_display.GameOverMsg = null;
@@ -120,7 +120,7 @@ public class MockTicTacToe implements ITicTacToe {
 		 * If _currMove is 0, stall until timer expiry for "giveup".
 		 */
 		if (_currMove == 0) {
-			while (!TicTacToe.NotInGame.get())
+			while (!Game.NotInGame.get())
 				;
 			return -1;
 		}
@@ -128,7 +128,7 @@ public class MockTicTacToe implements ITicTacToe {
 			// "Click to start." is set when player forcefully gives up
 			_display.GameOverMsgLock.lock();
 			try {
-				TicTacToe.NotInGame.set(true);
+				Game.NotInGame.set(true);
 				_display.GameOverMsg = "Click to start.";
 			} finally {
 				_display.GameOverMsgLock.unlock();

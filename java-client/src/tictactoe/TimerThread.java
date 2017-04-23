@@ -23,7 +23,7 @@ public class TimerThread implements Runnable {
 		long elapsedTime = 0L;
 		long countdown = 0L;
 		while (!_msg.gotMsg && (elapsedTime < _seconds * 1000) &&
-				!TicTacToe.NotInGame.get()) {
+				!Game.NotInGame.get()) {
 			elapsedTime = (new Date().getTime()) - startTime;
 			if (_timerCountdown != null) {
 				Long currCountdown = (long)_seconds - (elapsedTime / 1000);
@@ -33,7 +33,7 @@ public class TimerThread implements Runnable {
 				}
 			}
 		}
-		if (!_msg.gotMsg && !TicTacToe.NotInGame.get())
-			TicTacToe.NotInGame.set(true);
+		if (!_msg.gotMsg && !Game.NotInGame.get())
+			Game.NotInGame.set(true);
 	}
 }
