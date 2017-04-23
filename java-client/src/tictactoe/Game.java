@@ -44,9 +44,9 @@ public class Game {
 				_ttt.lockGameOverMsg();
 				try {
 					if (isP1)
-						_ttt.setGameOverMsg("Player 2 wins.");
+						_ttt.setGameOverMsg("Player 2 wins. You lose.");
 					else
-						_ttt.setGameOverMsg("Player 1 wins.");
+						_ttt.setGameOverMsg("Player 1 wins. You lose.");
 				} finally {
 					_ttt.unlockGameOverMsg();
 				}
@@ -133,16 +133,12 @@ public class Game {
 			if (_ttt.getGameOverMsg() != null &&
 					_ttt.getGameOverMsg().equals("Click to start.")) {
 				// quitbutton was triggered.
-				if (_c.isP1())
-					_ttt.setGameOverMsg(
-							"You have given up. Player 2 wins.");
-				else
-					_ttt.setGameOverMsg(
-							"You have given up. Player 1 wins.");
+				_ttt.setGameOverMsg(
+						"You have given up. You lose.");
 				_c.sendGiveup();
 			}
 			else if (_ttt.getGameOverMsg() != null &&
-					_ttt.getGameOverMsg().contains("You win"))
+					_ttt.getGameOverMsg().contains("given up"))
 				// other client triggered quitbutton
 				;
 			else if (_ttt.getGameOverMsg() != null &&
@@ -152,7 +148,8 @@ public class Game {
 				_c.sendBye();
 			}
 			else if (_ttt.getGameOverMsg() != null &&
-					(_ttt.getGameOverMsg().contains("wins") ||
+					(_ttt.getGameOverMsg().contains("You win") ||
+					 _ttt.getGameOverMsg().contains("You lose") ||
 					_ttt.getGameOverMsg().contains("Tie"))) {
 				;
 			}
@@ -160,12 +157,8 @@ public class Game {
 				// user didn't play move within 30 seconds or
 				// not receive move within 45 seconds
 				if (currPlayerTurn) {
-					if (p1turn)
-						_ttt.setGameOverMsg(
-								"You have not played a move. Player 2 wins.");
-					else
-						_ttt.setGameOverMsg(
-								"You have not played a move. Player 1 wins.");
+					_ttt.setGameOverMsg(
+							"You have not played a move. You lose.");
 					_c.sendGiveup();
 				}
 				else {
@@ -232,21 +225,11 @@ public class Game {
 			_c.sendWin(input);
 			_ttt.showGameOverDialog("Game over. You win.");
 
-			if (p1turn) {
-				_ttt.lockGameOverMsg();
-				try {
-					_ttt.setGameOverMsg("Player 1 wins.");
-				} finally {
-					_ttt.unlockGameOverMsg();
-				}
-			}
-			else {
-				_ttt.lockGameOverMsg();
-				try {
-					_ttt.setGameOverMsg("Player 2 wins.");
-				} finally {
-					_ttt.unlockGameOverMsg();
-				}
+			_ttt.lockGameOverMsg();
+			try {
+				_ttt.setGameOverMsg("You win.");
+			} finally {
+				_ttt.unlockGameOverMsg();
 			}
 			return;
 		}

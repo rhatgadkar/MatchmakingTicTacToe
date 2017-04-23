@@ -66,6 +66,7 @@ public class FvtTicTacToe implements ITicTacToe {
 	
 	public void setGameOverMsg(String newMsg) {
 		_display.GameOverMsg = newMsg;
+		System.out.println(newMsg);
 	}
 	
 	public String getGameOverMsg() {
@@ -123,7 +124,6 @@ public class FvtTicTacToe implements ITicTacToe {
 
 	@Override
 	public void showGameOverDialog(String message) {
-		System.out.println(message);
 	}
 
 	@Override
