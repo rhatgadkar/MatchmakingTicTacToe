@@ -1,13 +1,15 @@
 import argparse
 from screenutils import Screen, list_screens
 import table_parser as tp
-from commands import getoutput
 from time import sleep
 import os
 import re
+import traceback
+import commands
 
 
 WORKING_DIR = ''
+IDENTITY_FILE = ''
 DEPLOY_SCREENS_CMD = 'python run_java_test.py'
 PSQL_PREFIX_CMD = "psql -d mydb -c "
 PSQL_SELECT_CMD = "'" + PSQL_PREFIX_CMD + '"SELECT * FROM tttrecords;"' + "'"
@@ -18,13 +20,13 @@ PS_CMD = "ps ww"
 SERVER_ADDR = "ubuntu@54.219.156.253"
 
 
-def get_raw_psql_table_output(identity_file):
+def get_raw_psql_table_output():
     """
     Gets the raw psql output of the tttrecords table.
     """
-    ssh_cmd = 'ssh -i ' + args.identity_file + ' ' + SERVER_ADDR
+    ssh_cmd = 'ssh -i ' + IDENTITY_FILE + ' ' + SERVER_ADDR
     get_tttrecords_cmd = ssh_cmd + ' ' + PSQL_SELECT_CMD
-    raw_data = getoutput(get_tttrecords_cmd)
+    raw_data = commands.getoutput(get_tttrecords_cmd)
     return raw_data
 
 
@@ -74,7 +76,7 @@ def get_file_wins_losses(screen_log):
     return (file_wins, file_losses)
 
 
-def verify_wins_losses(num_screens, psql_table_data):
+def verify_wins_losses(num_screens):
     """
     Verify the wins and loss count from the screen session logs and psql table
     output.
@@ -82,6 +84,9 @@ def verify_wins_losses(num_screens, psql_table_data):
     Example psql_table_data:
     [['s1', '3', '3'], ['s2', '3', '3'], ['s3', '3', '3']]
     """
+    raw_psql_table = get_raw_psql_table_output()
+    (psql_table_headers, psql_table_data) = \
+            tp.get_psql_table_data(raw_psql_table)
     for data_list in psql_table_data:
         username = data_list[0]
         table_wins = int(data_list[1])
@@ -103,7 +108,7 @@ def verify_wins_losses(num_screens, psql_table_data):
     return True
 
 
-def cleanup(identity_file):
+def cleanup():
     """
     Delete screen session logs and clear both psql records and login tables.
     """
@@ -113,33 +118,112 @@ def cleanup(identity_file):
     dir_items = os.listdir(os.getcwd())
     for item in dir_items:
         if screen_log_prog.match(item):
-            os.system('rm ' + os.getcwd() + '/' + item)
+            commands.getoutput('rm ' + os.getcwd() + '/' + item)
     # delete psql table entries
-    ssh_cmd = 'ssh -i ' + identity_file + ' ' + SERVER_ADDR + ' ' + \
+    ssh_cmd = 'ssh -i ' + IDENTITY_FILE + ' ' + SERVER_ADDR + ' ' + \
             PSQL_DELETE_RECORDS_CMD
-    os.system(ssh_cmd)
-    ssh_cmd = 'ssh -i ' + identity_file + ' ' + SERVER_ADDR + ' ' + \
+    commands.getoutput(ssh_cmd)
+    ssh_cmd = 'ssh -i ' + IDENTITY_FILE + ' ' + SERVER_ADDR + ' ' + \
             PSQL_DELETE_LOGIN_CMD
-    os.system(ssh_cmd)
+    commands.getoutput(ssh_cmd)
 
 
 # tests:
-def default_test(identity_file):
+def basic_test():
     """
     5 clients are running for 10 minutes with move set of '1 2 3 4 5 6 7 8 9'.
     """
+    result = False
     move_str = '1 2 3 4 5 6 7 8 9'
     num_screens = 5
-    deploy_screens(num_screens, move_str)
-    # wait 10 minutes before exit
-    sleep(60 * 10)
-    kill_screens()
-    # verify results
-    raw_psql_table = get_raw_psql_table_output(identity_file)
-    (psql_table_headers, psql_table_data) = \
-            tp.get_psql_table_data(raw_psql_table)
-    result = verify_wins_losses(num_screens, psql_table_data)
-    cleanup(identity_file)
+    try:
+        deploy_screens(num_screens, move_str)
+        # wait 10 minutes before exit
+        sleep(60 * 10)
+        kill_screens()
+        # verify results of screen logs with psql table output
+        result = verify_wins_losses(num_screens)
+        if not result:
+            return False
+    except:
+        print 'Exception occurred.'
+        traceback.print_exc()
+        return False
+    cleanup()
+    return result
+
+
+def p1_giveup_test():
+    """
+    5 clients are running for 10 minutes with move set of '1 2'. So P1 will
+    timeout and thus giveup.
+    """
+    result = False
+    move_str = '1 2'
+    num_screens = 5
+    try:
+        deploy_screens(num_screens, move_str)
+        # wait 10 minutes before exit
+        sleep(60 * 10)
+        kill_screens()
+        # verify results of screen logs with psql table output
+        result = verify_wins_losses(num_screens)
+        if not result:
+            return False
+    except:
+        print 'Exception occurred.'
+        traceback.print_exc()
+        return False
+    cleanup()
+    return result
+
+
+def p2_giveup_test():
+    """
+    5 clients are running for 10 minutes with move set of '1'. So P2 will
+    timeout and thus giveup.
+    """
+    result = False
+    move_str = '1'
+    num_screens = 5
+    try:
+        deploy_screens(num_screens, move_str)
+        # wait 10 minutes before exit
+        sleep(60 * 10)
+        kill_screens()
+        # verify results of screen logs with psql table output
+        result = verify_wins_losses(num_screens)
+        if not result:
+            return False
+    except:
+        print 'Exception occurred.'
+        traceback.print_exc()
+        return False
+    cleanup()
+    return result
+
+
+def basic_20_clients_test():
+    """
+    20 clients are running for 30 minutes with move set of '1 2 3 4 5 6 7 8 9'.
+    """
+    result = False
+    move_str = '1 2 3 4 5 6 7 8 9'
+    num_screens = 20
+    try:
+        deploy_screens(num_screens, move_str)
+        # wait 10 minutes before exit
+        sleep(60 * 30)
+        kill_screens()
+        # verify results of screen logs with psql table output
+        result = verify_wins_losses(num_screens)
+        if not result:
+            return False
+    except:
+        print 'Exception occurred.'
+        traceback.print_exc()
+        return False
+    cleanup()
     return result
 
 
@@ -151,12 +235,26 @@ def main(args):
     arg 2: SSH private key file
     """
     global WORKING_DIR
+    global IDENTITY_FILE
     WORKING_DIR = args.working_dir
-    result = default_test(args.identity_file)
+    IDENTITY_FILE = args.identity_file
+    result = basic_test()
     if not result:
-        print 'Tests failed.'
-    else:
-        print 'Tests passed.'
+        print 'basic_test failed.'
+        return
+    result = p1_giveup_test()
+    if not result:
+        print 'p1_giveup_test failed.'
+        return
+    result = p2_giveup_test()
+    if not result:
+        print 'p2_giveup_test failed.'
+        return
+    result = basic_20_clients_test()
+    if not result:
+        print 'basic_20_clients_test failed.'
+        return
+    print 'All tests passed.'
 
 
 parser = argparse.ArgumentParser()
