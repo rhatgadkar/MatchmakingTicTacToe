@@ -99,6 +99,8 @@ public final class Client implements IClient {
 				break;
 			}
 			try {
+				System.out.println(
+						"Trying to connect to child server at port: " + buf);
 				createSocketServer(buf);
 			} catch (Exception e) {
 				System.err.println("Could not create socket to child server. Exiting.");
