@@ -60,7 +60,7 @@ def get_file_wins_losses(screen_log):
     try:
         f = open(screen_log, 'r')
     except:
-        raise('%s cannot be opened for reading.' % (screen_log))
+        raise Exception('%s cannot be opened for reading.' % (screen_log))
     win_regex = r'.*You win.*'
     loss_regex = r'.*You lose.*'
     win_prog = re.compile(win_regex)
@@ -128,6 +128,41 @@ def cleanup():
     commands.getoutput(ssh_cmd)
 
 
+def get_ports_usage(num_screens):
+    """
+    Get the usage of ports from screen logs.
+    """
+    ports_usage = {}
+    starting_port = 4951
+    for port in range(starting_port, starting_port + (num_screens / 2) + 1):
+        ports_usage[port] = False
+        port_regex = '.*' + str(port) + '.*'
+        port_prog = re.compile(port_regex)
+        # verify if the port_regex is matched in the log files
+        screen_log_regex = r'^s[1-9][0-9]*\.log'
+        screen_log_prog = re.compile(screen_log_regex)
+        dir_items = os.listdir(os.getcwd())
+        for item in dir_items:
+            found_port = False
+            if screen_log_prog.match(item):
+                f = None
+                try:
+                    f = open(item, 'r')
+                    for line in f:
+                        if port_prog.match(line):
+                            ports_usage[port] = True
+                            found_port = True
+                            break
+                except:
+                    raise Exception('%s cannot be opened for reading.' %
+                            (item))
+                f.close()
+                if found_port:
+                    break
+    for port in sorted(ports_usage):
+        print str(port) + ': ' + str(ports_usage[port])
+
+
 # tests:
 def basic_test():
     """
@@ -149,6 +184,7 @@ def basic_test():
         print 'Exception occurred.'
         traceback.print_exc()
         return False
+    get_ports_usage(num_screens)
     cleanup()
     return result
 
@@ -174,6 +210,7 @@ def p1_giveup_test():
         print 'Exception occurred.'
         traceback.print_exc()
         return False
+    get_ports_usage(num_screens)
     cleanup()
     return result
 
@@ -199,20 +236,21 @@ def p2_giveup_test():
         print 'Exception occurred.'
         traceback.print_exc()
         return False
+    get_ports_usage(num_screens)
     cleanup()
     return result
 
 
-def basic_20_clients_test():
+def basic_21_clients_test():
     """
-    20 clients are running for 30 minutes with move set of '1 2 3 4 5 6 7 8 9'.
+    21 clients are running for 30 minutes with move set of '1 2 3 4 5 6 7 8 9'.
     """
     result = False
     move_str = '1 2 3 4 5 6 7 8 9'
-    num_screens = 20
+    num_screens = 21
     try:
         deploy_screens(num_screens, move_str)
-        # wait 10 minutes before exit
+        # wait 30 minutes before exit
         sleep(60 * 30)
         kill_screens()
         # verify results of screen logs with psql table output
@@ -223,6 +261,7 @@ def basic_20_clients_test():
         print 'Exception occurred.'
         traceback.print_exc()
         return False
+    get_ports_usage(num_screens)
     cleanup()
     return result
 
@@ -250,9 +289,9 @@ def main(args):
     if not result:
         print 'p2_giveup_test failed.'
         return
-    result = basic_20_clients_test()
+    result = basic_21_clients_test()
     if not result:
-        print 'basic_20_clients_test failed.'
+        print 'basic_21_clients_test failed.'
         return
     print 'All tests passed.'
 
