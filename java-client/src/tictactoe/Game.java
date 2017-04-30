@@ -224,15 +224,7 @@ public class Game {
 		else if (input == -1) {
 			// action happened before user could provide input or
 			// user not input move within 30 seconds
-			
 			Game.NotInGame.set(true);
-			try {
-				gt.join();
-			} catch (InterruptedException e) {
-				System.err.println("Could not join giveup thread.");
-				System.exit(1);
-			}
-			handleGameOver(p1turn, true);
 			return;
 		}
 		else
@@ -281,16 +273,8 @@ public class Game {
 			System.exit(1);
 		}
 		
-		if (Game.NotInGame.get()) {
-			try {
-				gt.join();
-			} catch (InterruptedException e) {
-				System.err.println("Could not join giveup thread.");
-				System.exit(1);
-			}
-			handleGameOver(p1turn, false);
+		if (Game.NotInGame.get())
 			return;
-		}
 
 		input = _recv.getRecvBuf().charAt(0) - '0';
 
@@ -355,6 +339,7 @@ public class Game {
 		gt.start();
 
 		boolean p1turn = true;
+		boolean currPlayerTurn = false;
 		while (!Game.NotInGame.get()) {
 			// draw board
 			if (p1turn && _c.isP1())
@@ -367,8 +352,9 @@ public class Game {
 				_ttt.setTurnfieldText("Your turn.");
 
 			_ttt.repaintDisplay();
-
-			if ((p1turn && _c.isP1()) || (!p1turn && !_c.isP1()))
+			
+			currPlayerTurn = (p1turn && _c.isP1()) || (!p1turn && !_c.isP1());
+			if (currPlayerTurn)
 				currPlayerMove(p1turn, gt);
 			else
 				otherPlayerMove(p1turn, gt);
@@ -381,5 +367,7 @@ public class Game {
 			System.err.println("Could not join giveup thread.");
 			System.exit(1);
 		}
+		
+		handleGameOver(p1turn, currPlayerTurn);
 	}
 }
