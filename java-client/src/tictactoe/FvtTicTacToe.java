@@ -7,6 +7,7 @@ public class FvtTicTacToe implements ITicTacToe {
 	private Board _board;
 	private Client _c;
 	private Game _game;
+	private GameOverMsg _gom;
 	private Display _display;
 	private String _username;
 	private String _password;
@@ -15,16 +16,12 @@ public class FvtTicTacToe implements ITicTacToe {
 	public FvtTicTacToe() {
 		_board = new Board();
 		_c = new Client();
-		_game = new Game(this, _c, _board);
-		_display = new Display(_game.getBoard());
+		_gom = new GameOverMsg();
+		_game = new Game(this, _c, _board, _gom);
+		_display = new Display(_game.getBoard(), _gom);
 		// after "Click to start", NotInGame==false and GameOverMsg==null
 		Game.NotInGame.set(false);
-		_display.GameOverMsgLock.lock();
-		try {
-			_display.GameOverMsg = null;
-		} finally {
-			_display.GameOverMsgLock.unlock();
-		}
+		_gom.setGameOverMsg(null);
 	}
 
 	@Override
@@ -54,23 +51,6 @@ public class FvtTicTacToe implements ITicTacToe {
 	
 	public void repaintDisplay() {
 		_display.repaint();
-	}
-	
-	public void lockGameOverMsg() {
-		_display.GameOverMsgLock.lock();
-	}
-	
-	public void unlockGameOverMsg() {
-		_display.GameOverMsgLock.unlock();
-	}
-	
-	public void setGameOverMsg(String newMsg) {
-		_display.GameOverMsg = newMsg;
-		System.out.println(newMsg);
-	}
-	
-	public String getGameOverMsg() {
-		return _display.GameOverMsg;
 	}
 
 	@Override

@@ -12,10 +12,6 @@ public interface ITicTacToe {
 	public void setOpponentText(String text);
 	public JLabel getTimerfield();
 	public void repaintDisplay();
-	public void lockGameOverMsg();
-	public void unlockGameOverMsg();
-	public void setGameOverMsg(String newMsg);
-	public String getGameOverMsg();
 	public int getInput(char symbol);
 	public void runGame();
 	public void handlePlayerLogin(String[] args);

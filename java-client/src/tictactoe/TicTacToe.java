@@ -18,6 +18,7 @@ public final class TicTacToe extends JPanel implements ITicTacToe {
 	private Board _board;
 	private Client _c;
 	private Game _game;
+	private GameOverMsg _gom;
 	private Display _display;
 	private JLabel _turnfield;
 	private JLabel _playerfield;
@@ -31,22 +32,6 @@ public final class TicTacToe extends JPanel implements ITicTacToe {
 	
 	public void repaintDisplay() {
 		_display.repaint();
-	}
-	
-	public void lockGameOverMsg() {
-		_display.GameOverMsgLock.lock();
-	}
-	
-	public void unlockGameOverMsg() {
-		_display.GameOverMsgLock.unlock();
-	}
-	
-	public void setGameOverMsg(String newMsg) {
-		_display.GameOverMsg = newMsg;
-	}
-	
-	public String getGameOverMsg() {
-		return _display.GameOverMsg;
 	}
 	
 	public int getInput(char symbol) {
@@ -128,8 +113,9 @@ public final class TicTacToe extends JPanel implements ITicTacToe {
 	private void initializeInterface() {
 		_board = new Board();
 		_c = new Client();
-		_game = new Game(this, _c, _board);
-		_display = new Display(_game.getBoard());
+		_gom = new GameOverMsg();
+		_game = new Game(this, _c, _board, _gom);
+		_display = new Display(_game.getBoard(), _gom);
 		_display.setPreferredSize(new Dimension(Display.WIDTH,
 				Display.HEIGHT));
 		_turnfield = new JLabel();
@@ -142,27 +128,22 @@ public final class TicTacToe extends JPanel implements ITicTacToe {
 		_opponentnamefield = new JLabel();
 
 		_quitbutton.addActionListener(new ActionListener() {
-			private Display _display;
 			private Client _c;
 			public void actionPerformed(ActionEvent e) {
 				if (Game.NotInGame.get() || !_c.getDoneInit())
 					System.exit(0);
 				else {
-					_display.GameOverMsgLock.lock();
-					try {
+					synchronized (_gom) {
 						Game.NotInGame.set(true);
-						_display.GameOverMsg = "Click to start.";
-					} finally {
-						_display.GameOverMsgLock.unlock();
+						_gom.setGameOverMsg(GameOverMsg.CLICK_TO_START);
 					}
 				}
 			}
-			private ActionListener init(Display display, Client c) {
-				_display = display;
+			private ActionListener init(Client c) {
 				_c = c;
 				return this;
 			}
-		}.init(_display, _c));
+		}.init(_c));
 
 		setLayout(new GridLayout(2, 1));
 		add(createTopPanel());

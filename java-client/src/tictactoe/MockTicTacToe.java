@@ -7,7 +7,7 @@ public class MockTicTacToe implements ITicTacToe {
 	private Board _board;
 	private MockClient _c;
 	private Game _game;
-	private Display _display;
+	private GameOverMsg _gom;
 	int _currMove;
 	String _turnfieldText;
 	String _playerfieldText;
@@ -16,7 +16,7 @@ public class MockTicTacToe implements ITicTacToe {
 	String _winfieldText;
 	
 	public MockTicTacToe(boolean isP1, int currMove, String opponentMove,
-			Board b) {
+			Board b, GameOverMsg gom) {
 		/**
 		 * - currMove contains integer from 1-9 representing positions in
 		 *   Board.  -1 means send a "giveup".
@@ -25,18 +25,13 @@ public class MockTicTacToe implements ITicTacToe {
 		 */
 		
 		_board = b;
+		_gom = gom;
 		_c = new MockClient(isP1, opponentMove);
-		_game = new Game(this, _c, _board);
-		_display = new Display(_game.getBoard());
+		_game = new Game(this, _c, _board, _gom);
 		_currMove = currMove;
 		// after "Click to start", NotInGame==false and GameOverMsg==null
 		Game.NotInGame.set(false);
-		_display.GameOverMsgLock.lock();
-		try {
-			_display.GameOverMsg = null;
-		} finally {
-			_display.GameOverMsgLock.unlock();
-		}
+		_gom.setGameOverMsg(null);
 	}
 
 	@Override
@@ -94,26 +89,6 @@ public class MockTicTacToe implements ITicTacToe {
 	}
 
 	@Override
-	public void lockGameOverMsg() {
-		_display.GameOverMsgLock.lock();
-	}
-
-	@Override
-	public void unlockGameOverMsg() {
-		_display.GameOverMsgLock.unlock();
-	}
-
-	@Override
-	public void setGameOverMsg(String newMsg) {
-		_display.GameOverMsg = newMsg;
-	}
-
-	@Override
-	public String getGameOverMsg() {
-		return _display.GameOverMsg;
-	}
-
-	@Override
 	public int getInput(char symbol) {
 		/**
 		 * If _currMove is -1, this means a "giveup" should be sent immediately.
@@ -126,12 +101,9 @@ public class MockTicTacToe implements ITicTacToe {
 		}
 		if (_currMove == -1) {
 			// "Click to start." is set when player forcefully gives up
-			_display.GameOverMsgLock.lock();
-			try {
+			synchronized (_gom) {
 				Game.NotInGame.set(true);
-				_display.GameOverMsg = "Click to start.";
-			} finally {
-				_display.GameOverMsgLock.unlock();
+				_gom.setGameOverMsg(GameOverMsg.CLICK_TO_START);
 			}
 			return -1;
 		}

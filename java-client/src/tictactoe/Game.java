@@ -2,7 +2,6 @@ package tictactoe;
 
 import java.net.SocketTimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class Game {
 	private Board _board;
@@ -11,24 +10,30 @@ public class Game {
 	private Recv _recv;
 	private IClient _c;
 	private ITicTacToe _ttt;
+	private GameOverMsg _gom;
 	
 	public static AtomicBoolean NotInGame = new AtomicBoolean(true);
 	
 	private class Recv {
-		public String recvBuf;
-		public ReentrantLock recvBufLock = new ReentrantLock();
+		private String _recvBuf;
+		public synchronized void setRecvBuf(String newBuf) {
+			_recvBuf = newBuf;
+		}
+		
+		public synchronized String getRecvBuf() {
+			return _recvBuf;
+		}
 	}
 	
-	public Game(ITicTacToe ttt, IClient c, Board b) {
+	public Game(ITicTacToe ttt, IClient c, Board b, GameOverMsg gom) {
 		_ttt = ttt;
 		_board = b;
 		_c = c;
+		_gom = gom;
 		_p1 = new Player(Player.P1_SYMBOL);
 		_p2 = new Player(Player.P2_SYMBOL);
 		_recv = new Recv();
-		_recv.recvBufLock.lock();
-		_recv.recvBuf = "";
-		_recv.recvBufLock.unlock();
+		_recv.setRecvBuf("");
 	}
 	
 	public Board getBoard() {
@@ -44,24 +49,14 @@ public class Game {
 			_ttt.repaintDisplay();
 			if (symbol == 'w') {
 				_ttt.showGameOverDialog("Game over. You lose.");
-				_ttt.lockGameOverMsg();
-				try {
-					if (isP1)
-						_ttt.setGameOverMsg("Player 2 wins. You lose.");
-					else
-						_ttt.setGameOverMsg("Player 1 wins. You lose.");
-				} finally {
-					_ttt.unlockGameOverMsg();
-				}
+				if (isP1)
+					_gom.setGameOverMsg(GameOverMsg.P2_WIN_LOSE);
+				else
+					_gom.setGameOverMsg(GameOverMsg.P1_WIN_LOSE);
 			}
 			else {
 				_ttt.showGameOverDialog("Game over. Tie game.");
-				_ttt.lockGameOverMsg();
-				try {
-					_ttt.setGameOverMsg("Tie game.");
-				} finally {
-					_ttt.unlockGameOverMsg();
-				}
+				_gom.setGameOverMsg(GameOverMsg.TIE_GAME);
 			}
 		}
 		
@@ -87,90 +82,70 @@ public class Game {
 					continue;
 				} catch (Exception e) {
 					// server disconnect
-					_ttt.lockGameOverMsg();
-					try {
-						_ttt.setGameOverMsg("disconnect");
-					} finally {
-						_ttt.unlockGameOverMsg();
-					}
+					_gom.setGameOverMsg(GameOverMsg.DISCONNECT);
 					Game.NotInGame.set(true);
 					return;
 				}
-				_recv.recvBufLock.lock();
-				try {
-					_recv.recvBuf = Client.stringToLength(test, "giveup".length());
-					if (_recv.recvBuf.equals("giveup")) {
-						_ttt.lockGameOverMsg();
-						try {
-							Game.NotInGame.set(true);
-							if (_c.isP1())
-								_ttt.setGameOverMsg(
-										"Player 2 has given up. You win.");
-							else
-								_ttt.setGameOverMsg(
-										"Player 1 has given up. You win.");
-						} finally {
-							_ttt.unlockGameOverMsg();
-						}
+				synchronized (_recv) {
+					_recv.setRecvBuf(Client.stringToLength(test, "giveup".length()));
+					if (_recv.getRecvBuf().equals("giveup")) {
+						Game.NotInGame.set(true);
+						if (_c.isP1())
+							_gom.setGameOverMsg(GameOverMsg.P2_GIVEUP_WIN);
+						else
+							_gom.setGameOverMsg(GameOverMsg.P1_GIVEUP_WIN);
 						return;
 					}
-					if (_recv.recvBuf == "")
+					if (_recv.getRecvBuf() == "")
 						continue;
-					if (_recv.recvBuf.charAt(0) == 'w' ||
-							_recv.recvBuf.charAt(0) == 't') {
-						handleRecvWinTie(_recv.recvBuf.charAt(0),
-								_recv.recvBuf.charAt(1) - '0', _c.isP1());
+					if (_recv.getRecvBuf().charAt(0) == 'w' ||
+							_recv.getRecvBuf().charAt(0) == 't') {
+						handleRecvWinTie(_recv.getRecvBuf().charAt(0),
+								_recv.getRecvBuf().charAt(1) - '0', _c.isP1());
 						Game.NotInGame.set(true);
 						return;
 					}
-				} finally {
-					_recv.recvBufLock.unlock();
 				}
 			}
 		}
 	}
 	
-	private void handleGameOver(boolean p1turn, boolean currPlayerTurn) {
-		_ttt.lockGameOverMsg();
-		try {
-			if (_ttt.getGameOverMsg() != null &&
-					_ttt.getGameOverMsg().equals("Click to start.")) {
+	public void handleGameOver(boolean p1turn, boolean currPlayerTurn) {
+		synchronized (_gom) {
+			if (_gom.getGameOverMsg() != null &&
+					_gom.getGameOverMsg().equals(GameOverMsg.CLICK_TO_START)) {
 				// quitbutton was triggered.
-				_ttt.setGameOverMsg(
-						"You have given up. You lose.");
+				_gom.setGameOverMsg(GameOverMsg.GIVEN_UP);
 				_c.sendGiveup();
 			}
-			else if (_ttt.getGameOverMsg() != null &&
-					_ttt.getGameOverMsg().contains("given up"))
+			else if (_gom.getGameOverMsg() != null &&
+					_gom.getGameOverMsg().contains("given up"))
 				// other client triggered quitbutton
 				;
-			else if (_ttt.getGameOverMsg() != null &&
-					_ttt.getGameOverMsg().equals("disconnect")) {
+			else if (_gom.getGameOverMsg() != null &&
+					_gom.getGameOverMsg().equals(GameOverMsg.DISCONNECT)) {
 				// server disconnect
-				_ttt.setGameOverMsg("Connection loss.");
+				_gom.setGameOverMsg(GameOverMsg.CONNECTION_LOSS);
 				_c.sendBye();
 			}
-			else if (_ttt.getGameOverMsg() != null &&
-					(_ttt.getGameOverMsg().contains("You win") ||
-					 _ttt.getGameOverMsg().contains("You lose") ||
-					_ttt.getGameOverMsg().contains("Tie"))) {
+			else if (_gom.getGameOverMsg() != null &&
+					(_gom.getGameOverMsg().contains("You win") ||
+					 _gom.getGameOverMsg().contains("You lose") ||
+					_gom.getGameOverMsg().contains("Tie"))) {
 				;
 			}
 			else {
 				// user didn't play move within 30 seconds or
 				// not receive move within 45 seconds
 				if (currPlayerTurn) {
-					_ttt.setGameOverMsg(
-							"You have not played a move. You lose.");
+					_gom.setGameOverMsg(GameOverMsg.NO_PLAY_MOVE);
 					_c.sendGiveup();
 				}
 				else {
-					_ttt.setGameOverMsg("Connection loss.");
+					_gom.setGameOverMsg(GameOverMsg.CONNECTION_LOSS);
 					_c.sendBye();
 				}
 			}
-		} finally {
-			_ttt.unlockGameOverMsg();
 		}
 	}
 	
@@ -228,12 +203,7 @@ public class Game {
 			_c.sendWin(input);
 			_ttt.showGameOverDialog("Game over. You win.");
 
-			_ttt.lockGameOverMsg();
-			try {
-				_ttt.setGameOverMsg("You win.");
-			} finally {
-				_ttt.unlockGameOverMsg();
-			}
+			_gom.setGameOverMsg(GameOverMsg.YOU_WIN);
 			return;
 		}
 		else if (_board.isTie() && !Game.NotInGame.get()) {
@@ -248,12 +218,7 @@ public class Game {
 			_c.sendTie(input);
 			_ttt.showGameOverDialog("Game over. Tie game.");
 
-			_ttt.lockGameOverMsg();
-			try {
-				_ttt.setGameOverMsg("Tie game.");
-			} finally {
-				_ttt.unlockGameOverMsg();
-			}
+			_gom.setGameOverMsg(GameOverMsg.TIE_GAME);
 			return;
 		}
 		else if (input == -1) {
@@ -298,24 +263,14 @@ public class Game {
 		t.start();
 
 		int input = -1;
-		_recv.recvBufLock.lock();
-		try {
-			_recv.recvBuf = "";
-		} finally {
-			_recv.recvBufLock.unlock();
-		}
+		_recv.setRecvBuf("");
 		
 		while (!Game.NotInGame.get()) {
-			_recv.recvBufLock.lock();
-			try {
-				if (_recv.recvBuf == "")
-					continue;
-				if (Character.isDigit(_recv.recvBuf.charAt(0)) &&
-						_recv.recvBuf.charAt(0) != '0')
-					break;
-			} finally {
-				_recv.recvBufLock.unlock();
-			}
+			if (_recv.getRecvBuf() == "")
+				continue;
+			if (Character.isDigit(_recv.getRecvBuf().charAt(0)) &&
+					_recv.getRecvBuf().charAt(0) != '0')
+				break;
 		}
 		
 		msg.gotMsg = true;
@@ -337,12 +292,7 @@ public class Game {
 			return;
 		}
 
-		_recv.recvBufLock.lock();
-		try {
-			input = _recv.recvBuf.charAt(0) - '0';
-		} finally {
-			_recv.recvBufLock.unlock();
-		}
+		input = _recv.getRecvBuf().charAt(0) - '0';
 
 		if (p1turn && !_board.insert(_p1.getSymbol(), input)) {
 			System.err.println("Error with receivePosition with input: " +

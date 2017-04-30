@@ -5,7 +5,6 @@ import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import javax.swing.JPanel;
-import java.util.concurrent.locks.ReentrantLock;
 
 @SuppressWarnings("serial")
 public class Display extends JPanel implements MouseListener {
@@ -13,33 +12,26 @@ public class Display extends JPanel implements MouseListener {
 	public final static int WIDTH = 300;
 	public final static int HEIGHT = 300;
 
-	public String GameOverMsg;
-	public ReentrantLock GameOverMsgLock = new ReentrantLock();
-
 	private class InputMsg {
 		public volatile int input;
 	}
 
 	private Board _board;
+	private GameOverMsg _gom;
 	private boolean _allowInput;
 	private final InputMsg _acceptedInput;
 	private char _symbol;
 
-	public Display(Board board) {
+	public Display(Board board, GameOverMsg gom) {
 		addMouseListener(this);
 		_board = board;
+		_gom = gom;
 		_allowInput = false;
 		_acceptedInput = new InputMsg();
 		_acceptedInput.input = -1;
 		_symbol = 0;
-		if (Game.NotInGame.get()) {
-			GameOverMsgLock.lock();
-			try {
-				GameOverMsg = "Click to start.";
-			} finally {
-				GameOverMsgLock.unlock();
-			}
-		}
+		if (Game.NotInGame.get())
+			_gom.setGameOverMsg(GameOverMsg.CLICK_TO_START);
 		repaint();
 	}
 
@@ -73,9 +65,8 @@ public class Display extends JPanel implements MouseListener {
 	}
 
 	public void paintComponent(Graphics g) {
-		GameOverMsgLock.lock();
-		try {
-			if (GameOverMsg == null) {
+		synchronized (_gom) {
+			if (_gom.getGameOverMsg() == null) {
 				g.setColor(Color.lightGray);
 				g.fillRect(0, 0, Display.WIDTH, Display.HEIGHT);
 				g.setColor(Color.BLACK);
@@ -103,12 +94,11 @@ public class Display extends JPanel implements MouseListener {
 				g.setColor(Color.lightGray);
 				g.fillRect(0, 0, Display.WIDTH, Display.HEIGHT);
 				g.setColor(Color.BLACK);
-				g.drawString(GameOverMsg, 20, Display.HEIGHT / 2);
-				if (!GameOverMsg.equals("Click to start."))
-					g.drawString("Click to restart.", 20, Display.HEIGHT - 100);
+				g.drawString(_gom.getGameOverMsg(), 20, Display.HEIGHT / 2);
+				if (!_gom.getGameOverMsg().equals(GameOverMsg.CLICK_TO_START))
+					g.drawString(GameOverMsg.CLICK_TO_RESTART, 20,
+							Display.HEIGHT - 100);
 			}
-		} finally {
-			GameOverMsgLock.unlock();
 		}
 	}
 
@@ -141,14 +131,11 @@ public class Display extends JPanel implements MouseListener {
 			}
 		}
 		else if (Game.NotInGame.get()) {
-			GameOverMsgLock.lock();
-			try {
-				if (GameOverMsg != null) {
+			synchronized (_gom) {
+				if (_gom.getGameOverMsg() != null) {
 					Game.NotInGame.set(false);
-					GameOverMsg = null;
+					_gom.setGameOverMsg(null);
 				}
-			} finally {
-				GameOverMsgLock.unlock();
 			}
 		}
 	}
