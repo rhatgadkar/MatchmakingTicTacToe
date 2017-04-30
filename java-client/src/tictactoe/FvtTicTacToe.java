@@ -4,10 +4,10 @@ import javax.swing.JLabel;
 
 public class FvtTicTacToe implements ITicTacToe {
 	
+	private String _gameOverMsg;
 	private Board _board;
 	private Client _c;
 	private Game _game;
-	private GameOverMsg _gom;
 	private Display _display;
 	private String _username;
 	private String _password;
@@ -16,12 +16,11 @@ public class FvtTicTacToe implements ITicTacToe {
 	public FvtTicTacToe() {
 		_board = new Board();
 		_c = new Client();
-		_gom = new GameOverMsg();
-		_game = new Game(this, _c, _board, _gom);
-		_display = new Display(_game.getBoard(), _gom);
+		_game = new Game(this, _c, _board);
+		_display = new Display(_game.getBoard(), this);
 		// after "Click to start", NotInGame==false and GameOverMsg==null
 		Game.NotInGame.set(false);
-		_gom.setGameOverMsg(null);
+		setGameOverMsg(null);
 	}
 
 	@Override
@@ -110,6 +109,17 @@ public class FvtTicTacToe implements ITicTacToe {
 	public void setOpponentText(String text) {
 		// TODO Auto-generated method stub
 		
+	}
+
+	@Override
+	public synchronized void setGameOverMsg(String newMsg) {
+		_gameOverMsg = newMsg;
+		System.out.println(newMsg);
+	}
+
+	@Override
+	public synchronized String getGameOverMsg() {
+		return _gameOverMsg;
 	}
 
 }

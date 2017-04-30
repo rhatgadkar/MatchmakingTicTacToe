@@ -5,7 +5,7 @@ import org.junit.Test;
 
 import tictactoe.MockTicTacToe;
 import tictactoe.Game;
-import tictactoe.GameOverMsg;
+import tictactoe.ITicTacToe;
 import tictactoe.Board;
 
 public class TestGame {
@@ -44,7 +44,6 @@ public class TestGame {
 		 * - nothing is sent
 		 */
 		Board b = new Board();
-		GameOverMsg g = new GameOverMsg();
 		b.insert('x', 1);
 		b.insert('o', 2);
 		b.insert('x', 3);
@@ -52,11 +51,11 @@ public class TestGame {
 		b.insert('x', 5);
 		b.insert('o', 6);
 		
-		MockTicTacToe ttt = new MockTicTacToe(false, 8, "w7", b, g);
+		MockTicTacToe ttt = new MockTicTacToe(false, 8, "w7", b);
 		ttt.getGame().start("",  "");
 		
 		Assert.assertEquals('x', b.getSymbolAtCoord(2, 0));
-		Assert.assertEquals(GameOverMsg.P1_WIN_LOSE, g.getGameOverMsg());
+		Assert.assertEquals(ITicTacToe.P1_WIN_LOSE, ttt.getGameOverMsg());
 		Assert.assertTrue(Game.NotInGame.get());
 		Assert.assertEquals("", ttt.getFinalMessage());
 	}
@@ -80,7 +79,6 @@ public class TestGame {
 		 */
 		
 		Board b = new Board();
-		GameOverMsg g = new GameOverMsg();
 		b.insert('x', 1);
 		b.insert('o', 2);
 		b.insert('x', 3);
@@ -90,11 +88,11 @@ public class TestGame {
 		b.insert('o', 7);
 		b.insert('x', 8);
 		
-		MockTicTacToe ttt = new MockTicTacToe(false, 8, "t9", b, g);
+		MockTicTacToe ttt = new MockTicTacToe(false, 8, "t9", b);
 		ttt.getGame().start("",  "");
 		
 		Assert.assertEquals('x', b.getSymbolAtCoord(2, 2));
-		Assert.assertEquals(GameOverMsg.TIE_GAME, g.getGameOverMsg());
+		Assert.assertEquals(ITicTacToe.TIE_GAME, ttt.getGameOverMsg());
 		Assert.assertTrue(Game.NotInGame.get());
 		Assert.assertEquals("", ttt.getFinalMessage());
 	}
@@ -114,12 +112,11 @@ public class TestGame {
 		 */
 		
 		Board b = new Board();
-		GameOverMsg g = new GameOverMsg();
 		
-		MockTicTacToe ttt = new MockTicTacToe(false, 8, "giveup", b, g);
+		MockTicTacToe ttt = new MockTicTacToe(false, 8, "giveup", b);
 		ttt.getGame().start("", "");
 		
-		Assert.assertEquals(GameOverMsg.P1_GIVEUP_WIN, g.getGameOverMsg());
+		Assert.assertEquals(ITicTacToe.P1_GIVEUP_WIN, ttt.getGameOverMsg());
 		Assert.assertTrue(Game.NotInGame.get());
 		Assert.assertEquals("", ttt.getFinalMessage());
 	}
@@ -144,15 +141,14 @@ public class TestGame {
 		 */
 		
 		Board b = new Board();
-		GameOverMsg g = new GameOverMsg();
 		b.insert('x', 1);
 		b.insert('o', 2);
 		
-		MockTicTacToe ttt = new MockTicTacToe(false, -1, "3", b, g);
+		MockTicTacToe ttt = new MockTicTacToe(false, -1, "3", b);
 		ttt.getGame().start("", "");
 		
 		Assert.assertEquals('x', b.getSymbolAtCoord(0, 2));
-		Assert.assertEquals(GameOverMsg.GIVEN_UP, g.getGameOverMsg());
+		Assert.assertEquals(ITicTacToe.GIVEN_UP, ttt.getGameOverMsg());
 		Assert.assertTrue(Game.NotInGame.get());
 		Assert.assertEquals("giveup", ttt.getFinalMessage());
 	}
@@ -175,7 +171,6 @@ public class TestGame {
 		 * - "w7" is sent
 		 */
 		Board b = new Board();
-		GameOverMsg g = new GameOverMsg();
 		b.insert('x', 1);
 		b.insert('o', 2);
 		b.insert('x', 3);
@@ -183,11 +178,11 @@ public class TestGame {
 		b.insert('x', 5);
 		b.insert('o', 6);
 		
-		MockTicTacToe ttt = new MockTicTacToe(true, 7, "8", b, g);
+		MockTicTacToe ttt = new MockTicTacToe(true, 7, "8", b);
 		ttt.getGame().start("",  "");
 		
 		Assert.assertEquals('x', b.getSymbolAtCoord(2, 0));
-		Assert.assertEquals(GameOverMsg.YOU_WIN, g.getGameOverMsg());
+		Assert.assertEquals(ITicTacToe.YOU_WIN, ttt.getGameOverMsg());
 		Assert.assertTrue(Game.NotInGame.get());
 		Assert.assertEquals("w7", ttt.getFinalMessage());
 	}
@@ -211,7 +206,6 @@ public class TestGame {
 		 */
 		
 		Board b = new Board();
-		GameOverMsg g = new GameOverMsg();
 		b.insert('o', 1);
 		b.insert('x', 2);
 		b.insert('o', 3);
@@ -221,11 +215,11 @@ public class TestGame {
 		b.insert('x', 7);
 		b.insert('o', 8);
 		
-		MockTicTacToe ttt = new MockTicTacToe(true, 9, "8", b, g);
+		MockTicTacToe ttt = new MockTicTacToe(true, 9, "8", b);
 		ttt.getGame().start("",  "");
 		
 		Assert.assertEquals('x', b.getSymbolAtCoord(2, 2));
-		Assert.assertEquals(GameOverMsg.TIE_GAME, g.getGameOverMsg());
+		Assert.assertEquals(ITicTacToe.TIE_GAME, ttt.getGameOverMsg());
 		Assert.assertTrue(Game.NotInGame.get());
 		Assert.assertEquals("t9", ttt.getFinalMessage());
 	}
@@ -245,12 +239,11 @@ public class TestGame {
 		 */
 		
 		Board b = new Board();
-		GameOverMsg g = new GameOverMsg();
 		
-		MockTicTacToe ttt = new MockTicTacToe(true, -1, "8", b, g);
+		MockTicTacToe ttt = new MockTicTacToe(true, -1, "8", b);
 		ttt.getGame().start("", "");
 		
-		Assert.assertEquals(GameOverMsg.GIVEN_UP, g.getGameOverMsg());
+		Assert.assertEquals(ITicTacToe.GIVEN_UP, ttt.getGameOverMsg());
 		Assert.assertTrue(Game.NotInGame.get());
 		Assert.assertEquals("giveup", ttt.getFinalMessage());
 	}
@@ -275,15 +268,14 @@ public class TestGame {
 		 */
 		
 		Board b = new Board();
-		GameOverMsg g = new GameOverMsg();
 		b.insert('x', 1);
 		b.insert('o', 2);
 		
-		MockTicTacToe ttt = new MockTicTacToe(true, 3, "giveup", b, g);
+		MockTicTacToe ttt = new MockTicTacToe(true, 3, "giveup", b);
 		ttt.getGame().start("", "");
 		
 		Assert.assertEquals('x', b.getSymbolAtCoord(0, 2));
-		Assert.assertEquals(GameOverMsg.P2_GIVEUP_WIN, g.getGameOverMsg());
+		Assert.assertEquals(ITicTacToe.P2_GIVEUP_WIN, ttt.getGameOverMsg());
 		Assert.assertTrue(Game.NotInGame.get());
 		Assert.assertEquals("3", ttt.getFinalMessage());
 	}
@@ -304,12 +296,11 @@ public class TestGame {
 		 */
 		
 		Board b = new Board();
-		GameOverMsg g = new GameOverMsg();
 		
-		MockTicTacToe ttt = new MockTicTacToe(false, 8, "", b, g);
+		MockTicTacToe ttt = new MockTicTacToe(false, 8, "", b);
 		ttt.getGame().start("", "");
 		
-		Assert.assertEquals(GameOverMsg.CONNECTION_LOSS, g.getGameOverMsg());
+		Assert.assertEquals(ITicTacToe.CONNECTION_LOSS, ttt.getGameOverMsg());
 		Assert.assertTrue(Game.NotInGame.get());
 		Assert.assertEquals("bye", ttt.getFinalMessage());
 	}
@@ -329,12 +320,11 @@ public class TestGame {
 		 */
 		
 		Board b = new Board();
-		GameOverMsg g = new GameOverMsg();
 		
-		MockTicTacToe ttt = new MockTicTacToe(true, 0, "8", b, g);
+		MockTicTacToe ttt = new MockTicTacToe(true, 0, "8", b);
 		ttt.getGame().start("", "");
 		
-		Assert.assertEquals(GameOverMsg.NO_PLAY_MOVE, g.getGameOverMsg());
+		Assert.assertEquals(ITicTacToe.NO_PLAY_MOVE, ttt.getGameOverMsg());
 		Assert.assertTrue(Game.NotInGame.get());
 		Assert.assertEquals("giveup", ttt.getFinalMessage());
 	}

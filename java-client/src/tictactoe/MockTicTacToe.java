@@ -4,10 +4,10 @@ import javax.swing.JLabel;
 
 public class MockTicTacToe implements ITicTacToe {
 	
+	private String _gameOverMsg;
 	private Board _board;
 	private MockClient _c;
 	private Game _game;
-	private GameOverMsg _gom;
 	int _currMove;
 	String _turnfieldText;
 	String _playerfieldText;
@@ -16,7 +16,7 @@ public class MockTicTacToe implements ITicTacToe {
 	String _winfieldText;
 	
 	public MockTicTacToe(boolean isP1, int currMove, String opponentMove,
-			Board b, GameOverMsg gom) {
+			Board b) {
 		/**
 		 * - currMove contains integer from 1-9 representing positions in
 		 *   Board.  -1 means send a "giveup".
@@ -25,13 +25,12 @@ public class MockTicTacToe implements ITicTacToe {
 		 */
 		
 		_board = b;
-		_gom = gom;
 		_c = new MockClient(isP1, opponentMove);
-		_game = new Game(this, _c, _board, _gom);
+		_game = new Game(this, _c, _board);
 		_currMove = currMove;
 		// after "Click to start", NotInGame==false and GameOverMsg==null
 		Game.NotInGame.set(false);
-		_gom.setGameOverMsg(null);
+		setGameOverMsg(null);
 	}
 
 	@Override
@@ -101,9 +100,9 @@ public class MockTicTacToe implements ITicTacToe {
 		}
 		if (_currMove == -1) {
 			// "Click to start." is set when player forcefully gives up
-			synchronized (_gom) {
+			synchronized (this) {
 				Game.NotInGame.set(true);
-				_gom.setGameOverMsg(GameOverMsg.CLICK_TO_START);
+				setGameOverMsg(ITicTacToe.CLICK_TO_START);
 			}
 			return -1;
 		}
@@ -140,5 +139,12 @@ public class MockTicTacToe implements ITicTacToe {
 		// TODO Auto-generated method stub
 		
 	}
-
+	
+	public synchronized void setGameOverMsg(String newMsg) {
+		_gameOverMsg = newMsg;
+	}
+	
+	public synchronized String getGameOverMsg() {
+		return _gameOverMsg;
+	}
 }

@@ -17,21 +17,21 @@ public class Display extends JPanel implements MouseListener {
 	}
 
 	private Board _board;
-	private GameOverMsg _gom;
+	private ITicTacToe _ttt;
 	private boolean _allowInput;
 	private final InputMsg _acceptedInput;
 	private char _symbol;
 
-	public Display(Board board, GameOverMsg gom) {
+	public Display(Board board, ITicTacToe ttt) {
 		addMouseListener(this);
 		_board = board;
-		_gom = gom;
+		_ttt = ttt;
 		_allowInput = false;
 		_acceptedInput = new InputMsg();
 		_acceptedInput.input = -1;
 		_symbol = 0;
 		if (Game.NotInGame.get())
-			_gom.setGameOverMsg(GameOverMsg.CLICK_TO_START);
+			_ttt.setGameOverMsg(ITicTacToe.CLICK_TO_START);
 		repaint();
 	}
 
@@ -65,8 +65,8 @@ public class Display extends JPanel implements MouseListener {
 	}
 
 	public void paintComponent(Graphics g) {
-		synchronized (_gom) {
-			if (_gom.getGameOverMsg() == null) {
+		synchronized (_ttt) {
+			if (_ttt.getGameOverMsg() == null) {
 				g.setColor(Color.lightGray);
 				g.fillRect(0, 0, Display.WIDTH, Display.HEIGHT);
 				g.setColor(Color.BLACK);
@@ -94,9 +94,9 @@ public class Display extends JPanel implements MouseListener {
 				g.setColor(Color.lightGray);
 				g.fillRect(0, 0, Display.WIDTH, Display.HEIGHT);
 				g.setColor(Color.BLACK);
-				g.drawString(_gom.getGameOverMsg(), 20, Display.HEIGHT / 2);
-				if (!_gom.getGameOverMsg().equals(GameOverMsg.CLICK_TO_START))
-					g.drawString(GameOverMsg.CLICK_TO_RESTART, 20,
+				g.drawString(_ttt.getGameOverMsg(), 20, Display.HEIGHT / 2);
+				if (!_ttt.getGameOverMsg().equals(ITicTacToe.CLICK_TO_START))
+					g.drawString(ITicTacToe.CLICK_TO_RESTART, 20,
 							Display.HEIGHT - 100);
 			}
 		}
@@ -131,10 +131,10 @@ public class Display extends JPanel implements MouseListener {
 			}
 		}
 		else if (Game.NotInGame.get()) {
-			synchronized (_gom) {
-				if (_gom.getGameOverMsg() != null) {
+			synchronized (_ttt) {
+				if (_ttt.getGameOverMsg() != null) {
 					Game.NotInGame.set(false);
-					_gom.setGameOverMsg(null);
+					_ttt.setGameOverMsg(null);
 				}
 			}
 		}

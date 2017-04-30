@@ -14,11 +14,11 @@ import javax.swing.JButton;
 
 @SuppressWarnings("serial")
 public final class TicTacToe extends JPanel implements ITicTacToe {
-
+	
+	private String _gameOverMsg;
 	private Board _board;
 	private Client _c;
 	private Game _game;
-	private GameOverMsg _gom;
 	private Display _display;
 	private JLabel _turnfield;
 	private JLabel _playerfield;
@@ -113,9 +113,8 @@ public final class TicTacToe extends JPanel implements ITicTacToe {
 	private void initializeInterface() {
 		_board = new Board();
 		_c = new Client();
-		_gom = new GameOverMsg();
-		_game = new Game(this, _c, _board, _gom);
-		_display = new Display(_game.getBoard(), _gom);
+		_game = new Game(this, _c, _board);
+		_display = new Display(_game.getBoard(), this);
 		_display.setPreferredSize(new Dimension(Display.WIDTH,
 				Display.HEIGHT));
 		_turnfield = new JLabel();
@@ -133,9 +132,9 @@ public final class TicTacToe extends JPanel implements ITicTacToe {
 				if (Game.NotInGame.get() || !_c.getDoneInit())
 					System.exit(0);
 				else {
-					synchronized (_gom) {
+					synchronized (this) {
 						Game.NotInGame.set(true);
-						_gom.setGameOverMsg(GameOverMsg.CLICK_TO_START);
+						setGameOverMsg(ITicTacToe.CLICK_TO_START);
 					}
 				}
 			}
@@ -186,5 +185,13 @@ public final class TicTacToe extends JPanel implements ITicTacToe {
 	@Override
 	public void setOpponentText(String text) {
 		_opponentnamefield.setText(text);
+	}
+	
+	public synchronized void setGameOverMsg(String newMsg) {
+		_gameOverMsg = newMsg;
+	}
+	
+	public synchronized String getGameOverMsg() {
+		return _gameOverMsg;
 	}
 }

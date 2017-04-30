@@ -10,7 +10,6 @@ public class Game {
 	private Recv _recv;
 	private IClient _c;
 	private ITicTacToe _ttt;
-	private GameOverMsg _gom;
 	
 	public static AtomicBoolean NotInGame = new AtomicBoolean(true);
 	
@@ -25,11 +24,10 @@ public class Game {
 		}
 	}
 	
-	public Game(ITicTacToe ttt, IClient c, Board b, GameOverMsg gom) {
+	public Game(ITicTacToe ttt, IClient c, Board b) {
 		_ttt = ttt;
 		_board = b;
 		_c = c;
-		_gom = gom;
 		_p1 = new Player(Player.P1_SYMBOL);
 		_p2 = new Player(Player.P2_SYMBOL);
 		_recv = new Recv();
@@ -50,13 +48,13 @@ public class Game {
 			if (symbol == 'w') {
 				_ttt.showGameOverDialog("Game over. You lose.");
 				if (isP1)
-					_gom.setGameOverMsg(GameOverMsg.P2_WIN_LOSE);
+					_ttt.setGameOverMsg(ITicTacToe.P2_WIN_LOSE);
 				else
-					_gom.setGameOverMsg(GameOverMsg.P1_WIN_LOSE);
+					_ttt.setGameOverMsg(ITicTacToe.P1_WIN_LOSE);
 			}
 			else {
 				_ttt.showGameOverDialog("Game over. Tie game.");
-				_gom.setGameOverMsg(GameOverMsg.TIE_GAME);
+				_ttt.setGameOverMsg(ITicTacToe.TIE_GAME);
 			}
 		}
 		
@@ -82,7 +80,7 @@ public class Game {
 					continue;
 				} catch (Exception e) {
 					// server disconnect
-					_gom.setGameOverMsg(GameOverMsg.DISCONNECT);
+					_ttt.setGameOverMsg(ITicTacToe.DISCONNECT);
 					Game.NotInGame.set(true);
 					return;
 				}
@@ -91,9 +89,9 @@ public class Game {
 					if (_recv.getRecvBuf().equals("giveup")) {
 						Game.NotInGame.set(true);
 						if (_c.isP1())
-							_gom.setGameOverMsg(GameOverMsg.P2_GIVEUP_WIN);
+							_ttt.setGameOverMsg(ITicTacToe.P2_GIVEUP_WIN);
 						else
-							_gom.setGameOverMsg(GameOverMsg.P1_GIVEUP_WIN);
+							_ttt.setGameOverMsg(ITicTacToe.P1_GIVEUP_WIN);
 						return;
 					}
 					if (_recv.getRecvBuf() == "")
@@ -110,39 +108,39 @@ public class Game {
 		}
 	}
 	
-	public void handleGameOver(boolean p1turn, boolean currPlayerTurn) {
-		synchronized (_gom) {
-			if (_gom.getGameOverMsg() != null &&
-					_gom.getGameOverMsg().equals(GameOverMsg.CLICK_TO_START)) {
+	private void handleGameOver(boolean p1turn, boolean currPlayerTurn) {
+		synchronized (_ttt) {
+			if (_ttt.getGameOverMsg() != null &&
+					_ttt.getGameOverMsg().equals(ITicTacToe.CLICK_TO_START)) {
 				// quitbutton was triggered.
-				_gom.setGameOverMsg(GameOverMsg.GIVEN_UP);
+				_ttt.setGameOverMsg(ITicTacToe.GIVEN_UP);
 				_c.sendGiveup();
 			}
-			else if (_gom.getGameOverMsg() != null &&
-					_gom.getGameOverMsg().contains("given up"))
+			else if (_ttt.getGameOverMsg() != null &&
+					_ttt.getGameOverMsg().contains("given up"))
 				// other client triggered quitbutton
 				;
-			else if (_gom.getGameOverMsg() != null &&
-					_gom.getGameOverMsg().equals(GameOverMsg.DISCONNECT)) {
+			else if (_ttt.getGameOverMsg() != null &&
+					_ttt.getGameOverMsg().equals(ITicTacToe.DISCONNECT)) {
 				// server disconnect
-				_gom.setGameOverMsg(GameOverMsg.CONNECTION_LOSS);
+				_ttt.setGameOverMsg(ITicTacToe.CONNECTION_LOSS);
 				_c.sendBye();
 			}
-			else if (_gom.getGameOverMsg() != null &&
-					(_gom.getGameOverMsg().contains("You win") ||
-					 _gom.getGameOverMsg().contains("You lose") ||
-					_gom.getGameOverMsg().contains("Tie"))) {
+			else if (_ttt.getGameOverMsg() != null &&
+					(_ttt.getGameOverMsg().contains("You win") ||
+					 _ttt.getGameOverMsg().contains("You lose") ||
+					_ttt.getGameOverMsg().contains("Tie"))) {
 				;
 			}
 			else {
 				// user didn't play move within 30 seconds or
 				// not receive move within 45 seconds
 				if (currPlayerTurn) {
-					_gom.setGameOverMsg(GameOverMsg.NO_PLAY_MOVE);
+					_ttt.setGameOverMsg(ITicTacToe.NO_PLAY_MOVE);
 					_c.sendGiveup();
 				}
 				else {
-					_gom.setGameOverMsg(GameOverMsg.CONNECTION_LOSS);
+					_ttt.setGameOverMsg(ITicTacToe.CONNECTION_LOSS);
 					_c.sendBye();
 				}
 			}
@@ -203,7 +201,7 @@ public class Game {
 			_c.sendWin(input);
 			_ttt.showGameOverDialog("Game over. You win.");
 
-			_gom.setGameOverMsg(GameOverMsg.YOU_WIN);
+			_ttt.setGameOverMsg(ITicTacToe.YOU_WIN);
 			return;
 		}
 		else if (_board.isTie() && !Game.NotInGame.get()) {
@@ -218,7 +216,7 @@ public class Game {
 			_c.sendTie(input);
 			_ttt.showGameOverDialog("Game over. Tie game.");
 
-			_gom.setGameOverMsg(GameOverMsg.TIE_GAME);
+			_ttt.setGameOverMsg(ITicTacToe.TIE_GAME);
 			return;
 		}
 		else if (input == -1) {
