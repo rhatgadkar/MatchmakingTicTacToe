@@ -108,7 +108,8 @@ public class Game {
 		}
 	}
 	
-	private void handleGameOver(boolean p1turn, boolean currPlayerTurn) {
+	private void handleGameOver(boolean currPlayerTurn,
+			int currPlayerLastMove) {
 		synchronized (_ttt) {
 			if (_ttt.getGameOverMsg() != null &&
 					_ttt.getGameOverMsg().equals(ITicTacToe.CLICK_TO_START)) {
@@ -126,10 +127,23 @@ public class Game {
 				_ttt.setGameOverMsg(ITicTacToe.CONNECTION_LOSS);
 				_c.sendBye();
 			}
+			else if (_ttt.getGameOverMsg() != null && currPlayerTurn &&
+					_ttt.getGameOverMsg().contains("You win")) {
+				// current player played a win move
+				_c.sendWin(currPlayerLastMove);
+				_ttt.showGameOverDialog("Game over. You win.");
+			}
+			else if (_ttt.getGameOverMsg() != null && currPlayerTurn &&
+					_ttt.getGameOverMsg().contains("Tie")) {
+				// current player played a tie move
+				_c.sendTie(currPlayerLastMove);
+				_ttt.showGameOverDialog("Game over. Tie game.");
+			}
 			else if (_ttt.getGameOverMsg() != null &&
 					(_ttt.getGameOverMsg().contains("You win") ||
 					 _ttt.getGameOverMsg().contains("You lose") ||
 					_ttt.getGameOverMsg().contains("Tie"))) {
+				// other player received win/loss/tie from CheckGiveupThread
 				;
 			}
 			else {
@@ -147,7 +161,7 @@ public class Game {
 		}
 	}
 	
-	private void currPlayerMove(boolean p1turn, Thread gt) {
+	private int currPlayerMove(boolean p1turn) {
 		/**
 		 * Handle the event when it is the current player's move.  The current
 		 * player has 30 seconds to play a move.  A current player's move is
@@ -164,6 +178,8 @@ public class Game {
 		 * - the current player's move resulted in a win or tie game
 		 * If the game is not over, the current player's move gets sent to the
 		 * server and then it becomes the other player's move.
+		 * If the current player won or tied the game, this method will return
+		 * the current player's last inputted move.
 		 */
 		final TimerThread.Msg msg = new TimerThread.Msg();
 		msg.gotMsg = false;
@@ -192,44 +208,25 @@ public class Game {
 		if (_board.isWin(input) && !Game.NotInGame.get()) {
 			_ttt.repaintDisplay();
 			Game.NotInGame.set(true);
-			try {
-				gt.join();
-			} catch (InterruptedException e) {
-				System.err.println("Could not join giveup thread.");
-				System.exit(1);
-			}
-			_c.sendWin(input);
-			_ttt.showGameOverDialog("Game over. You win.");
-
 			_ttt.setGameOverMsg(ITicTacToe.YOU_WIN);
-			return;
 		}
 		else if (_board.isTie() && !Game.NotInGame.get()) {
 			_ttt.repaintDisplay();
 			Game.NotInGame.set(true);
-			try {
-				gt.join();
-			} catch (InterruptedException e) {
-				System.err.println("Could not join giveup thread.");
-				System.exit(1);
-			}
-			_c.sendTie(input);
-			_ttt.showGameOverDialog("Game over. Tie game.");
-
 			_ttt.setGameOverMsg(ITicTacToe.TIE_GAME);
-			return;
 		}
 		else if (input == -1) {
 			// action happened before user could provide input or
 			// user not input move within 30 seconds
 			Game.NotInGame.set(true);
-			return;
 		}
 		else
 			_c.sendPosition(input);
+		
+		return input;
 	}
 	
-	private void otherPlayerMove(boolean p1turn, Thread gt) {
+	private void otherPlayerMove(boolean p1turn) {
 		/**
 		 * Handles the event when it is the other player's turn.  Up to 45
 		 * seconds are spent waiting for a move from the other player.
@@ -336,9 +333,11 @@ public class Game {
 		Thread gt = new Thread(giveupThread);
 		gt.start();
 
-		boolean p1turn = true;
+		boolean p1turn = false;
 		boolean currPlayerTurn = false;
+		int currPlayerLastMove = -1;
 		while (!Game.NotInGame.get()) {
+			p1turn = !p1turn;
 			// draw board
 			if (p1turn && _c.isP1())
 				_ttt.setTurnfieldText("Your turn.");
@@ -353,10 +352,9 @@ public class Game {
 			
 			currPlayerTurn = (p1turn && _c.isP1()) || (!p1turn && !_c.isP1());
 			if (currPlayerTurn)
-				currPlayerMove(p1turn, gt);
+				currPlayerLastMove = currPlayerMove(p1turn);
 			else
-				otherPlayerMove(p1turn, gt);
-			p1turn = !p1turn;
+				otherPlayerMove(p1turn);
 		}
 		
 		try {
@@ -366,6 +364,6 @@ public class Game {
 			System.exit(1);
 		}
 		
-		handleGameOver(p1turn, currPlayerTurn);
+		handleGameOver(currPlayerTurn, currPlayerLastMove);
 	}
 }
