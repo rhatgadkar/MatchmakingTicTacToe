@@ -18,7 +18,7 @@ public interface IClient {
 
 	void sendPosition(int pos);
 
-	void init(String username, String password);
+	void init(String username, String password, ITicTacToe ttt);
 
 	String getRecord();
 

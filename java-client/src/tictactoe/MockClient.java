@@ -50,7 +50,7 @@ public class MockClient implements IClient {
 	}
 
 	@Override
-	public void init(String username, String password) {		
+	public void init(String username, String password, ITicTacToe ttt) {		
 	}
 
 	@Override

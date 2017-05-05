@@ -6,7 +6,6 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.net.SocketTimeoutException;
-import javax.swing.JOptionPane;
 
 public final class Client implements IClient {
 	public final static int MAXBUFLEN = 100;
@@ -39,7 +38,7 @@ public final class Client implements IClient {
 		return sb.toString();
 	}
 
-	public void init(String username, String password) {
+	public void init(String username, String password, ITicTacToe ttt) {
 		_username = username;
 		_password = password;
 		_record = "";
@@ -162,16 +161,16 @@ public final class Client implements IClient {
 				break;
 			}
 			else if (buf.equals("invalidl")) {
-				JOptionPane.showMessageDialog(null, "Invalid login credentials. Exiting.");
+				ttt.showGameOverDialog("Invalid login credentials. Exiting.");
 				System.exit(0);
 			}
 			else {
-				JOptionPane.showMessageDialog(null, "User is currently in game. Exiting.");
+				ttt.showGameOverDialog("User is currently in game. Exiting.");
 				System.exit(0);
 			}
 		}
 		if (retries == 10) {
-			JOptionPane.showMessageDialog(null, "Connection to server failed.");
+			ttt.showGameOverDialog("Connection to server failed.");
 			System.exit(1);
 		}
 		_doneInit = true;

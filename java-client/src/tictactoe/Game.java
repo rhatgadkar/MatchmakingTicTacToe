@@ -295,7 +295,7 @@ public class Game {
 		}
 
 		_ttt.setPlayerfieldText("Searching for opponent...");
-		_c.init(username, password);
+		_c.init(username, password, _ttt);
 
 		/**
 		 * record string is formatted like this:
