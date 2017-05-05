@@ -10,6 +10,7 @@ import commands
 
 WORKING_DIR = ''
 IDENTITY_FILE = ''
+STARTING_USER_NUM = ''
 DEPLOY_SCREENS_CMD = 'python run_java_test.py'
 PSQL_PREFIX_CMD = "psql -d mydb -c "
 PSQL_SELECT_CMD = "'" + PSQL_PREFIX_CMD + '"SELECT * FROM tttrecords;"' + "'"
@@ -35,8 +36,8 @@ def deploy_screens(num_screens, move_str):
     Deploy the screen session's for each client using the run_java_test.py
     script with provided arguments of the working directory and move set.
     """
-    for i in range(0, num_screens):
-        scr_name = 's' + str(i + 1)
+    for i in range(STARTING_USER_NUM, num_screens + 1):
+        scr_name = 's' + str(i)
         fvt_args = WORKING_DIR + ' ' + scr_name + ' ' + move_str
         s = Screen(scr_name, True)
         s.enable_logs(scr_name + '.log')
@@ -92,7 +93,12 @@ def verify_wins_losses(num_screens):
         table_wins = int(data_list[1])
         table_losses = int(data_list[2])
         screen_log = os.getcwd() + '/' + username + '.log'
-        (file_wins, file_losses) = get_file_wins_losses(screen_log)
+        (file_wins, file_losses) = (0, 0)
+        try:
+            (file_wins, file_losses) = get_file_wins_losses(screen_log)
+        except:
+            # screen log does not exist for the user
+            continue
         if file_wins == table_wins - 1 or file_wins == table_wins + 1 or \
                 file_wins == table_wins:
             if file_losses == table_losses - 1 or \
@@ -134,7 +140,8 @@ def get_ports_usage(num_screens):
     """
     ports_usage = {}
     starting_port = 4951
-    for port in range(starting_port, starting_port + (num_screens / 2) + 1):
+    ending_port = 5950
+    for port in range(starting_port, ending_port + 1):
         ports_usage[port] = False
         port_regex = '.*' + str(port) + '.*'
         port_prog = re.compile(port_regex)
@@ -275,8 +282,10 @@ def main(args):
     """
     global WORKING_DIR
     global IDENTITY_FILE
+    global STARTING_USER_NUM
     WORKING_DIR = args.working_dir
     IDENTITY_FILE = args.identity_file
+    STARTING_USER_NUM = args.start_user_num
     result = basic_test()
     if not result:
         print 'basic_test failed.'
@@ -301,5 +310,8 @@ parser.add_argument("working_dir", help="Java client working directory",
                     type=str)
 parser.add_argument("identity_file", help="SSH private key (identity) file",
                     type=str)
+# if start_user_num is '1', it will begin deploying screens from 's1'
+parser.add_argument("start_user_num", help="The starting num of the user",
+                    type=int)
 args = parser.parse_args()
 main(args)
