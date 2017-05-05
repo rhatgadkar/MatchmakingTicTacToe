@@ -17,14 +17,14 @@ def basic_31_clients_test():
         sleep(60 * 30)
         fvt_tests.kill_screens()
         # verify results of screen logs with psql table output
-        result = fvt_tests.verify_wins_losses(num_screens)
+        result = fvt_tests.verify_wins_losses()
         if not result:
             return False
     except:
         print 'Exception occurred.'
         traceback.print_exc()
         return False
-    fvt_tests.get_ports_usage(num_screens)
+    fvt_tests.get_ports_usage()
     fvt_tests.cleanup()
     return result
 

@@ -36,7 +36,7 @@ def deploy_screens(num_screens, move_str):
     Deploy the screen session's for each client using the run_java_test.py
     script with provided arguments of the working directory and move set.
     """
-    for i in range(STARTING_USER_NUM, num_screens + 1):
+    for i in range(STARTING_USER_NUM, num_screens + STARTING_USER_NUM):
         scr_name = 's' + str(i)
         fvt_args = WORKING_DIR + ' ' + scr_name + ' ' + move_str
         s = Screen(scr_name, True)
@@ -77,7 +77,7 @@ def get_file_wins_losses(screen_log):
     return (file_wins, file_losses)
 
 
-def verify_wins_losses(num_screens):
+def verify_wins_losses():
     """
     Verify the wins and loss count from the screen session logs and psql table
     output.
@@ -134,7 +134,7 @@ def cleanup():
     commands.getoutput(ssh_cmd)
 
 
-def get_ports_usage(num_screens):
+def get_ports_usage():
     """
     Get the usage of ports from screen logs.
     """
@@ -184,14 +184,14 @@ def basic_test():
         sleep(60 * 10)
         kill_screens()
         # verify results of screen logs with psql table output
-        result = verify_wins_losses(num_screens)
+        result = verify_wins_losses()
         if not result:
             return False
     except:
         print 'Exception occurred.'
         traceback.print_exc()
         return False
-    get_ports_usage(num_screens)
+    get_ports_usage()
     cleanup()
     return result
 
@@ -210,14 +210,14 @@ def p1_giveup_test():
         sleep(60 * 10)
         kill_screens()
         # verify results of screen logs with psql table output
-        result = verify_wins_losses(num_screens)
+        result = verify_wins_losses()
         if not result:
             return False
     except:
         print 'Exception occurred.'
         traceback.print_exc()
         return False
-    get_ports_usage(num_screens)
+    get_ports_usage()
     cleanup()
     return result
 
@@ -236,14 +236,14 @@ def p2_giveup_test():
         sleep(60 * 10)
         kill_screens()
         # verify results of screen logs with psql table output
-        result = verify_wins_losses(num_screens)
+        result = verify_wins_losses()
         if not result:
             return False
     except:
         print 'Exception occurred.'
         traceback.print_exc()
         return False
-    get_ports_usage(num_screens)
+    get_ports_usage()
     cleanup()
     return result
 
@@ -261,14 +261,14 @@ def basic_21_clients_test():
         sleep(60 * 30)
         kill_screens()
         # verify results of screen logs with psql table output
-        result = verify_wins_losses(num_screens)
+        result = verify_wins_losses()
         if not result:
             return False
     except:
         print 'Exception occurred.'
         traceback.print_exc()
         return False
-    get_ports_usage(num_screens)
+    get_ports_usage()
     cleanup()
     return result
 
