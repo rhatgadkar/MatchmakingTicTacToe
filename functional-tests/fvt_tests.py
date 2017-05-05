@@ -305,13 +305,14 @@ def main(args):
     print 'All tests passed.'
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument("working_dir", help="Java client working directory",
-                    type=str)
-parser.add_argument("identity_file", help="SSH private key (identity) file",
-                    type=str)
-# if start_user_num is '1', it will begin deploying screens from 's1'
-parser.add_argument("start_user_num", help="The starting num of the user",
-                    type=int)
-args = parser.parse_args()
-main(args)
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("working_dir", help="Java client working directory",
+                        type=str)
+    parser.add_argument("identity_file",
+                        help="SSH private key (identity) file", type=str)
+    # if start_user_num is '1', it will begin deploying screens from 's1'
+    parser.add_argument("start_user_num", help="The starting num of the user",
+                        type=int)
+    args = parser.parse_args()
+    main(args)
