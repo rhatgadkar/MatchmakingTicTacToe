@@ -118,7 +118,8 @@ public class Game {
 				_c.sendGiveup();
 			}
 			else if (_ttt.getGameOverMsg() != null &&
-					_ttt.getGameOverMsg().contains("given up"))
+					(_ttt.getGameOverMsg().equals(ITicTacToe.P1_GIVEUP_WIN) ||
+					_ttt.getGameOverMsg().equals(ITicTacToe.P2_GIVEUP_WIN)))
 				// other client triggered quitbutton
 				;
 			else if (_ttt.getGameOverMsg() != null &&
@@ -128,22 +129,22 @@ public class Game {
 				_c.sendBye();
 			}
 			else if (_ttt.getGameOverMsg() != null && currPlayerTurn &&
-					_ttt.getGameOverMsg().contains("You win")) {
+					_ttt.getGameOverMsg().equals(ITicTacToe.YOU_WIN)) {
 				// current player played a win move
 				_c.sendWin(currPlayerLastMove);
 				_ttt.showGameOverDialog("Game over. You win.");
 			}
 			else if (_ttt.getGameOverMsg() != null && currPlayerTurn &&
-					_ttt.getGameOverMsg().contains("Tie")) {
+					_ttt.getGameOverMsg().equals(ITicTacToe.TIE_GAME)) {
 				// current player played a tie move
 				_c.sendTie(currPlayerLastMove);
 				_ttt.showGameOverDialog("Game over. Tie game.");
 			}
 			else if (_ttt.getGameOverMsg() != null &&
-					(_ttt.getGameOverMsg().contains("You win") ||
-					 _ttt.getGameOverMsg().contains("You lose") ||
-					_ttt.getGameOverMsg().contains("Tie"))) {
-				// other player received win/loss/tie from CheckGiveupThread
+					(_ttt.getGameOverMsg().contains(ITicTacToe.P1_WIN_LOSE) ||
+					_ttt.getGameOverMsg().contains(ITicTacToe.P2_WIN_LOSE) ||
+					_ttt.getGameOverMsg().contains(ITicTacToe.TIE_GAME))) {
+				// other player received win/tie from CheckGiveupThread
 				;
 			}
 			else {
