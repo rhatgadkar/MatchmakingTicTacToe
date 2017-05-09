@@ -92,7 +92,6 @@ int handle_syn_port(int sockfd, int* curr_port, int* client_port,
 	memset(buf, 0, MAXBUFLEN);
 	memset(s, 0, INET_ADDRSTRLEN);
 	their_addr_v4 = NULL;
-
 	*sockfd_client = accept(sockfd, &their_addr, &addr_len);
 	if (*sockfd_client == -1)
 	{
@@ -127,8 +126,6 @@ int handle_syn_port(int sockfd, int* curr_port, int* client_port,
 	if (num_ppl_str[0] == 'b')
 		return -1;
 
-	sleep(1);
-
 	int old_client_port = *client_port;
 	*curr_port = LISTENPORT + 1;
 	port_to_shm_iter(*curr_port, &shm_iter, shm_ports_used);
@@ -145,7 +142,9 @@ int handle_syn_port(int sockfd, int* curr_port, int* client_port,
 			break;
 		}
 		else
+		{
 			release_shm_lock(shm_ports_used);
+		}
 	}
 	acquire_shm_lock(shm_ports_used);
 	if (*shm_iter != 1)
@@ -162,11 +161,15 @@ int handle_syn_port(int sockfd, int* curr_port, int* client_port,
 				break;
 			}
 			else
+			{
 				release_shm_lock(shm_ports_used);
+			}
 		}
 	}
 	else
+	{
 		release_shm_lock(shm_ports_used);
+	}
 
 	sprintf(port, "%d", *curr_port);
 	status = send_to_address(*sockfd_client, port);
@@ -195,11 +198,11 @@ struct client_thread_params
 	char p1_username[MAXBUFLEN];
 	char p1_record_str[MAXBUFLEN];
 	char rec;
+	char* other_player_rec;
 };
 
 void* client_thread(void* parameters)
 {
-//	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 
 	struct client_thread_params* params;
@@ -402,11 +405,14 @@ void* client_thread(void* parameters)
 				printf("Received 'giveup'\n");
 
 				// send giveup to second address
-				params->rec = 'g';
-				status = send_to_address(*(params->sockfd_other_client),
-						"giveup");
-				if (status == -1)
-					perror("server: sendto");
+				if (*(params->other_player_rec) == 'n')
+				{
+					params->rec = 'g';
+					status = send_to_address(*(params->sockfd_other_client),
+							"giveup");
+					if (status == -1)
+						perror("server: sendto");
+				}
 				break;
 			}
 		}
@@ -431,10 +437,13 @@ void* client_thread(void* parameters)
 			printf("Received 'giveup'\n");
 
 			// send giveup to second address
-			params->rec = 'g';
-			status = send_to_address(*(params->sockfd_other_client), "giveup");
-			if (status == -1)
-				perror("server: sendto");
+			if (*(params->other_player_rec) == 'n')
+			{
+				params->rec = 'g';
+				status = send_to_address(*(params->sockfd_other_client), "giveup");
+				if (status == -1)
+					perror("server: sendto");
+			}
 			break;
 		}
 		else if (*(params->sockfd_other_client) == -1)
@@ -444,9 +453,15 @@ void* client_thread(void* parameters)
 		{
 			// forward message from first_addr to second_addr
 			if (buf[0] == 'w')
-				params->rec = 'w';
+			{
+				if (*(params->other_player_rec) == 'n')
+					params->rec = 'w';
+			}
 			else if (buf[0] == 't')
-				params->rec = 't';
+			{
+				if (*(params->other_player_rec) == 'n')
+					params->rec = 't';
+			}
 			status = send_to_address(*(params->sockfd_other_client), buf);
 			printf("Forwarding message from %s:%hu: %s\n", addr_str,
 					params->addr_v4->sin_port, buf);
@@ -489,7 +504,9 @@ void handle_match_msg(int sockfd, int* shm_iter, int* shm_ports_used)
 		release_shm_lock(shm_ports_used);
 	}
 	else
+	{
 		release_shm_lock(shm_ports_used);
+	}
 
 	// receive login from client 1
 	char login[MAXBUFLEN];
@@ -564,7 +581,6 @@ void handle_match_msg(int sockfd, int* shm_iter, int* shm_ports_used)
 		first_thread_params.username[0] = 0;
 	else
 		strcpy(first_thread_params.username, username);
-	first_thread_params.rec = 'n';
 	struct client_thread_params second_thread_params;
 	second_thread_params.sockfd_curr_client = &sockfd_client_2;
 	second_thread_params.sockfd_other_client = &sockfd_client_1;
@@ -610,7 +626,10 @@ void handle_match_msg(int sockfd, int* shm_iter, int* shm_ports_used)
 			return;
 		}
 	}
+	first_thread_params.rec = 'n';
 	second_thread_params.rec = 'n';
+	first_thread_params.other_player_rec = &second_thread_params.rec;
+	second_thread_params.other_player_rec = &first_thread_params.rec;
 
 	pthread_create(&first_thread, NULL, &client_thread, &first_thread_params);
 
@@ -762,7 +781,7 @@ int send_to_address(int sockfd, const char* text)
 
 	for (numbytes = 0; numbytes < MAXBUFLEN; numbytes += status)
 	{
-		status = send(sockfd, text + numbytes, MAXBUFLEN - numbytes, 0);
+		status = send(sockfd, buf + numbytes, MAXBUFLEN - numbytes, 0);
 		if (status == -1)
 			return -1;
 	}

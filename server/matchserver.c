@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <signal.h>
+#include <pthread.h>
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -18,32 +18,40 @@
 int fifo_fd;
 int* shm_ports_used;
 
-void sigchld_handler(int s)
+void* free_child_processes(void* parameters)
 {
 	int status;
 	char buf[MAXBUFLEN];
 	int port;
 	int* shm_iter;
 
-	while(waitpid(-1, NULL, WNOHANG) > 0)
+	for(;;)
 	{
-		memset(buf, 0, MAXBUFLEN);
-		status = read(fifo_fd, buf, 4);
-		if (status == -1)
-			perror("sigchld read");
+		sleep(10);
 
-		port = (int)strtol(buf, (char**)NULL, 10);
-
-		if (port != 0)
+		while ((waitpid(-1, NULL, WNOHANG)) > 0)
 		{
-			printf("clearing port: %d\n", port);
-			port_to_shm_iter(port, &shm_iter, shm_ports_used);
-			acquire_shm_lock(shm_ports_used);
-			*(shm_ports_used + SHM_POP_POS) -= *shm_iter;
-			*shm_iter = 0;
-			release_shm_lock(shm_ports_used);
+			memset(buf, 0, MAXBUFLEN);
+			status = read(fifo_fd, buf, 4);
+			if (status == -1)
+				perror("free_child_processes read");
+
+			port = (int)strtol(buf, (char**)NULL, 10);
+
+			if (port != 0)
+			{
+				printf("clearing port: %d\n", port);
+				port_to_shm_iter(port, &shm_iter,
+						shm_ports_used);
+				acquire_shm_lock(shm_ports_used);
+				*(shm_ports_used + SHM_POP_POS) -= *shm_iter;
+				*shm_iter = 0;
+				release_shm_lock(shm_ports_used);
+			}
 		}
 	}
+
+	return NULL;
 }
 
 void initialize_shm()
@@ -166,15 +174,9 @@ int main()
 		exit(1);
 	}
 
-	struct sigaction sa;
-	memset(&sa, 0, sizeof(sa));
-	sa.sa_handler = &sigchld_handler;
-	sa.sa_flags = SA_RESTART;
-	if (sigaction(SIGCHLD, &sa, NULL) == -1)
-	{
-		perror("sigaction");
-		exit(1);
-	}
+	pthread_t free_child_processes_thread;
+	pthread_create(&free_child_processes_thread, NULL,
+			&free_child_processes, NULL);
 
 	for (;;)
 	{
@@ -192,7 +194,9 @@ int main()
 			create_match_server(curr_port);
 		}
 		else
+		{
 			release_shm_lock(shm_ports_used);
+		}
 	}
 
 	close(sockfd);
