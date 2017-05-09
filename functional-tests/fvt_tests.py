@@ -49,8 +49,11 @@ def kill_screens():
     Destroy all running screen sessions. This also terminates the corresponding
     clients.
     """
+    screen_name_regex = r'^s[1-9][0-9]*'
+    screen_name_prog = re.compile(screen_name_regex)
     for s in list_screens():
-        s.kill()
+        if screen_name_prog.match(s.name):
+            s.kill()
 
 
 def get_file_wins_losses(screen_log):
