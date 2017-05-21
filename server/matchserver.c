@@ -11,6 +11,7 @@
 #include <sys/shm.h>
 #include <sys/ipc.h>
 #include <sys/stat.h>
+#include "queue.h"
 
 #define FIFO_NAME "fifo"
 #define SHM_SIZE 4096
@@ -140,6 +141,7 @@ int main()
 	int sockfd;
 	int sockfd_client;
 	struct addrinfo* servinfo;
+	int child_fifo_fd;
 
 	initialize_shm();
 	int* shm_iter;
@@ -158,9 +160,6 @@ int main()
 	}
 
 	int curr_port;
-	int client_port;
-
-	client_port = LISTENPORT + 1;
 
 	if ((mkfifo(FIFO_NAME, S_IFIFO | 0666)) == -1)
 	{
@@ -174,14 +173,27 @@ int main()
 		exit(1);
 	}
 
+/*	if ((mkfifo("child_fifo_fd", S_IFIFO | 0666)) == -1)
+	{
+		perror("child_fifo_fd mkfifo");
+		exit(1);
+	}
+	child_fifo_fd = open("child_fifo_fd", O_RDWR | O_NDELAY | O_NONBLOCK);
+	if (child_fifo_fd == -1)
+	{
+		perror("open child_fifo_fd in parent");
+		exit(1);
+	}*/
+	struct queue* q = create_empty_queue();
+
 	pthread_t free_child_processes_thread;
 	pthread_create(&free_child_processes_thread, NULL,
 			&free_child_processes, NULL);
 
 	for (;;)
 	{
-		status = handle_syn_port(sockfd, &curr_port, &client_port,
-				shm_ports_used, &sockfd_client);
+		status = handle_syn_port(sockfd, &curr_port, shm_ports_used,
+				&sockfd_client, q);
 		close(sockfd_client);
 		if (status == -1)
 			continue;

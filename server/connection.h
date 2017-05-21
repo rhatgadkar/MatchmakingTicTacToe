@@ -1,6 +1,7 @@
 #ifndef CONNECTION_H
 #define CONNECTION_H
 
+#include "queue.h"
 #include <netinet/in.h>
 
 #define LISTENPORT 4950  // the port clients will be connecting to
@@ -13,8 +14,8 @@
 int setup_connection(int* sockfd, struct addrinfo* servinfo, int port_int);
 
 // Return 0 if able to send port to client. Otherwise return -1.
-int handle_syn_port(int sockfd, int* curr_port, int* client_port,
-		int* shm_ports_used, int* sockfd_client);
+int handle_syn_port(int sockfd, int* curr_port, int* shm_ports_used,
+		int* sockfd_client, struct queue* q);
 
 void handle_match_msg(int sockfd, int* shm_iter, int* shm_ports_used);
 

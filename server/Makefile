@@ -1,4 +1,4 @@
-OBJS = matchserver.o connection.o db-accessor.o
+OBJS = matchserver.o connection.o db-accessor.o queue.o
 CC = gcc
 CFLAGS = -c -I/usr/include/postgresql
 LFLAGS = -L/usr/lib/postgresql/9.3/lib
@@ -14,6 +14,9 @@ connection.o : connection.c connection.h db-accessor.h
 
 db-accessor.o : db-accessor.c db-accessor.h
 	$(CC) $(CFLAGS) db-accessor.c
+
+queue.o : queue.c connection.h queue.h
+	$(CC) $(CFLAGS) queue.c
 
 clean:
 	rm *.o matchserver fifo

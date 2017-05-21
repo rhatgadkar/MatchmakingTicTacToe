@@ -13,6 +13,7 @@
 #include <sys/time.h>
 #include "connection.h"
 #include "db-accessor.h"
+#include "queue.h"
 
 #define LISTENPORT 4950  // the port clients will be connecting to
 
@@ -76,8 +77,8 @@ int setup_connection(int* sockfd, struct addrinfo* servinfo, int port_int)
 	return 0;
 }
 
-int handle_syn_port(int sockfd, int* curr_port, int* client_port,
-		int* shm_ports_used, int* sockfd_client)
+int handle_syn_port(int sockfd, int* curr_port, int* shm_ports_used,
+		int* sockfd_client, struct queue* q)
 {
 	int status;
 	struct sockaddr their_addr;
@@ -126,7 +127,75 @@ int handle_syn_port(int sockfd, int* curr_port, int* client_port,
 	if (num_ppl_str[0] == 'b')
 		return -1;
 
-	int old_client_port = *client_port;
+		printf("outside\n");
+	if (is_queue_empty(q))
+	{
+		printf("inside\n");
+		// find an empty child server one at a time
+		for (*curr_port = LISTENPORT + 1;
+				*curr_port < LISTENPORT + MAX_CHILD_SERVERS + 1;
+				*curr_port = *curr_port + 1)
+		{
+			printf("before port_to_shm_iter_inside\n");
+			port_to_shm_iter(*curr_port, &shm_iter, shm_ports_used);
+			printf("after port_to_shm_iter_inside\n");
+			acquire_shm_lock(shm_ports_used);
+			if (*shm_iter == 0)
+			{
+				release_shm_lock(shm_ports_used);
+				// add this new port to the queue
+				printf("before push\n");
+				push_queue(q, *curr_port);
+				printf("after push\n");
+				break;
+			}
+			else
+				release_shm_lock(shm_ports_used);
+		}
+	}
+	else
+	{
+		// port is the top element of the queue
+		printf("else 1\n");
+		*curr_port = pop_queue(q);
+		printf("else 2\n");
+	}
+/*	status = read(child_fifo_fd, port, 4);
+	if (status < 4)
+	{
+		// find an empty child server one at a time
+		for (*curr_port = LISTENPORT + 1;
+				*curr_port < LISTENPORT + MAX_CHILD_SERVERS + 1;
+				*curr_port = *curr_port + 1)
+		{
+			printf("before port_to_shm_iter_inside\n");
+			port_to_shm_iter(*curr_port, &shm_iter, shm_ports_used);
+			printf("after port_to_shm_iter_inside\n");
+			acquire_shm_lock(shm_ports_used);
+			printf("after acquire\n");
+			if (*shm_iter == 0)
+			{
+				release_shm_lock(shm_ports_used);
+				// add this new port to the queue
+				printf("before push\n");
+				status = write(child_fifo_fd, port, 4);
+				if (status == -1)
+					perror("write child_fifo_fd");
+				printf("after push\n");
+				break;
+			}
+			else
+				release_shm_lock(shm_ports_used);
+		}
+	}
+	else
+	{
+		// port is the top element of the queue
+		printf("else 1\n");
+		printf("else 2\n");
+	}*/
+
+/*	int old_client_port = *client_port;
 	*curr_port = LISTENPORT + 1;
 	port_to_shm_iter(*curr_port, &shm_iter, shm_ports_used);
 	// priority should be to find count == 1 first
@@ -170,13 +239,14 @@ int handle_syn_port(int sockfd, int* curr_port, int* client_port,
 	{
 		release_shm_lock(shm_ports_used);
 	}
+*/
 
 	sprintf(port, "%d", *curr_port);
 	status = send_to_address(*sockfd_client, port);
 	if (status == -1)
 	{
 		perror("sendto ACK");
-		*client_port = old_client_port;
+//		*client_port = old_client_port;
 		return -1;
 	}
 
