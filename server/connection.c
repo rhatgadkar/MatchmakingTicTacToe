@@ -127,38 +127,45 @@ int handle_syn_port(int sockfd, int* curr_port, int* shm_ports_used,
 	if (num_ppl_str[0] == 'b')
 		return -1;
 
-		printf("outside\n");
-	if (is_queue_empty(q))
+	for (;;)
 	{
-		printf("inside\n");
-		// find an empty child server one at a time
-		for (*curr_port = LISTENPORT + 1;
-				*curr_port < LISTENPORT + MAX_CHILD_SERVERS + 1;
-				*curr_port = *curr_port + 1)
+		if (is_queue_empty(q))
 		{
-			printf("before port_to_shm_iter_inside\n");
+			// find a new child server one at a time
+			for (*curr_port = LISTENPORT + 1;
+					*curr_port < LISTENPORT + MAX_CHILD_SERVERS + 1;
+					*curr_port = *curr_port + 1)
+			{
+				port_to_shm_iter(*curr_port, &shm_iter, shm_ports_used);
+				acquire_shm_lock(shm_ports_used);
+				if (*shm_iter == 0)
+				{
+					release_shm_lock(shm_ports_used);
+					// add this new port to the queue
+					push_queue(q, *curr_port);
+					break;
+				}
+				else
+					release_shm_lock(shm_ports_used);
+			}
+			break;
+		}
+		else
+		{
+			// port is the top element of the queue
+			*curr_port = pop_queue(q);
 			port_to_shm_iter(*curr_port, &shm_iter, shm_ports_used);
-			printf("after port_to_shm_iter_inside\n");
 			acquire_shm_lock(shm_ports_used);
-			if (*shm_iter == 0)
+			if (*shm_iter < 2)
 			{
 				release_shm_lock(shm_ports_used);
 				// add this new port to the queue
-				printf("before push\n");
 				push_queue(q, *curr_port);
-				printf("after push\n");
 				break;
 			}
 			else
 				release_shm_lock(shm_ports_used);
 		}
-	}
-	else
-	{
-		// port is the top element of the queue
-		printf("else 1\n");
-		*curr_port = pop_queue(q);
-		printf("else 2\n");
 	}
 /*	status = read(child_fifo_fd, port, 4);
 	if (status < 4)
@@ -246,7 +253,6 @@ int handle_syn_port(int sockfd, int* curr_port, int* shm_ports_used,
 	if (status == -1)
 	{
 		perror("sendto ACK");
-//		*client_port = old_client_port;
 		return -1;
 	}
 
