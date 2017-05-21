@@ -127,6 +127,7 @@ int handle_syn_port(int sockfd, int* curr_port, int* shm_ports_used,
 	if (num_ppl_str[0] == 'b')
 		return -1;
 
+	int outer_break = 0;
 	for (;;)
 	{
 		if (is_queue_empty(q))
@@ -143,12 +144,14 @@ int handle_syn_port(int sockfd, int* curr_port, int* shm_ports_used,
 					release_shm_lock(shm_ports_used);
 					// add this new port to the queue
 					push_queue(q, *curr_port);
+					outer_break = 1;
 					break;
 				}
 				else
 					release_shm_lock(shm_ports_used);
 			}
-			break;
+			if (outer_break)
+				break;
 		}
 		else
 		{
