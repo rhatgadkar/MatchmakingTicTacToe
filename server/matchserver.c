@@ -8,23 +8,22 @@
 #include <sys/wait.h>
 #include <netdb.h>
 #include "connection.h"
-#include <sys/shm.h>
 #include <sys/ipc.h>
 #include <sys/stat.h>
 #include "queue.h"
 
 #define FIFO_NAME "fifo"
-#define SHM_SIZE 4096
 
 int fifo_fd;
-int* shm_ports_used;
 
 void* free_child_processes(void* parameters)
 {
 	int status;
 	char buf[MAXBUFLEN];
 	int port;
-	int* shm_iter;
+    int* port_iter;
+
+    struct server_pop* sp = (struct server_pop*)parameters;
 
 	for(;;)
 	{
@@ -42,40 +41,17 @@ void* free_child_processes(void* parameters)
 			if (port != 0)
 			{
 				printf("clearing port: %d\n", port);
-				port_to_shm_iter(port, &shm_iter,
-						shm_ports_used);
-				acquire_shm_lock(shm_ports_used);
-				*(shm_ports_used + SHM_POP_POS) -= *shm_iter;
-				*shm_iter = 0;
-				release_shm_lock(shm_ports_used);
+				port_to_array_iter(port, &port_iter,
+						sp->child_server_pop);
+                pthread_mutex_lock(&(sp->mutex));
+				sp->total_pop -= *port_iter;
+				*port_iter = 0;
+                pthread_mutex_unlock(&(sp->mutex));
 			}
 		}
 	}
 
 	return NULL;
-}
-
-void initialize_shm()
-{
-	int shmid;
-	key_t key;
-	int* shm_iter;
-
-	key = 5678;
-
-	shmid = shmget(key, SHM_SIZE, IPC_CREAT | 0666);
-	if (shmid == -1)
-	{
-		perror("shmget");
-		exit(1);
-	}
-
-	shm_ports_used = (int*)shmat(shmid, 0, 0);
-	if (shm_ports_used == (int*)-1)
-	{
-		perror("shmat");
-		exit(1);
-	}
 }
 
 void create_match_server(int curr_port)
@@ -94,10 +70,6 @@ void create_match_server(int curr_port)
 		int status;
 		struct addrinfo* servinfo;
 
-		initialize_shm();
-		int* shm_iter;
-		port_to_shm_iter(curr_port, &shm_iter, shm_ports_used);
-
 		status = setup_connection(&sockfd, servinfo, curr_port);
 		if (status != 0)
 		{
@@ -110,7 +82,7 @@ void create_match_server(int curr_port)
 		char str_curr_port[MAXBUFLEN];
 		sprintf(str_curr_port, "%d", curr_port);
 
-		handle_match_msg(sockfd, shm_iter, shm_ports_used);
+		handle_match_msg(sockfd);
 
 		printf("Child server at port: %d has closed.\n", curr_port);
 
@@ -143,14 +115,12 @@ int main()
 	struct addrinfo* servinfo;
 	int child_fifo_fd;
 
-	initialize_shm();
-	int* shm_iter;
-	shm_iter = shm_ports_used;
+    struct server_pop sp;
+    pthread_mutex_init(&(sp.mutex), NULL);
 	int k;
 	for (k = 0; k < MAX_CHILD_SERVERS; k++)
-		*shm_iter++ = 0;
-	*(shm_ports_used + SHM_POP_POS) = 0;
-	*(shm_ports_used + SHM_LOCK_POS) = 0;
+		sp.child_server_pop[k] = 0;
+    sp.total_pop = 0;
 
 	status = setup_connection(&sockfd, servinfo, LISTENPORT);
 	if (status != 0)
@@ -173,41 +143,31 @@ int main()
 		exit(1);
 	}
 
-/*	if ((mkfifo("child_fifo_fd", S_IFIFO | 0666)) == -1)
-	{
-		perror("child_fifo_fd mkfifo");
-		exit(1);
-	}
-	child_fifo_fd = open("child_fifo_fd", O_RDWR | O_NDELAY | O_NONBLOCK);
-	if (child_fifo_fd == -1)
-	{
-		perror("open child_fifo_fd in parent");
-		exit(1);
-	}*/
 	struct queue* q = create_empty_queue();
 
 	pthread_t free_child_processes_thread;
 	pthread_create(&free_child_processes_thread, NULL,
-			&free_child_processes, NULL);
+			&free_child_processes, &sp);
+
+    int* port_iter;
 
 	for (;;)
 	{
-		status = handle_syn_port(sockfd, &curr_port, shm_ports_used,
-				&sockfd_client, q);
+		status = handle_syn_port(sockfd, &curr_port, &sockfd_client, q, &sp);
 		close(sockfd_client);
 		if (status == -1)
 			continue;
 
-		port_to_shm_iter(curr_port, &shm_iter, shm_ports_used);
-		acquire_shm_lock(shm_ports_used);
-		if (*shm_iter == 0)
+		port_to_array_iter(curr_port, &port_iter, sp.child_server_pop);
+		pthread_mutex_lock(&(sp.mutex));
+        if (*port_iter == 1)
 		{
-			release_shm_lock(shm_ports_used);
+            pthread_mutex_unlock(&(sp.mutex));
 			create_match_server(curr_port);
 		}
 		else
 		{
-			release_shm_lock(shm_ports_used);
+            pthread_mutex_unlock(&(sp.mutex));
 		}
 	}
 

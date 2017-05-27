@@ -77,8 +77,8 @@ int setup_connection(int* sockfd, struct addrinfo* servinfo, int port_int)
 	return 0;
 }
 
-int handle_syn_port(int sockfd, int* curr_port, int* shm_ports_used,
-		int* sockfd_client, struct queue* q)
+int handle_syn_port(int sockfd, int* curr_port, int* sockfd_client,
+        struct queue* q, struct server_pop* sp)
 {
 	int status;
 	struct sockaddr their_addr;
@@ -87,7 +87,7 @@ int handle_syn_port(int sockfd, int* curr_port, int* shm_ports_used,
 	char buf[MAXBUFLEN];
 	char s[INET_ADDRSTRLEN];
 	char port[MAXBUFLEN];
-	int* shm_iter;
+	int* port_iter;
 
 	addr_len = sizeof(their_addr);
 	memset(buf, 0, MAXBUFLEN);
@@ -110,10 +110,9 @@ int handle_syn_port(int sockfd, int* curr_port, int* shm_ports_used,
 	int num_ppl;
 	char num_ppl_str[MAXBUFLEN];
 
-	shm_iter = shm_ports_used;
-	acquire_shm_lock(shm_ports_used);
-	num_ppl = *(shm_ports_used + SHM_POP_POS);
-	release_shm_lock(shm_ports_used);
+    pthread_mutex_lock(&(sp->mutex));
+	num_ppl = sp->total_pop;
+    pthread_mutex_unlock(&(sp->mutex));
 	if (num_ppl == MAX_CHILD_SERVERS * 2)
 		strcpy(num_ppl_str, "b");
 	else
@@ -127,129 +126,39 @@ int handle_syn_port(int sockfd, int* curr_port, int* shm_ports_used,
 	if (num_ppl_str[0] == 'b')
 		return -1;
 
-	int outer_break = 0;
-	for (;;)
-	{
-		if (is_queue_empty(q))
-		{
-			// find a new child server one at a time
-			for (*curr_port = LISTENPORT + 1;
-					*curr_port < LISTENPORT + MAX_CHILD_SERVERS + 1;
-					*curr_port = *curr_port + 1)
-			{
-				port_to_shm_iter(*curr_port, &shm_iter, shm_ports_used);
-				acquire_shm_lock(shm_ports_used);
-				if (*shm_iter == 0)
-				{
-					release_shm_lock(shm_ports_used);
-					// add this new port to the queue
-					push_queue(q, *curr_port);
-					outer_break = 1;
-					break;
-				}
-				else
-					release_shm_lock(shm_ports_used);
-			}
-			if (outer_break)
-				break;
-		}
-		else
-		{
-			// port is the top element of the queue
-			*curr_port = pop_queue(q);
-			port_to_shm_iter(*curr_port, &shm_iter, shm_ports_used);
-			acquire_shm_lock(shm_ports_used);
-			if (*shm_iter < 2)
-			{
-				release_shm_lock(shm_ports_used);
-				// add this new port to the queue
-				push_queue(q, *curr_port);
-				break;
-			}
-			else
-				release_shm_lock(shm_ports_used);
-		}
-	}
-/*	status = read(child_fifo_fd, port, 4);
-	if (status < 4)
-	{
-		// find an empty child server one at a time
-		for (*curr_port = LISTENPORT + 1;
-				*curr_port < LISTENPORT + MAX_CHILD_SERVERS + 1;
-				*curr_port = *curr_port + 1)
-		{
-			printf("before port_to_shm_iter_inside\n");
-			port_to_shm_iter(*curr_port, &shm_iter, shm_ports_used);
-			printf("after port_to_shm_iter_inside\n");
-			acquire_shm_lock(shm_ports_used);
-			printf("after acquire\n");
-			if (*shm_iter == 0)
-			{
-				release_shm_lock(shm_ports_used);
-				// add this new port to the queue
-				printf("before push\n");
-				status = write(child_fifo_fd, port, 4);
-				if (status == -1)
-					perror("write child_fifo_fd");
-				printf("after push\n");
-				break;
-			}
-			else
-				release_shm_lock(shm_ports_used);
-		}
-	}
-	else
-	{
-		// port is the top element of the queue
-		printf("else 1\n");
-		printf("else 2\n");
-	}*/
-
-/*	int old_client_port = *client_port;
-	*curr_port = LISTENPORT + 1;
-	port_to_shm_iter(*curr_port, &shm_iter, shm_ports_used);
-	// priority should be to find count == 1 first
-	for (; *curr_port <= *client_port; (*curr_port)++)
-	{
-		port_to_shm_iter(*curr_port, &shm_iter, shm_ports_used);
-		acquire_shm_lock(shm_ports_used);
-		if (*shm_iter == 1)
-		{
-			release_shm_lock(shm_ports_used);
-			if (*curr_port == *client_port)
-				(*client_port)++;
-			break;
-		}
-		else
-		{
-			release_shm_lock(shm_ports_used);
-		}
-	}
-	acquire_shm_lock(shm_ports_used);
-	if (*shm_iter != 1)
-	{
-		release_shm_lock(shm_ports_used);
-		*curr_port = LISTENPORT + 1;
-		for (; *curr_port <= *client_port; (*curr_port)++)
-		{
-			port_to_shm_iter(*curr_port, &shm_iter, shm_ports_used);
-			acquire_shm_lock(shm_ports_used);
-			if (*shm_iter == 0)
-			{
-				release_shm_lock(shm_ports_used);
-				break;
-			}
-			else
-			{
-				release_shm_lock(shm_ports_used);
-			}
-		}
-	}
-	else
-	{
-		release_shm_lock(shm_ports_used);
-	}
-*/
+    if (is_queue_empty(q))
+    {
+        // find a new child server one at a time
+        for (*curr_port = LISTENPORT + 1;
+                *curr_port < LISTENPORT + MAX_CHILD_SERVERS + 1;
+                *curr_port = *curr_port + 1)
+        {
+            port_to_array_iter(*curr_port, &port_iter,
+                    sp->child_server_pop);
+            pthread_mutex_lock(&(sp->mutex));
+            if (*port_iter == 0)
+            {
+                // add this new port to the queue
+                *port_iter = *port_iter + 1;
+                sp->total_pop = sp->total_pop + 1;
+                pthread_mutex_unlock(&(sp->mutex));
+                push_queue(q, *curr_port);
+                break;
+            }
+            else
+                pthread_mutex_unlock(&(sp->mutex));
+        }
+    }
+    else
+    {
+        // port is the top element of the queue
+        *curr_port = pop_queue(q);
+        port_to_array_iter(*curr_port, &port_iter, sp->child_server_pop);
+        pthread_mutex_lock(&(sp->mutex));
+        *port_iter = *port_iter + 1;
+        sp->total_pop = sp->total_pop + 1;
+        pthread_mutex_unlock(&(sp->mutex));
+    }
 
 	sprintf(port, "%d", *curr_port);
 	status = send_to_address(*sockfd_client, port);
@@ -270,8 +179,6 @@ struct client_thread_params
 	struct sockaddr_in* addr_v4;
 	int sockfd;
 	pthread_t other_id;
-	int* shm_iter;
-	int* shm_ports_used;
 	int thread_canceled;
 	char username[MAXBUFLEN];
 	char p1_username[MAXBUFLEN];
@@ -293,11 +200,8 @@ void* client_thread(void* parameters)
 
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
 
-	acquire_shm_lock(params->shm_ports_used);
-	if (*(params->sockfd_curr_client) == -1 && *(params->shm_iter) == 1)
+	if (*(params->sockfd_curr_client) == -1)
 	{
-		release_shm_lock(params->shm_ports_used);
-	
 		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 	
 		struct sockaddr their_addr;
@@ -355,11 +259,6 @@ void* client_thread(void* parameters)
 		}
 	
 		pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
-
-		acquire_shm_lock(params->shm_ports_used);
-		*(params->shm_iter) = *(params->shm_iter) + 1;
-		*(params->shm_ports_used + SHM_POP_POS) += 1;
-		release_shm_lock(params->shm_ports_used);
 
 		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 
@@ -433,8 +332,6 @@ void* client_thread(void* parameters)
 	}
 	else
 	{
-		release_shm_lock(params->shm_ports_used);
-	
 		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 
 		inet_ntop(AF_INET, &(params->addr_v4->sin_addr),
@@ -557,7 +454,7 @@ void* client_thread(void* parameters)
 	return NULL;
 }
 
-void handle_match_msg(int sockfd, int* shm_iter, int* shm_ports_used)
+void handle_match_msg(int sockfd)
 {
 	int status;
 
@@ -567,24 +464,17 @@ void handle_match_msg(int sockfd, int* shm_iter, int* shm_ports_used)
 	int sockfd_client_1 = -1;
 	int sockfd_client_2 = -1;
 
-	acquire_shm_lock(shm_ports_used);
-	if (sockfd_client_1 == -1 && *shm_iter == 0)
+	if (sockfd_client_1 == -1)
 	{
-		release_shm_lock(shm_ports_used);
 		sockfd_client_1 = accept_timer(sockfd, &their_addr, &addr_len, 30);
 		if (sockfd_client_1 < 0)
 		{
 			printf("Closing child server.\n");
 			return;
 		}
-		acquire_shm_lock(shm_ports_used);
-		(*shm_iter)++;
-		*(shm_ports_used + SHM_POP_POS) += 1;
-		release_shm_lock(shm_ports_used);
 	}
 	else
 	{
-		release_shm_lock(shm_ports_used);
 	}
 
 	// receive login from client 1
@@ -653,8 +543,6 @@ void handle_match_msg(int sockfd, int* shm_iter, int* shm_ports_used)
 	first_thread_params.addr_v4 = (struct sockaddr_in*)&their_addr;
 	first_thread_params.sockfd = sockfd;
 	first_thread_params.other_id = second_thread;
-	first_thread_params.shm_iter = shm_iter;
-	first_thread_params.shm_ports_used = shm_ports_used;
 	first_thread_params.thread_canceled = 0;
 	if (login[0] == ',')
 		first_thread_params.username[0] = 0;
@@ -666,8 +554,6 @@ void handle_match_msg(int sockfd, int* shm_iter, int* shm_ports_used)
 	second_thread_params.addr_v4 = NULL;
 	second_thread_params.sockfd = sockfd;
 	second_thread_params.other_id = first_thread;
-	second_thread_params.shm_iter = shm_iter;
-	second_thread_params.shm_ports_used = shm_ports_used;
 	second_thread_params.thread_canceled = 0;
 	memset(second_thread_params.username, 0, MAXBUFLEN);
 	memset(second_thread_params.p1_record_str, 0, MAXBUFLEN);
@@ -867,26 +753,8 @@ int send_to_address(int sockfd, const char* text)
 	return 0;
 }
 
-void port_to_shm_iter(int port, int** shm_iter, int* shm_ports_used)
+void port_to_array_iter(int port, int** array_iter, int* array_ports)
 {
-	*shm_iter = shm_ports_used;
-	(*shm_iter) += (port - LISTENPORT - 1);
-}
-
-int test_and_set(int* shm_ports_used)
-{
-	int orig = *(shm_ports_used + SHM_LOCK_POS);
-	*(shm_ports_used + SHM_LOCK_POS) = 1;
-	return orig;
-}
-
-void acquire_shm_lock(int* shm_ports_used)
-{
-	while (test_and_set(shm_ports_used) == 1)
-		;
-}
-
-void release_shm_lock(int* shm_ports_used)
-{
-	*(shm_ports_used + SHM_LOCK_POS) = 0;
+	*array_iter = array_ports;
+	(*array_iter) += (port - LISTENPORT - 1);
 }
