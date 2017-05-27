@@ -84,13 +84,9 @@ int handle_syn_port(int sockfd, int* curr_port, int* sockfd_client,
 	struct sockaddr their_addr;
 	struct sockaddr_in* their_addr_v4;
 	socklen_t addr_len;
-	char buf[MAXBUFLEN];
 	char s[INET_ADDRSTRLEN];
-	char port[MAXBUFLEN];
-	int* port_iter;
 
 	addr_len = sizeof(their_addr);
-	memset(buf, 0, MAXBUFLEN);
 	memset(s, 0, INET_ADDRSTRLEN);
 	their_addr_v4 = NULL;
 	*sockfd_client = accept(sockfd, &their_addr, &addr_len);
@@ -106,26 +102,9 @@ int handle_syn_port(int sockfd, int* curr_port, int* sockfd_client,
 	printf("client: %s:%hu connected to parent server.\n", s,
 			their_addr_v4->sin_port);
 
-	// send number of people online to client
-	int num_ppl;
-	char num_ppl_str[MAXBUFLEN];
+	int* port_iter;
 
-	pthread_mutex_lock(&(sp->mutex));
-	num_ppl = sp->total_pop;
-	pthread_mutex_unlock(&(sp->mutex));
-	if (num_ppl == MAX_CHILD_SERVERS * 2)
-		strcpy(num_ppl_str, "b");
-	else
-		sprintf(num_ppl_str, "%d", num_ppl);
-	status = send_to_address(*sockfd_client, num_ppl_str);
-	if (status == -1)
-	{
-		perror("sendto num_ppl");
-		return -1;
-	}
-	if (num_ppl_str[0] == 'b')
-		return -1;
-
+	// find child server port
 	if (!is_queue_empty(waiting_servers))
 	{
 		// port is the top element of the queue
@@ -133,7 +112,6 @@ int handle_syn_port(int sockfd, int* curr_port, int* sockfd_client,
 		port_to_array_iter(*curr_port, &port_iter, sp->child_server_pop);
 		pthread_mutex_lock(&(sp->mutex));
 		*port_iter = *port_iter + 1;
-		sp->total_pop = sp->total_pop + 1;
 		pthread_mutex_unlock(&(sp->mutex));
 	}
 	else if (!is_queue_empty(sp->empty_servers))
@@ -143,15 +121,17 @@ int handle_syn_port(int sockfd, int* curr_port, int* sockfd_client,
 		*curr_port = pop_queue(sp->empty_servers);
 		port_to_array_iter(*curr_port, &port_iter, sp->child_server_pop);
 		*port_iter = *port_iter + 1;
-		sp->total_pop = sp->total_pop + 1;
 		pthread_mutex_unlock(&(sp->mutex));
 		push_queue(waiting_servers, *curr_port);
 	}
 	else
 	{
 		printf("No child servers available.\n");
+		send_to_address(*sockfd_client, "full");
 		return -1;
 	}
+
+	char port[MAXBUFLEN];
 
 	sprintf(port, "%d", *curr_port);
 	status = send_to_address(*sockfd_client, port);

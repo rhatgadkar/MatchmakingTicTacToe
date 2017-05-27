@@ -12,7 +12,6 @@
 struct server_pop
 {
 	int child_server_pop[MAX_CHILD_SERVERS];
-	int total_pop;
 	struct queue* empty_servers;
 	pthread_mutex_t mutex;
 };

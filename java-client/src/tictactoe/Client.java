@@ -10,7 +10,7 @@ import java.net.SocketTimeoutException;
 public final class Client implements IClient {
 	public final static int MAXBUFLEN = 100;
 	private final static String SERVERIP = "54.219.156.253";
-//	private final static String SERVERIP = "192.168.218.140";
+//	private final static String SERVERIP = "192.168.218.175";
 	private final static String SERVERPORT = "4950";
 
 	private Socket _sock;
@@ -63,19 +63,13 @@ public final class Client implements IClient {
 				continue;
 			}
 			try {
-				int numPpl = getNumPpl();
-				if (numPpl == -1) {
-					System.out.println("Parent server is busy. Retrying.");
-					Thread.sleep(15000);
-					continue;
-				}
-				if (numPpl == 2) {
+				buf = handleSynAck();
+				if (buf.equals("full")) {
 					System.out.println("Child servers are full. Retrying.");
 					retries = 0;
 					Thread.sleep(15000);
 					continue;
 				}
-				buf = handleSynAck();
 			} catch (Exception e) {
 				continue;
 			}
@@ -251,20 +245,6 @@ public final class Client implements IClient {
 			throw new Exception();
 		} catch (NumberFormatException e) {
 			System.err.println("Could not parse port string to int.");
-			throw new Exception();
-		}
-	}
-
-	private int getNumPpl() throws Exception {
-		try {
-			String numPpl = receiveFrom(15);
-			if (numPpl.charAt(0) == 'b')
-				return 2;
-			System.out.println("Number of people online: " + numPpl);
-			return 1;
-		} catch (Exception e) {
-			System.err.println("Possible server disconnect.");
-			e.printStackTrace();
 			throw new Exception();
 		}
 	}
