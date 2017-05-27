@@ -78,7 +78,7 @@ int setup_connection(int* sockfd, struct addrinfo* servinfo, int port_int)
 }
 
 int handle_syn_port(int sockfd, int* curr_port, int* sockfd_client,
-        struct queue* q, struct server_pop* sp)
+        struct queue* waiting_servers, struct server_pop* sp)
 {
 	int status;
 	struct sockaddr their_addr;
@@ -126,38 +126,31 @@ int handle_syn_port(int sockfd, int* curr_port, int* sockfd_client,
 	if (num_ppl_str[0] == 'b')
 		return -1;
 
-    if (is_queue_empty(q))
-    {
-        // find a new child server one at a time
-        for (*curr_port = LISTENPORT + 1;
-                *curr_port < LISTENPORT + MAX_CHILD_SERVERS + 1;
-                *curr_port = *curr_port + 1)
-        {
-            port_to_array_iter(*curr_port, &port_iter,
-                    sp->child_server_pop);
-            pthread_mutex_lock(&(sp->mutex));
-            if (*port_iter == 0)
-            {
-                // add this new port to the queue
-                *port_iter = *port_iter + 1;
-                sp->total_pop = sp->total_pop + 1;
-                pthread_mutex_unlock(&(sp->mutex));
-                push_queue(q, *curr_port);
-                break;
-            }
-            else
-                pthread_mutex_unlock(&(sp->mutex));
-        }
-    }
-    else
+    if (!is_queue_empty(waiting_servers))
     {
         // port is the top element of the queue
-        *curr_port = pop_queue(q);
+        *curr_port = pop_queue(waiting_servers);
         port_to_array_iter(*curr_port, &port_iter, sp->child_server_pop);
         pthread_mutex_lock(&(sp->mutex));
         *port_iter = *port_iter + 1;
         sp->total_pop = sp->total_pop + 1;
         pthread_mutex_unlock(&(sp->mutex));
+    }
+    else if (!is_queue_empty(sp->empty_servers))
+    {
+        // get a new child server
+        pthread_mutex_lock(&(sp->mutex));
+        *curr_port = pop_queue(sp->empty_servers);
+        port_to_array_iter(*curr_port, &port_iter, sp->child_server_pop);
+        *port_iter = *port_iter + 1;
+        sp->total_pop = sp->total_pop + 1;
+        pthread_mutex_unlock(&(sp->mutex));
+        push_queue(waiting_servers, *curr_port);
+    }
+    else
+    {
+        printf("No child servers available.\n");
+        return -1;
     }
 
 	sprintf(port, "%d", *curr_port);
@@ -189,6 +182,7 @@ struct client_thread_params
 
 void* client_thread(void* parameters)
 {
+    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
 	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
 
 	struct client_thread_params* params;
@@ -198,12 +192,8 @@ void* client_thread(void* parameters)
 	char buf[MAXBUFLEN];
 	char addr_str[INET_ADDRSTRLEN];
 
-	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
-
 	if (*(params->sockfd_curr_client) == -1)
 	{
-		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
-	
 		struct sockaddr their_addr;
 		socklen_t addr_len = sizeof(their_addr);
 		char login[MAXBUFLEN];
@@ -258,10 +248,6 @@ void* client_thread(void* parameters)
 			}
 		}
 	
-		pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
-
-		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
-
 		printf("client 2 success\n");
 
 		params->addr_v4 = (struct sockaddr_in*)&their_addr;
@@ -332,8 +318,6 @@ void* client_thread(void* parameters)
 	}
 	else
 	{
-		pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
-
 		inet_ntop(AF_INET, &(params->addr_v4->sin_addr),
 				addr_str, sizeof(addr_str));
 		printf("First client connected: %s:%hu\n", addr_str,

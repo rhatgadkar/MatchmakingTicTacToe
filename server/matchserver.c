@@ -46,6 +46,7 @@ void* free_child_processes(void* parameters)
                 pthread_mutex_lock(&(sp->mutex));
 				sp->total_pop -= *port_iter;
 				*port_iter = 0;
+                push_queue(sp->empty_servers, port);
                 pthread_mutex_unlock(&(sp->mutex));
 			}
 		}
@@ -114,13 +115,17 @@ int main()
 	int sockfd_client;
 	struct addrinfo* servinfo;
 	int child_fifo_fd;
+	int k;
 
     struct server_pop sp;
     pthread_mutex_init(&(sp.mutex), NULL);
-	int k;
 	for (k = 0; k < MAX_CHILD_SERVERS; k++)
 		sp.child_server_pop[k] = 0;
     sp.total_pop = 0;
+    struct queue* empty_servers = create_empty_queue();
+    for (k = LISTENPORT + 1; k < LISTENPORT + 1 + MAX_CHILD_SERVERS; k++)
+        push_queue(empty_servers, k);
+    sp.empty_servers = empty_servers;
 
 	status = setup_connection(&sockfd, servinfo, LISTENPORT);
 	if (status != 0)
@@ -143,7 +148,7 @@ int main()
 		exit(1);
 	}
 
-	struct queue* q = create_empty_queue();
+	struct queue* waiting_servers = create_empty_queue();
 
 	pthread_t free_child_processes_thread;
 	pthread_create(&free_child_processes_thread, NULL,
@@ -153,7 +158,8 @@ int main()
 
 	for (;;)
 	{
-		status = handle_syn_port(sockfd, &curr_port, &sockfd_client, q, &sp);
+		status = handle_syn_port(sockfd, &curr_port, &sockfd_client,
+                waiting_servers, &sp);
 		close(sockfd_client);
 		if (status == -1)
 			continue;

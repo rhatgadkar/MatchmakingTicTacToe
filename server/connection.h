@@ -13,6 +13,7 @@ struct server_pop
 {
     int child_server_pop[MAX_CHILD_SERVERS];
     int total_pop;
+    struct queue* empty_servers;
     pthread_mutex_t mutex;
 };
 
@@ -20,7 +21,7 @@ int setup_connection(int* sockfd, struct addrinfo* servinfo, int port_int);
 
 // Return 0 if able to send port to client. Otherwise return -1.
 int handle_syn_port(int sockfd, int* curr_port, int* sockfd_client,
-        struct queue* q, struct server_pop* sp);
+        struct queue* waiting_servers, struct server_pop* sp);
 
 void handle_match_msg(int sockfd);
 
