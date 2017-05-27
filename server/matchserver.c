@@ -21,9 +21,9 @@ void* free_child_processes(void* parameters)
 	int status;
 	char buf[MAXBUFLEN];
 	int port;
-    int* port_iter;
+	int* port_iter;
 
-    struct server_pop* sp = (struct server_pop*)parameters;
+	struct server_pop* sp = (struct server_pop*)parameters;
 
 	for(;;)
 	{
@@ -43,11 +43,11 @@ void* free_child_processes(void* parameters)
 				printf("clearing port: %d\n", port);
 				port_to_array_iter(port, &port_iter,
 						sp->child_server_pop);
-                pthread_mutex_lock(&(sp->mutex));
+				pthread_mutex_lock(&(sp->mutex));
 				sp->total_pop -= *port_iter;
 				*port_iter = 0;
-                push_queue(sp->empty_servers, port);
-                pthread_mutex_unlock(&(sp->mutex));
+				push_queue(sp->empty_servers, port);
+				pthread_mutex_unlock(&(sp->mutex));
 			}
 		}
 	}
@@ -117,15 +117,15 @@ int main()
 	int child_fifo_fd;
 	int k;
 
-    struct server_pop sp;
-    pthread_mutex_init(&(sp.mutex), NULL);
+	struct server_pop sp;
+	pthread_mutex_init(&(sp.mutex), NULL);
 	for (k = 0; k < MAX_CHILD_SERVERS; k++)
 		sp.child_server_pop[k] = 0;
-    sp.total_pop = 0;
-    struct queue* empty_servers = create_empty_queue();
-    for (k = LISTENPORT + 1; k < LISTENPORT + 1 + MAX_CHILD_SERVERS; k++)
-        push_queue(empty_servers, k);
-    sp.empty_servers = empty_servers;
+	sp.total_pop = 0;
+	struct queue* empty_servers = create_empty_queue();
+	for (k = LISTENPORT + 1; k < LISTENPORT + 1 + MAX_CHILD_SERVERS; k++)
+		push_queue(empty_servers, k);
+	sp.empty_servers = empty_servers;
 
 	status = setup_connection(&sockfd, servinfo, LISTENPORT);
 	if (status != 0)
@@ -154,26 +154,26 @@ int main()
 	pthread_create(&free_child_processes_thread, NULL,
 			&free_child_processes, &sp);
 
-    int* port_iter;
+	int* port_iter;
 
 	for (;;)
 	{
 		status = handle_syn_port(sockfd, &curr_port, &sockfd_client,
-                waiting_servers, &sp);
+				waiting_servers, &sp);
 		close(sockfd_client);
 		if (status == -1)
 			continue;
 
 		port_to_array_iter(curr_port, &port_iter, sp.child_server_pop);
 		pthread_mutex_lock(&(sp.mutex));
-        if (*port_iter == 1)
+		if (*port_iter == 1)
 		{
-            pthread_mutex_unlock(&(sp.mutex));
+			pthread_mutex_unlock(&(sp.mutex));
 			create_match_server(curr_port);
 		}
 		else
 		{
-            pthread_mutex_unlock(&(sp.mutex));
+			pthread_mutex_unlock(&(sp.mutex));
 		}
 	}
 
