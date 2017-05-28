@@ -58,6 +58,11 @@ public class MockClient implements IClient {
 		return "r,,";
 	}
 
+	@Override
+	public String getNumPpl() {
+		return "";
+	}
+
 	public String getFinalMsg() {
 		return _finalMsg;
 	}

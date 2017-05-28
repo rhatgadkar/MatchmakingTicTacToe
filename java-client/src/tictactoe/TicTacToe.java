@@ -27,6 +27,7 @@ public final class TicTacToe extends JPanel implements ITicTacToe {
 	private JLabel _winrecordfield;
 	private JLabel _lossrecordfield;
 	private JLabel _opponentnamefield;
+	private JLabel _numpplfield;
 	private String _username;
 	private String _password;
 	
@@ -91,7 +92,10 @@ public final class TicTacToe extends JPanel implements ITicTacToe {
 		p.add(_playerfield);
 		p.add(_timerfield);
 		grid.add(p);
-		grid.add(_opponentnamefield);
+		JPanel g2 = new JPanel(new GridLayout(2, 1));
+		g2.add(_opponentnamefield);
+		g2.add(_numpplfield);
+		grid.add(g2);
 		return grid;
 	}
 
@@ -125,6 +129,7 @@ public final class TicTacToe extends JPanel implements ITicTacToe {
 		_winrecordfield = new JLabel();
 		_lossrecordfield = new JLabel();
 		_opponentnamefield = new JLabel();
+		_numpplfield = new JLabel();
 
 		_quitbutton.addActionListener(new ActionListener() {
 			private Client _c;
@@ -185,6 +190,11 @@ public final class TicTacToe extends JPanel implements ITicTacToe {
 	@Override
 	public void setOpponentText(String text) {
 		_opponentnamefield.setText(text);
+	}
+
+	@Override
+	public void setNumPplText(String text) {
+		_numpplfield.setText(text);
 	}
 	
 	public synchronized void setGameOverMsg(String newMsg) {

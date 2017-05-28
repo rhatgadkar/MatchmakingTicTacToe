@@ -112,6 +112,12 @@ public class FvtTicTacToe implements ITicTacToe {
 	}
 
 	@Override
+	public void setNumPplText(String text) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
 	public synchronized void setGameOverMsg(String newMsg) {
 		_gameOverMsg = newMsg;
 		System.out.println(newMsg);

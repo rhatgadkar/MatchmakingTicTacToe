@@ -28,6 +28,7 @@ public interface ITicTacToe {
 	public void setWinfieldText(String text);
 	public void setLossfieldText(String text);
 	public void setOpponentText(String text);
+	public void setNumPplText(String text);
 	public JLabel getTimerfield();
 	public void repaintDisplay();
 	public int getInput(char symbol);

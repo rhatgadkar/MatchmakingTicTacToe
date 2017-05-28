@@ -44,6 +44,7 @@ void* free_child_processes(void* parameters)
 				port_to_array_iter(port, &port_iter,
 						sp->child_server_pop);
 				pthread_mutex_lock(&(sp->mutex));
+				sp->total_pop -= *port_iter;
 				*port_iter = 0;
 				push_queue(sp->empty_servers, port);
 				pthread_mutex_unlock(&(sp->mutex));
@@ -124,6 +125,7 @@ int main()
 	for (k = LISTENPORT + 1; k < LISTENPORT + 1 + MAX_CHILD_SERVERS; k++)
 		push_queue(empty_servers, k);
 	sp.empty_servers = empty_servers;
+	sp.total_pop = 0;
 
 	status = setup_connection(&sockfd, servinfo, LISTENPORT);
 	if (status != 0)

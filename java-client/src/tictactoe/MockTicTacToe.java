@@ -139,6 +139,12 @@ public class MockTicTacToe implements ITicTacToe {
 		// TODO Auto-generated method stub
 		
 	}
+
+	@Override
+	public void setNumPplText(String text) {
+		// TODO Auto-generated method stub
+		
+	}
 	
 	public synchronized void setGameOverMsg(String newMsg) {
 		_gameOverMsg = newMsg;

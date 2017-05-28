@@ -102,6 +102,21 @@ int handle_syn_port(int sockfd, int* curr_port, int* sockfd_client,
 	printf("client: %s:%hu connected to parent server.\n", s,
 			their_addr_v4->sin_port);
 
+	// send number of people in game to client
+	int num_ppl;
+	char num_ppl_str[MAXBUFLEN];
+
+	pthread_mutex_lock(&(sp->mutex));
+	num_ppl = sp->total_pop;
+	pthread_mutex_unlock(&(sp->mutex));
+	sprintf(num_ppl_str, "%d", num_ppl);
+	status = send_to_address(*sockfd_client, num_ppl_str);
+	if (status == -1)
+	{
+		perror("sendto num_ppl");
+		return -1;
+	}
+
 	int* port_iter;
 
 	// find child server port
@@ -112,6 +127,7 @@ int handle_syn_port(int sockfd, int* curr_port, int* sockfd_client,
 		port_to_array_iter(*curr_port, &port_iter, sp->child_server_pop);
 		pthread_mutex_lock(&(sp->mutex));
 		*port_iter = *port_iter + 1;
+		sp->total_pop = sp->total_pop + 1;
 		pthread_mutex_unlock(&(sp->mutex));
 	}
 	else if (!is_queue_empty(sp->empty_servers))
@@ -121,6 +137,7 @@ int handle_syn_port(int sockfd, int* curr_port, int* sockfd_client,
 		*curr_port = pop_queue(sp->empty_servers);
 		port_to_array_iter(*curr_port, &port_iter, sp->child_server_pop);
 		*port_iter = *port_iter + 1;
+		sp->total_pop = sp->total_pop + 1;
 		pthread_mutex_unlock(&(sp->mutex));
 		push_queue(waiting_servers, *curr_port);
 	}

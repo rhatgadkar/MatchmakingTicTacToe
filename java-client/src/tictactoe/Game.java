@@ -322,6 +322,7 @@ public class Game {
 			_ttt.setOpponentText("Opponent: " + opponentUsername);
 		else
 			_ttt.setOpponentText("Guest Opponent");
+		_ttt.setNumPplText("Players in-game: " + _c.getNumPpl());
 
 		if (_c.isP1())
 			_ttt.setPlayerfieldText("You are player 1 (" +

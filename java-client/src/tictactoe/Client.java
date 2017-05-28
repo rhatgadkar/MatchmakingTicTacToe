@@ -10,7 +10,7 @@ import java.net.SocketTimeoutException;
 public final class Client implements IClient {
 	public final static int MAXBUFLEN = 100;
 	private final static String SERVERIP = "54.219.156.253";
-//	private final static String SERVERIP = "192.168.218.175";
+//	private final static String SERVERIP = "192.168.218.176";
 	private final static String SERVERPORT = "4950";
 
 	private Socket _sock;
@@ -26,6 +26,11 @@ public final class Client implements IClient {
 	private String _record;
 	public String getRecord() {
 		return _record;
+	}
+
+	private String _numPpl;
+	public String getNumPpl() {
+		return _numPpl;
 	}
 
 	public Client() {
@@ -63,6 +68,8 @@ public final class Client implements IClient {
 				continue;
 			}
 			try {
+				_numPpl = handleNumPpl();
+
 				buf = handleSynAck();
 				if (buf.equals("full")) {
 					System.out.println("Child servers are full. Retrying.");
@@ -203,6 +210,18 @@ public final class Client implements IClient {
 	public void sendTie(int pos) {
 		String a = "t" + Integer.toString(pos);
 		sendToServer(a);
+	}
+
+	private String handleNumPpl() throws Exception {
+		String numPpl = "";
+		try {
+			numPpl = receiveFrom(15);
+		} catch (Exception e) {
+			System.err.println("Possible server disconnect.");
+			e.printStackTrace();
+			throw new Exception();
+		}
+		return numPpl;
 	}
 
 	private String handleSynAck() throws Exception {
