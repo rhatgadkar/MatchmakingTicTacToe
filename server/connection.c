@@ -727,10 +727,12 @@ int send_to_address(int sockfd, const char* text)
 
 	for (numbytes = 0; numbytes < MAXBUFLEN; numbytes += status)
 	{
-		status = send(sockfd, buf + numbytes, MAXBUFLEN - numbytes, 0);
+		status = send(sockfd, buf + numbytes, MAXBUFLEN - numbytes,
+				MSG_NOSIGNAL);
 		if (status == -1)
 			return -1;
 	}
+
 	return 0;
 }
 
