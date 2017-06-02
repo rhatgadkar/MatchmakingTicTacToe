@@ -10,7 +10,7 @@ import java.net.SocketTimeoutException;
 public final class Client implements IClient {
 	public final static int MAXBUFLEN = 100;
 	private final static String SERVERIP = "54.219.156.253";
-//	private final static String SERVERIP = "192.168.218.176";
+//	private final static String SERVERIP = "192.168.218.179";
 	private final static String SERVERPORT = "4950";
 
 	private Socket _sock;
@@ -72,6 +72,7 @@ public final class Client implements IClient {
 
 				buf = handleSynAck();
 				if (buf.equals("full")) {
+					ttt.setPlayerfieldText("Servers are full. Retrying search...");
 					System.out.println("Child servers are full. Retrying.");
 					retries = 0;
 					Thread.sleep(15000);
