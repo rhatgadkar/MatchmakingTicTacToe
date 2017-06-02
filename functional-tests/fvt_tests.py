@@ -108,7 +108,7 @@ def verify_wins_losses():
                     file_losses == table_losses + 1 or \
                     file_losses == table_losses:
                         continue
-        print 'File and table wins and losses are not within +/-1.'
+        print 'File and table wins/losses are not within +/-1 for ' + username
         print 'file wins: ' + str(file_wins)
         print 'file losses: ' + str(file_losses)
         print 'table wins: ' + str(table_wins)

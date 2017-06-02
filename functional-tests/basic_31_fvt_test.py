@@ -25,7 +25,6 @@ def basic_31_clients_test():
         traceback.print_exc()
         return False
     fvt_tests.get_ports_usage()
-    fvt_tests.cleanup()
     return result
 
 
