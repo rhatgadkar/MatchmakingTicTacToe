@@ -120,35 +120,54 @@ int handle_syn_port(int sockfd, int* curr_port, int* sockfd_client,
 	int* port_iter;
 
 	// find child server port
-	int found_waiting_port = 0;
-	while (!is_queue_empty(waiting_servers))
-	{
-		*curr_port = pop_queue(waiting_servers);
-		port_to_array_iter(*curr_port, &port_iter,
-				sp->child_server_pop);
-		if (*port_iter == 1)
-		{
-			pthread_mutex_lock(&(sp->mutex));
-			*port_iter = *port_iter + 1;
-			sp->total_pop = sp->total_pop + 1;
-			pthread_mutex_unlock(&(sp->mutex));
-			found_waiting_port = 1;
-			break;
-		}
-	}
-	if (!found_waiting_port && !is_queue_empty(sp->empty_servers))
-	{
-		// get a new child server
-		pthread_mutex_lock(&(sp->mutex));
-		*curr_port = pop_queue(sp->empty_servers);
-		port_to_array_iter(*curr_port, &port_iter,
-				sp->child_server_pop);
-		*port_iter = *port_iter + 1;
-		sp->total_pop = sp->total_pop + 1;
-		pthread_mutex_unlock(&(sp->mutex));
-		push_queue(waiting_servers, *curr_port);
-	}
-	else if (!found_waiting_port)
+	int found_port = 0;
+    while (!found_port && (!is_queue_empty(waiting_servers) || !is_queue_empty(sp->empty_servers)))
+    {
+        while (!found_port && !is_queue_empty(waiting_servers))
+        {
+            *curr_port = pop_queue(waiting_servers);
+            port_to_array_iter(*curr_port, &port_iter,
+                    sp->child_server_pop);
+            pthread_mutex_lock(&(sp->mutex));
+            if (*port_iter == 1)
+            {
+                *port_iter = *port_iter + 1;
+                sp->total_pop = sp->total_pop + 1;
+                pthread_mutex_unlock(&(sp->mutex));
+                found_port = 1;
+            }
+            else if (*port_iter == 0)
+            {
+                push_queue(sp->empty_servers, *curr_port);
+                pthread_mutex_unlock(&(sp->mutex));
+            }
+            else
+                pthread_mutex_unlock(&(sp->mutex));
+        }
+        while (!found_port && !is_queue_empty(sp->empty_servers))
+        {
+            // get a new child server
+            pthread_mutex_lock(&(sp->mutex));
+            *curr_port = pop_queue(sp->empty_servers);
+            port_to_array_iter(*curr_port, &port_iter,
+                    sp->child_server_pop);
+            if (*port_iter == 1)
+            {
+                pthread_mutex_unlock(&(sp->mutex));
+                push_queue(waiting_servers, *curr_port);
+                break;
+            }
+            else if (*port_iter == 0)
+            {
+                *port_iter = *port_iter + 1;
+                sp->total_pop = sp->total_pop + 1;
+                pthread_mutex_unlock(&(sp->mutex));
+                push_queue(waiting_servers, *curr_port);
+                found_port = 1;
+            }
+        }
+    }
+	if (!found_port)
 	{
 		printf("No child servers available.\n");
 		send_to_address(*sockfd_client, "full");
