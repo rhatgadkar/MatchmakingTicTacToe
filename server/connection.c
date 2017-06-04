@@ -120,28 +120,35 @@ int handle_syn_port(int sockfd, int* curr_port, int* sockfd_client,
 	int* port_iter;
 
 	// find child server port
-	if (!is_queue_empty(waiting_servers))
+	int found_waiting_port = 0;
+	while (!is_queue_empty(waiting_servers))
 	{
-		// port is the top element of the queue
 		*curr_port = pop_queue(waiting_servers);
-		port_to_array_iter(*curr_port, &port_iter, sp->child_server_pop);
-		pthread_mutex_lock(&(sp->mutex));
-		*port_iter = *port_iter + 1;
-		sp->total_pop = sp->total_pop + 1;
-		pthread_mutex_unlock(&(sp->mutex));
+		port_to_array_iter(*curr_port, &port_iter,
+				sp->child_server_pop);
+		if (*port_iter == 1)
+		{
+			pthread_mutex_lock(&(sp->mutex));
+			*port_iter = *port_iter + 1;
+			sp->total_pop = sp->total_pop + 1;
+			pthread_mutex_unlock(&(sp->mutex));
+			found_waiting_port = 1;
+			break;
+		}
 	}
-	else if (!is_queue_empty(sp->empty_servers))
+	if (!found_waiting_port && !is_queue_empty(sp->empty_servers))
 	{
 		// get a new child server
 		pthread_mutex_lock(&(sp->mutex));
 		*curr_port = pop_queue(sp->empty_servers);
-		port_to_array_iter(*curr_port, &port_iter, sp->child_server_pop);
+		port_to_array_iter(*curr_port, &port_iter,
+				sp->child_server_pop);
 		*port_iter = *port_iter + 1;
 		sp->total_pop = sp->total_pop + 1;
 		pthread_mutex_unlock(&(sp->mutex));
 		push_queue(waiting_servers, *curr_port);
 	}
-	else
+	else if (!found_waiting_port)
 	{
 		printf("No child servers available.\n");
 		send_to_address(*sockfd_client, "full");
@@ -219,7 +226,7 @@ void* client_thread(void* parameters)
 			else
 			{
 				if (login[0] == ',')
-					break;
+					goto records;
 				// receive success
 				get_login_info(login, username, password);
 				status = is_login_valid(username, password);
@@ -243,75 +250,75 @@ void* client_thread(void* parameters)
 					continue;
 				}
 			}
-		}
-	
-		printf("client 2 success\n");
+			records:
+			printf("client 2 success\n");
 
-		params->addr_v4 = (struct sockaddr_in*)&their_addr;
+			params->addr_v4 = (struct sockaddr_in*)&their_addr;
 
-		// get client 2 records
-		char p2_win[MAXBUFLEN];
-		char p2_loss[MAXBUFLEN];
-		char record_str[MAXBUFLEN];
-		memset(p2_win, 0, MAXBUFLEN);
-		memset(p2_loss, 0, MAXBUFLEN);
-		memset(record_str, 0, MAXBUFLEN);
-		if (login[0] == ',' && params->p1_username[0] == 0)
-		{
-			strcat(record_str, "r,,");
-		}
-		else if (login[0] == ',' && params->p1_username[0] != 0)
-		{
-			strcat(record_str, "r,,");
-			strcat(record_str, params->p1_username);
-		}
-		else
-		{
-			get_win_loss_record(username, p2_win, p2_loss);
-			// record_str contains: p2_win,p2_loss,p1_username
-			if (params->p1_username[0] != 0)
-				status = snprintf(record_str, MAXBUFLEN,
-						"r%s,%s,%s", p2_win, p2_loss,
-						params->p1_username);
-			else
-				status = snprintf(record_str, MAXBUFLEN,
-						"r%s,%s,", p2_win, p2_loss);
-			if (status < 0)
+			// get client 2 records
+			char p2_win[MAXBUFLEN];
+			char p2_loss[MAXBUFLEN];
+			char record_str[MAXBUFLEN];
+			memset(p2_win, 0, MAXBUFLEN);
+			memset(p2_loss, 0, MAXBUFLEN);
+			memset(record_str, 0, MAXBUFLEN);
+			if (login[0] == ',' && params->p1_username[0] == 0)
 			{
-				fprintf(stderr, "snprintf failed\n");
-				params->thread_canceled = 1;
-				return NULL;
+				strcat(record_str, "r,,");
 			}
-		}
+			else if (login[0] == ',' && params->p1_username[0] != 0)
+			{
+				strcat(record_str, "r,,");
+				strcat(record_str, params->p1_username);
+			}
+			else
+			{
+				get_win_loss_record(username, p2_win, p2_loss);
+				// record_str contains: p2_win,p2_loss,p1_username
+				if (params->p1_username[0] != 0)
+					status = snprintf(record_str, MAXBUFLEN,
+							"r%s,%s,%s", p2_win, p2_loss,
+							params->p1_username);
+				else
+					status = snprintf(record_str, MAXBUFLEN,
+							"r%s,%s,", p2_win, p2_loss);
+				if (status < 0)
+				{
+					fprintf(stderr, "snprintf failed\n");
+					*(params->sockfd_curr_client) = -1;
+					continue;
+				}
+			}
 
-		// send ACK to client 2 (player 2)
-		printf("sending to client 2: %s\n", record_str);
-		status = send_to_address(*(params->sockfd_curr_client),
-				(const char *)record_str);
-		if (status == -1)
-		{
-			perror("server: ACK to second_addr");
-			params->thread_canceled = 1;
-			return NULL;
+			// send ACK to client 2 (player 2)
+			printf("sending to client 2: %s\n", record_str);
+			status = send_to_address(*(params->sockfd_curr_client),
+					(const char *)record_str);
+			if (status == -1)
+			{
+				perror("server: ACK to second_addr");
+				*(params->sockfd_curr_client) = -1;
+				continue;
+			}
+			// params->p1_record_str contains: p1_win,p1_loss,p2_username
+			if (username[0] != 0)
+				strcat(params->p1_record_str, (const char *)username);
+			printf("sending to client 1: %s\n", params->p1_record_str);
+			status = send_to_address(*(params->sockfd_other_client),
+					(const char *)params->p1_record_str);
+			if (status == -1)
+			{
+				perror("server: ACK to first_addr");
+				*(params->sockfd_curr_client) = -1;
+				continue;
+			}
+			inet_ntop(AF_INET, &(params->addr_v4->sin_addr),
+					addr_str, sizeof(addr_str));
+			printf("Second client connected: %s:%hu\n", addr_str,
+					params->addr_v4->sin_port);
+			if (login[0] != ',')
+				strcpy(params->username, username);
 		}
-		// params->p1_record_str contains: p1_win,p1_loss,p2_username
-		if (username[0] != 0)
-			strcat(params->p1_record_str, (const char *)username);
-		printf("sending to client 1: %s\n", params->p1_record_str);
-		status = send_to_address(*(params->sockfd_other_client),
-				(const char *)params->p1_record_str);
-		if (status == -1)
-		{
-			perror("server: ACK to first_addr");
-			params->thread_canceled = 1;
-			return NULL;
-		}
-		inet_ntop(AF_INET, &(params->addr_v4->sin_addr),
-				addr_str, sizeof(addr_str));
-		printf("Second client connected: %s:%hu\n", addr_str,
-				params->addr_v4->sin_port);
-		if (login[0] != ',')
-			strcpy(params->username, username);
 	}
 	else
 	{
@@ -320,7 +327,6 @@ void* client_thread(void* parameters)
 		printf("First client connected: %s:%hu\n", addr_str,
 				params->addr_v4->sin_port);
 	}
-
 
 	for (;;)
 	{
