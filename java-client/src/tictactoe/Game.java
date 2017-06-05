@@ -184,7 +184,7 @@ public class Game {
 		 */
 		final TimerThread.Msg msg = new TimerThread.Msg();
 		msg.gotMsg = false;
-		Runnable timer = new TimerThread(msg, 30, _ttt.getTimerfield());
+		Runnable timer = new TimerThread(msg, 30, _ttt);
 		Thread t = new Thread(timer);
 		t.start();
 

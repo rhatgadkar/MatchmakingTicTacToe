@@ -1,7 +1,6 @@
 package tictactoe;
 
 import java.util.Date;
-import javax.swing.JLabel;
 
 public class TimerThread implements Runnable {
 	public static class Msg {
@@ -10,12 +9,12 @@ public class TimerThread implements Runnable {
 
 	private Msg _msg;
 	private int _seconds;
-	private JLabel _timerCountdown;
+	private ITicTacToe _ttt;
 
-	public TimerThread(Msg msg, int seconds, JLabel timerCountdown) {
+	public TimerThread(Msg msg, int seconds, ITicTacToe ttt) {
 		_msg = msg;
 		_seconds = seconds;
-		_timerCountdown = timerCountdown;
+		_ttt = ttt;
 	}
 	@Override
 	public void run() {
@@ -25,11 +24,11 @@ public class TimerThread implements Runnable {
 		while (!_msg.gotMsg && (elapsedTime < _seconds * 1000) &&
 				!Game.NotInGame.get()) {
 			elapsedTime = (new Date().getTime()) - startTime;
-			if (_timerCountdown != null) {
+			if (_ttt != null) {
 				Long currCountdown = (long)_seconds - (elapsedTime / 1000);
 				if (currCountdown != countdown) {
 					countdown = currCountdown;
-					_timerCountdown.setText(currCountdown.toString());
+					_ttt.setTimerfieldText(currCountdown.toString());
 				}
 			}
 		}
