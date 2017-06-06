@@ -110,7 +110,7 @@ public class Game {
 	
 	private void handleGameOver(boolean currPlayerTurn,
 			int currPlayerLastMove) {
-		synchronized (_ttt) {
+		synchronized (_ttt) {			
 			if (_ttt.getGameOverMsg() != null &&
 					_ttt.getGameOverMsg().equals(ITicTacToe.CLICK_TO_START)) {
 				// quitbutton was triggered.
@@ -295,7 +295,12 @@ public class Game {
 		}
 
 		_ttt.setPlayerfieldText("Searching for opponent...");
+		_ttt.setQuitbuttonVisible(true);
 		_c.init(username, password, _ttt);
+		if (!_c.getDoneInit()) {
+			_ttt.setPlayerfieldText("");
+			return;
+		}
 
 		/**
 		 * record string is formatted like this:
@@ -334,7 +339,7 @@ public class Game {
 		Runnable giveupThread = new CheckGiveupThread();
 		Thread gt = new Thread(giveupThread);
 		gt.start();
-
+				
 		boolean p1turn = false;
 		boolean currPlayerTurn = false;
 		int currPlayerLastMove = -1;
@@ -367,5 +372,7 @@ public class Game {
 		}
 		
 		handleGameOver(currPlayerTurn, currPlayerLastMove);
+		
+		_ttt.setQuitbuttonVisible(false);
 	}
 }

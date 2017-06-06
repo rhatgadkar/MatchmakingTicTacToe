@@ -99,6 +99,10 @@ public final class Client implements IClient {
 				e.printStackTrace();
 				break;
 			}
+			
+			if (Game.NotInGame.get())
+				break;
+			
 			try {
 				System.out.println(
 						"Trying to connect to child server at port: " + buf);
@@ -172,10 +176,12 @@ public final class Client implements IClient {
 			}
 		}
 		if (retries == 10) {
+			Game.NotInGame.set(true);
+			ttt.setGameOverMsg(ITicTacToe.CLICK_TO_START);
 			ttt.showGameOverDialog("Connection to server failed.");
-			System.exit(1);
 		}
-		_doneInit = true;
+		if (!Game.NotInGame.get())
+			_doneInit = true;
 	}
 
 	public void close() {

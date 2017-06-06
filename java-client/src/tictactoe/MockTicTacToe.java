@@ -153,4 +153,11 @@ public class MockTicTacToe implements ITicTacToe {
 	public synchronized String getGameOverMsg() {
 		return _gameOverMsg;
 	}
+
+	@Override
+	public void setQuitbuttonVisible(boolean enable) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

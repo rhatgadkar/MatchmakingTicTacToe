@@ -128,4 +128,10 @@ public class FvtTicTacToe implements ITicTacToe {
 		return _gameOverMsg;
 	}
 
+	@Override
+	public void setQuitbuttonVisible(boolean enable) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

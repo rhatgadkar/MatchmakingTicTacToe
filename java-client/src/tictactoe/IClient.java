@@ -23,4 +23,6 @@ public interface IClient {
 	String getRecord();
 
 	String getNumPpl();
+
+	boolean getDoneInit();
 }

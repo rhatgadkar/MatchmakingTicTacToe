@@ -66,4 +66,9 @@ public class MockClient implements IClient {
 	public String getFinalMsg() {
 		return _finalMsg;
 	}
+
+	@Override
+	public boolean getDoneInit() {
+		return true;
+	}
 }
