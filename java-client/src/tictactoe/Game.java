@@ -88,10 +88,14 @@ public class Game {
 					_recv.setRecvBuf(Client.stringToLength(test, "giveup".length()));
 					if (_recv.getRecvBuf().equals("giveup")) {
 						Game.NotInGame.set(true);
-						if (_c.isP1())
+						if (_c.isP1()) {
 							_ttt.setGameOverMsg(ITicTacToe.P2_GIVEUP_WIN);
-						else
+							_ttt.showGameOverDialog(ITicTacToe.P2_GIVEUP_WIN);
+						}
+						else {
 							_ttt.setGameOverMsg(ITicTacToe.P1_GIVEUP_WIN);
+							_ttt.showGameOverDialog(ITicTacToe.P1_GIVEUP_WIN);
+						}
 						return;
 					}
 					if (_recv.getRecvBuf() == "")
@@ -116,6 +120,7 @@ public class Game {
 				// quitbutton was triggered.
 				_ttt.setGameOverMsg(ITicTacToe.GIVEN_UP);
 				_c.sendGiveup();
+				_ttt.showGameOverDialog(ITicTacToe.GIVEN_UP);
 			}
 			else if (_ttt.getGameOverMsg() != null &&
 					(_ttt.getGameOverMsg().equals(ITicTacToe.P1_GIVEUP_WIN) ||
@@ -127,6 +132,7 @@ public class Game {
 				// server disconnect
 				_ttt.setGameOverMsg(ITicTacToe.CONNECTION_LOSS);
 				_c.sendBye();
+				_ttt.showGameOverDialog(ITicTacToe.CONNECTION_LOSS);
 			}
 			else if (_ttt.getGameOverMsg() != null && currPlayerTurn &&
 					_ttt.getGameOverMsg().equals(ITicTacToe.YOU_WIN)) {
@@ -153,10 +159,12 @@ public class Game {
 				if (currPlayerTurn) {
 					_ttt.setGameOverMsg(ITicTacToe.NO_PLAY_MOVE);
 					_c.sendGiveup();
+					_ttt.showGameOverDialog(ITicTacToe.NO_PLAY_MOVE);
 				}
 				else {
 					_ttt.setGameOverMsg(ITicTacToe.CONNECTION_LOSS);
 					_c.sendBye();
+					_ttt.showGameOverDialog(ITicTacToe.CONNECTION_LOSS);
 				}
 			}
 		}

@@ -6,7 +6,6 @@ import java.awt.FlowLayout;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -30,6 +29,7 @@ public final class TicTacToe extends JPanel implements ITicTacToe {
 	private JLabel _numpplfield;
 	private String _username;
 	private String _password;
+	private JButton _startbutton;
 	
 	public void repaintDisplay() {
 		_display.repaint();
@@ -70,6 +70,7 @@ public final class TicTacToe extends JPanel implements ITicTacToe {
 
 			while (Game.NotInGame.get())
 				;
+			_c.close();
 			removeAll();
 		}
 	}
@@ -100,8 +101,9 @@ public final class TicTacToe extends JPanel implements ITicTacToe {
 	}
 
 	private JPanel createRightGrid() {
-		JPanel p = new JPanel(new GridLayout(3, 1));
+		JPanel p = new JPanel(new GridLayout(4, 1));
 		p.add(_quitbutton);
+		p.add(_startbutton);
 		p.add(_winrecordfield);
 		p.add(_lossrecordfield);
 		return p;
@@ -125,6 +127,7 @@ public final class TicTacToe extends JPanel implements ITicTacToe {
 		_playerfield = new JLabel();
 		_timerfield = new JLabel();
 		_quitbutton = new JButton("Quit");
+		_startbutton = new JButton("Start");
 		_timerfield.setText("");
 		_winrecordfield = new JLabel();
 		_lossrecordfield = new JLabel();
@@ -135,12 +138,12 @@ public final class TicTacToe extends JPanel implements ITicTacToe {
 			private Client _c;
 			public void actionPerformed(ActionEvent e) {
 				if (!_c.getDoneInit()) {
+					setPlayerfieldText("Quitting...");
 					synchronized (this) {
 						_c.close();
 					}
 				}
 				Game.NotInGame.set(true);
-				setPlayerfieldText("Quitting...");
 				setGameOverMsg(ITicTacToe.CLICK_TO_START);
 				_quitbutton.setVisible(false);
 			}
@@ -149,6 +152,18 @@ public final class TicTacToe extends JPanel implements ITicTacToe {
 				return this;
 			}
 		}.init(_c));
+		
+		_startbutton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				synchronized (this) {
+					if (getGameOverMsg() != null) {
+						Game.NotInGame.set(false);
+						setGameOverMsg(null);
+					}
+				}
+			}
+		});
 		
 		setQuitbuttonVisible(false);
 
@@ -173,6 +188,10 @@ public final class TicTacToe extends JPanel implements ITicTacToe {
 		_quitbutton.setVisible(enable);
 	}
 	
+	public void setStartbuttonVisible(boolean enable) {
+		_startbutton.setVisible(enable);
+	}
+	
 	public void setQuitbuttonText(String text) {
 		_quitbutton.setText(text);
 	}
@@ -195,7 +214,7 @@ public final class TicTacToe extends JPanel implements ITicTacToe {
 
 	@Override
 	public void showGameOverDialog(String message) {
-		JOptionPane.showMessageDialog(this, message);
+		_numpplfield.setText(message);
 	}
 
 	@Override

@@ -134,4 +134,10 @@ public class FvtTicTacToe implements ITicTacToe {
 		
 	}
 
+	@Override
+	public void setStartbuttonVisible(boolean enable) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

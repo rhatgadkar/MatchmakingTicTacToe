@@ -36,4 +36,5 @@ public interface ITicTacToe {
 	public void handlePlayerLogin(String[] args);
 	public void showGameOverDialog(String message);
 	public void setQuitbuttonVisible(boolean enable);
+	public void setStartbuttonVisible(boolean enable);
 }

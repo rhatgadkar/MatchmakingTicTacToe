@@ -160,4 +160,10 @@ public class MockTicTacToe implements ITicTacToe {
 		
 	}
 
+	@Override
+	public void setStartbuttonVisible(boolean enable) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }
