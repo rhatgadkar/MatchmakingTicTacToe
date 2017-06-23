@@ -359,7 +359,7 @@ void* client_thread(void* parameters)
 	{
 		memset(buf, 0, MAXBUFLEN);
 
-		status = receive_from(*(params->sockfd_curr_client), buf, 120);
+		status = receive_from(*(params->sockfd_curr_client), buf, 40);
 		printf("Receiving message from %s:%hu: %s\n", addr_str,
 				params->addr_v4->sin_port, buf);
 		if (status == -1)

@@ -136,7 +136,7 @@ public final class Client implements IClient {
 				do {
 					buf = "";
 					try {
-						buf = receiveFrom(130);
+						buf = receiveFrom(50);
 					} catch (SocketTimeoutException e) {
 						System.err.println("Couldn't find opponent.");
 						retryConn = true;

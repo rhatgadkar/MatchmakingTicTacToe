@@ -11,6 +11,9 @@ public class Game {
 	private IClient _c;
 	private ITicTacToe _ttt;
 	
+	public static int GIVEUP_TIME = 15;
+	public static int CNXN_LOSS_TIME = 30;
+	
 	public static AtomicBoolean NotInGame = new AtomicBoolean(true);
 	
 	private class Recv {
@@ -192,7 +195,7 @@ public class Game {
 		 */
 		final TimerThread.Msg msg = new TimerThread.Msg();
 		msg.gotMsg = false;
-		Runnable timer = new TimerThread(msg, 30, _ttt);
+		Runnable timer = new TimerThread(msg, Game.GIVEUP_TIME, _ttt);
 		Thread t = new Thread(timer);
 		t.start();
 
@@ -254,7 +257,7 @@ public class Game {
 		 */
 		final TimerThread.Msg msg = new TimerThread.Msg();
 		msg.gotMsg = false;
-		Runnable timer = new TimerThread(msg, 45, null);
+		Runnable timer = new TimerThread(msg, Game.CNXN_LOSS_TIME, null);
 		Thread t = new Thread(timer);
 		t.start();
 
