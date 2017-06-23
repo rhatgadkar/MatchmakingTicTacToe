@@ -27,8 +27,6 @@ void* free_child_processes(void* parameters)
 
 	for(;;)
 	{
-		sleep(10);
-
 		while ((waitpid(-1, NULL, WNOHANG)) > 0)
 		{
 			memset(buf, 0, MAXBUFLEN);

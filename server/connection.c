@@ -165,6 +165,8 @@ int handle_syn_port(int sockfd, int* curr_port, int* sockfd_client,
                 push_queue(waiting_servers, *curr_port);
                 found_port = 1;
             }
+	    else
+	        pthread_mutex_unlock(&(sp->mutex));
         }
     }
 	if (!found_port)
@@ -226,8 +228,14 @@ void* client_thread(void* parameters)
 		printf("Waiting for second client to connect...\n");
 		while (*(params->sockfd_curr_client) == -1)
 		{
-			*(params->sockfd_curr_client) = accept(params->sockfd,
-					&their_addr, &addr_len);
+			*(params->sockfd_curr_client) = accept_timer(
+					params->sockfd, &their_addr, &addr_len,
+					15);
+			if (*params->sockfd_curr_client < 0)
+			{
+				printf("No opponent found for this server.\n");
+				goto end;
+			}
 			// receive login from client 2
 			memset(login, 0, MAXBUFLEN);
 			memset(username, 0, MAXBUFLEN);
@@ -456,6 +464,7 @@ void* client_thread(void* parameters)
 				break;
 		}
 	}
+end:
 	params->thread_canceled = 1;
 	return NULL;
 }
