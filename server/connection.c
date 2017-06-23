@@ -481,7 +481,7 @@ void handle_match_msg(int sockfd)
 
 	if (sockfd_client_1 == -1)
 	{
-		sockfd_client_1 = accept_timer(sockfd, &their_addr, &addr_len, 30);
+		sockfd_client_1 = accept_timer(sockfd, &their_addr, &addr_len, 15);
 		if (sockfd_client_1 < 0)
 		{
 			printf("Closing child server.\n");
