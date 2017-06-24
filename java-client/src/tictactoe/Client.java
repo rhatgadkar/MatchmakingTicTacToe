@@ -167,11 +167,23 @@ public final class Client implements IClient {
 				break;
 			}
 			else if (buf.equals("invalidl")) {
-				ttt.showGameOverDialog("Invalid login credentials. Exiting.");
+				ttt.showGameOverDialog("Invalid login credentials. Exiting...");
+				try {
+					Thread.sleep(2000);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 				System.exit(0);
 			}
 			else {
-				ttt.showGameOverDialog("User is currently in game. Exiting.");
+				ttt.showGameOverDialog("User is currently in game. Exiting...");
+				try {
+					Thread.sleep(2000);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 				System.exit(0);
 			}
 		}

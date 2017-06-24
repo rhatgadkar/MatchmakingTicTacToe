@@ -186,11 +186,11 @@ public class Game {
 	private int currPlayerMove(boolean p1turn) {
 		/**
 		 * Handle the event when it is the current player's move.  The current
-		 * player has 30 seconds to play a move.  A current player's move is
-		 * read from mouse input on a JPanel.
+		 * player has Game.GIVEUP_TIME seconds to play a move.  A current
+		 * player's move is read from mouse input on a JPanel.
 		 * The game is over when:
-		 * - 30 seconds have expired, a "giveup" message will be sent to
-		 *   the server, signaling the current player has given up
+		 * - Game.GIVEUP_TIME seconds have expired, a "giveup" message will be
+		 *   sent to the server, signaling the current player has given up
 		 * - the current player pressed the "Quit" button, resulting in the
 		 *   current player giving up and a "giveup" message sent to the server
 		 * - the current player exited the program, resulting in the current
@@ -250,8 +250,9 @@ public class Game {
 	
 	private void otherPlayerMove(boolean p1turn) {
 		/**
-		 * Handles the event when it is the other player's turn.  Up to 45
-		 * seconds are spent waiting for a move from the other player.
+		 * Handles the event when it is the other player's turn.  Up to
+		 * Game.CNXN_LOSS_TIME seconds are spent waiting for a move from the
+		 * other player.
 		 * The game is over when:
 		 * - the current player pressed the "Quit" button, resulting in the
 		 *   current player giving up and a "giveup" message sent to the server
@@ -259,9 +260,9 @@ public class Game {
 		 *   player giving up and a "giveup" message sent to the server
 		 * - the other player gave up (determined by CheckGiveupThread)
 		 * - the server is disconnected
-		 * - a move had not been received within 45 seconds, resulting in a
-		 *   possible server disconnect from the other player, no win/loss
-		 *   sent to server
+		 * - a move had not been received within Game.CNXN_LOSS_TIME seconds,
+		 *   resulting in a possible server disconnect from the other player,
+		 *   no win/loss sent to server
 		 * If the game is not over, the other player's move gets received from
 		 * the server and then it becomes the current player's move. 
 		 */
