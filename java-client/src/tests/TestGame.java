@@ -11,7 +11,8 @@ import tictactoe.Board;
 public class TestGame {
 	
 	/**
-	 * unit tests: (GameOverMsg set appropriately, start() should exit, NotInGame set, etc.)
+	 * unit tests: (GameOverMsg set appropriately, start() should exit,
+	 * NotInGame set, etc.)
 	 * 1. receive a 'w'
 	 * 2. receive a 't'
 	 * 3. receive a 'giveup'
@@ -20,10 +21,11 @@ public class TestGame {
 	 * 6. send a 't'
 	 * 7. send a 'giveup'
 	 * 8. send a normal move
-	 * (receive 'giveup' and receive 30 second expiry is same, because a 30
-	 *  second expires triggers a 'giveup' message to be sent)
-	 * 9. send 30 second timer expiry
-	 * 10. receive 45 second timer expiry
+	 * (receive 'giveup' and receive Game.GIVEUP_TIME second expiry is same,
+	 * because a Game.GIVEUP_TIME second expires triggers a 'giveup' message
+	 * to be sent)
+	 * 9. send Game.GIVEUP_TIME second timer expiry
+	 * 10. receive Game.CNXN_LOSS_TIME second timer expiry
 	*/
 
 	@Test
@@ -281,11 +283,11 @@ public class TestGame {
 	}
 	
 	@Test
-	public void testReceive45SecondExpiry() {
+	public void testReceiveCnxnLossSecondExpiry() {
 		/**
 		 * Scenario where current player is P2, waiting to receive a move.
-		 * P1 does not send a move within 45 seconds, and this results in a
-		 * connection loss.
+		 * P1 does not send a move within Game.CNXN_LOSS_TIME seconds, and
+		 * this results in a connection loss.
 		 * Board is empty.
 		 * 
 		 * Receive "giveup".
@@ -306,10 +308,11 @@ public class TestGame {
 	}
 	
 	@Test
-	public void testSend30SecondExpiry() {
+	public void testSendGiveupTimeSecondExpiry() {
 		/**
 		 * Scenario where current player is P1, sending a move.
-		 * P1 does not send a move within 30 seconds, and thus gives up.
+		 * P1 does not send a move within Game.GIVEUP_TIME seconds, and thus
+		 * gives up.
 		 * Board is empty.
 		 * 
 		 * Receive "giveup".
