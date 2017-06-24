@@ -1,7 +1,5 @@
 package tictactoe;
 
-import javax.swing.JLabel;
-
 public interface ITicTacToe {
 	public final static String CLICK_TO_START = "Click to start.";
 	public final static String CLICK_TO_RESTART = " Press 'Start' to restart.";
@@ -29,7 +27,6 @@ public interface ITicTacToe {
 	public void setLossfieldText(String text);
 	public void setOpponentText(String text);
 	public void setNumPplText(String text);
-	public JLabel getTimerfield();
 	public void repaintDisplay();
 	public int getInput(char symbol);
 	public void runGame();

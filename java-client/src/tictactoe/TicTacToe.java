@@ -143,9 +143,12 @@ public final class TicTacToe extends JPanel implements ITicTacToe {
 						_c.close();
 					}
 				}
+				setPlayerfieldText("");
 				Game.NotInGame.set(true);
 				setGameOverMsg(ITicTacToe.CLICK_TO_START);
 				_quitbutton.setVisible(false);
+				if (!_c.getDoneInit())
+					System.exit(0);
 			}
 			private ActionListener init(Client c) {
 				_c = c;

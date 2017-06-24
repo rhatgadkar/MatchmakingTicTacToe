@@ -1,7 +1,5 @@
 package tictactoe;
 
-import javax.swing.JLabel;
-
 public class FvtTicTacToe implements ITicTacToe {
 	
 	private String _gameOverMsg;
@@ -41,11 +39,6 @@ public class FvtTicTacToe implements ITicTacToe {
 
 	@Override
 	public void setLossfieldText(String text) {
-	}
-
-	@Override
-	public JLabel getTimerfield() {
-		return null;
 	}
 	
 	public void repaintDisplay() {

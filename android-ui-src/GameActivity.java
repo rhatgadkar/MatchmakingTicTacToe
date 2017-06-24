@@ -100,6 +100,8 @@ public class GameActivity extends AppCompatActivity implements ITicTacToe {
         Game.NotInGame.set(true);
         setGameOverMsg(ITicTacToe.CLICK_TO_START);
         setQuitbuttonVisible(false);
+        if (!_c.getDoneInit())
+            System.exit(0);
     }
 
     /** Called when Start button is clicked */

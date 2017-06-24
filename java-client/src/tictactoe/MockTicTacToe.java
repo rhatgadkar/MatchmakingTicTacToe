@@ -1,7 +1,5 @@
 package tictactoe;
 
-import javax.swing.JLabel;
-
 public class MockTicTacToe implements ITicTacToe {
 	
 	private String _gameOverMsg;
@@ -76,11 +74,6 @@ public class MockTicTacToe implements ITicTacToe {
 	
 	public String getLossfieldText() {
 		return _lossfieldText;
-	}
-
-	@Override
-	public JLabel getTimerfield() {
-		return null;
 	}
 
 	@Override
