@@ -49,14 +49,16 @@ public class Game {
 				_board.insert(Player.P1_SYMBOL, pos);
 			_ttt.repaintDisplay();
 			if (symbol == 'w') {
-				_ttt.showGameOverDialog("Game over. You lose.");
+				_ttt.showGameOverDialog("Game over. You lose." +
+						ITicTacToe.CLICK_TO_RESTART);
 				if (isP1)
 					_ttt.setGameOverMsg(ITicTacToe.P2_WIN_LOSE);
 				else
 					_ttt.setGameOverMsg(ITicTacToe.P1_WIN_LOSE);
 			}
 			else {
-				_ttt.showGameOverDialog("Game over. Tie game.");
+				_ttt.showGameOverDialog("Game over. Tie game." +
+						ITicTacToe.CLICK_TO_RESTART);
 				_ttt.setGameOverMsg(ITicTacToe.TIE_GAME);
 			}
 		}
@@ -93,11 +95,13 @@ public class Game {
 						Game.NotInGame.set(true);
 						if (_c.isP1()) {
 							_ttt.setGameOverMsg(ITicTacToe.P2_GIVEUP_WIN);
-							_ttt.showGameOverDialog(ITicTacToe.P2_GIVEUP_WIN);
+							_ttt.showGameOverDialog(ITicTacToe.P2_GIVEUP_WIN +
+									ITicTacToe.CLICK_TO_RESTART);
 						}
 						else {
 							_ttt.setGameOverMsg(ITicTacToe.P1_GIVEUP_WIN);
-							_ttt.showGameOverDialog(ITicTacToe.P1_GIVEUP_WIN);
+							_ttt.showGameOverDialog(ITicTacToe.P1_GIVEUP_WIN +
+									ITicTacToe.CLICK_TO_RESTART);
 						}
 						return;
 					}
@@ -123,7 +127,8 @@ public class Game {
 				// quitbutton was triggered.
 				_ttt.setGameOverMsg(ITicTacToe.GIVEN_UP);
 				_c.sendGiveup();
-				_ttt.showGameOverDialog(ITicTacToe.GIVEN_UP);
+				_ttt.showGameOverDialog(ITicTacToe.GIVEN_UP +
+						ITicTacToe.CLICK_TO_RESTART);
 			}
 			else if (_ttt.getGameOverMsg() != null &&
 					(_ttt.getGameOverMsg().equals(ITicTacToe.P1_GIVEUP_WIN) ||
@@ -135,19 +140,22 @@ public class Game {
 				// server disconnect
 				_ttt.setGameOverMsg(ITicTacToe.CONNECTION_LOSS);
 				_c.sendBye();
-				_ttt.showGameOverDialog(ITicTacToe.CONNECTION_LOSS);
+				_ttt.showGameOverDialog(ITicTacToe.CONNECTION_LOSS +
+						ITicTacToe.CLICK_TO_RESTART);
 			}
 			else if (_ttt.getGameOverMsg() != null && currPlayerTurn &&
 					_ttt.getGameOverMsg().equals(ITicTacToe.YOU_WIN)) {
 				// current player played a win move
 				_c.sendWin(currPlayerLastMove);
-				_ttt.showGameOverDialog("Game over. You win.");
+				_ttt.showGameOverDialog("Game over. You win." +
+						ITicTacToe.CLICK_TO_RESTART);
 			}
 			else if (_ttt.getGameOverMsg() != null && currPlayerTurn &&
 					_ttt.getGameOverMsg().equals(ITicTacToe.TIE_GAME)) {
 				// current player played a tie move
 				_c.sendTie(currPlayerLastMove);
-				_ttt.showGameOverDialog("Game over. Tie game.");
+				_ttt.showGameOverDialog("Game over. Tie game." +
+						ITicTacToe.CLICK_TO_RESTART);
 			}
 			else if (_ttt.getGameOverMsg() != null &&
 					(_ttt.getGameOverMsg().contains(ITicTacToe.P1_WIN_LOSE) ||
@@ -162,12 +170,14 @@ public class Game {
 				if (currPlayerTurn) {
 					_ttt.setGameOverMsg(ITicTacToe.NO_PLAY_MOVE);
 					_c.sendGiveup();
-					_ttt.showGameOverDialog(ITicTacToe.NO_PLAY_MOVE);
+					_ttt.showGameOverDialog(ITicTacToe.NO_PLAY_MOVE +
+							ITicTacToe.CLICK_TO_RESTART);
 				}
 				else {
 					_ttt.setGameOverMsg(ITicTacToe.CONNECTION_LOSS);
 					_c.sendBye();
-					_ttt.showGameOverDialog(ITicTacToe.CONNECTION_LOSS);
+					_ttt.showGameOverDialog(ITicTacToe.CONNECTION_LOSS +
+							ITicTacToe.CLICK_TO_RESTART);
 				}
 			}
 		}

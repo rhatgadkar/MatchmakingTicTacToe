@@ -4,7 +4,7 @@ import javax.swing.JLabel;
 
 public interface ITicTacToe {
 	public final static String CLICK_TO_START = "Click to start.";
-	public final static String CLICK_TO_RESTART = "Click to restart.";
+	public final static String CLICK_TO_RESTART = " Press 'Start' to restart.";
 	public final static String YOU_WIN = "You win.";
 	public final static String TIE_GAME = "Tie game.";
 	public final static String CONNECTION_LOSS = "Connection loss.";

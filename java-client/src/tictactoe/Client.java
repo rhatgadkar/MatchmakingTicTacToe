@@ -178,7 +178,8 @@ public final class Client implements IClient {
 		if (retries == 10) {
 			Game.NotInGame.set(true);
 			ttt.setGameOverMsg(ITicTacToe.CLICK_TO_START);
-			ttt.showGameOverDialog("Connection to server failed.");
+			ttt.showGameOverDialog("Connection to server failed." + 
+						ITicTacToe.CLICK_TO_RESTART);
 		}
 		if (!Game.NotInGame.get())
 			_doneInit = true;
