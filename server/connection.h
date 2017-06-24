@@ -7,7 +7,7 @@
 #define LISTENPORT 4950  // the port clients will be connecting to
 #define MAXBUFLEN 100
 #define BACKLOG 20
-#define MAX_CHILD_SERVERS 100
+#define MAX_CHILD_SERVERS 250
 
 struct server_pop
 {
