@@ -31,7 +31,7 @@ def get_raw_psql_table_output():
     return raw_data
 
 
-def deploy_screens(num_screens, move_str):
+def deploy_screens(num_screens, move_str, collect_logs=True):
     """
     Deploy the screen session's for each client using the run_java_test.py
     script with provided arguments of the working directory and move set.
@@ -40,7 +40,8 @@ def deploy_screens(num_screens, move_str):
         scr_name = 's' + str(i)
         fvt_args = WORKING_DIR + ' ' + scr_name + ' ' + move_str
         s = Screen(scr_name, True)
-        s.enable_logs(scr_name + '.log')
+	if collect_logs:
+            s.enable_logs(scr_name + '.log')
         s.send_commands(DEPLOY_SCREENS_CMD + ' ' + fvt_args)
 
 

@@ -12,7 +12,7 @@ def forever_31_clients_test():
     num_screens = 31
     while True:
 	    try:
-		fvt_tests.deploy_screens(num_screens, move_str)
+		fvt_tests.deploy_screens(num_screens, move_str, False)
 	    except:
 		print 'Exception occurred.'
 		traceback.print_exc()
