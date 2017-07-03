@@ -3,6 +3,7 @@ package tictactoe;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.net.SocketTimeoutException;
@@ -68,7 +69,7 @@ public final class Client implements IClient {
 				continue;
 			}
 			try {
-				_numPpl = handleNumPpl();
+//				_numPpl = handleNumPpl();
 
 				buf = handleSynAck();
 				if (buf.equals("full")) {
@@ -274,8 +275,10 @@ public final class Client implements IClient {
 
 	private void createSocketServer(String port) throws Exception {
 		port = Client.stringToLength(port, SERVERPORT.length());
+		_sock = new Socket();
 		try {
-			_sock = new Socket(SERVERIP, Integer.parseInt(port));
+			_sock.connect(new InetSocketAddress(SERVERIP,
+					Integer.parseInt(port)), 15000);
 		} catch (UnknownHostException e) {
 			System.err.println("Can't create socket. Unknown host.");
 			throw new Exception();
