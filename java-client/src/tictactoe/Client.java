@@ -76,7 +76,7 @@ public final class Client implements IClient {
 					ttt.setPlayerfieldText("Servers are full. Retrying search...");
 					System.out.println("Child servers are full. Retrying.");
 					retries = 0;
-					Thread.sleep(15000);
+					Thread.sleep(5000);
 					continue;
 				}
 			} catch (Exception e) {
