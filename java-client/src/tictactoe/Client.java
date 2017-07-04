@@ -76,7 +76,7 @@ public final class Client implements IClient {
 					ttt.setPlayerfieldText("Servers are full. Retrying search...");
 					System.out.println("Child servers are full. Retrying.");
 					retries = 0;
-					Thread.sleep(5000);
+					Thread.sleep(15000);
 					continue;
 				}
 			} catch (Exception e) {
@@ -137,7 +137,7 @@ public final class Client implements IClient {
 				do {
 					buf = "";
 					try {
-						buf = receiveFrom(15);
+						buf = receiveFrom(50);
 					} catch (SocketTimeoutException e) {
 						System.err.println("Couldn't find opponent.");
 						retryConn = true;
@@ -236,7 +236,7 @@ public final class Client implements IClient {
 	private String handleNumPpl() throws Exception {
 		String numPpl = "";
 		try {
-			numPpl = receiveFrom(5);
+			numPpl = receiveFrom(15);
 		} catch (Exception e) {
 			System.err.println("Possible server disconnect.");
 			e.printStackTrace();
@@ -248,7 +248,7 @@ public final class Client implements IClient {
 	private String handleSynAck() throws Exception {
 		String ack = "";
 		try {
-			ack = receiveFrom(5);
+			ack = receiveFrom(15);
 			System.out.println("Receieved ACK from server.");
 		} catch (Exception e) {
 			System.err.println("Possible server disconnect.");
@@ -263,7 +263,7 @@ public final class Client implements IClient {
 		sendToServer(login);
 		String ack = "";
 		try {
-			ack = receiveFrom(5);
+			ack = receiveFrom(15);
 			System.out.println("Receieved ACK from server.");
 		} catch (Exception e) {
 			System.err.println("Possible server disconnect.");
@@ -278,7 +278,7 @@ public final class Client implements IClient {
 		_sock = new Socket();
 		try {
 			_sock.connect(new InetSocketAddress(SERVERIP,
-					Integer.parseInt(port)), 5000);
+					Integer.parseInt(port)), 15000);
 		} catch (UnknownHostException e) {
 			System.err.println("Can't create socket. Unknown host.");
 			throw new Exception();
