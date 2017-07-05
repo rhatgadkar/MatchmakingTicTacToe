@@ -45,7 +45,9 @@ void* free_child_processes(void* parameters)
 				pthread_mutex_lock(&(sp->mutex));
 				sp->total_pop -= *port_iter;
 				*port_iter = 0;
+				pthread_mutex_lock(&sp->empty_servers_mutex);
 				push_queue(sp->empty_servers, port);
+				pthread_mutex_unlock(&sp->empty_servers_mutex);
 				pthread_mutex_unlock(&(sp->mutex));
 			}
 		}
@@ -118,6 +120,7 @@ int main()
 
 	struct server_pop sp;
 	pthread_mutex_init(&(sp.mutex), NULL);
+	pthread_mutex_init(&(sp.empty_servers_mutex), NULL);
 	for (k = 0; k < MAX_CHILD_SERVERS; k++)
 		sp.child_server_pop[k] = 0;
 	struct queue* empty_servers = create_empty_queue();

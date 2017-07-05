@@ -121,8 +121,10 @@ int handle_syn_port(int sockfd, int* curr_port, int* sockfd_client,
 
 	// find child server port
 	int found_port = 0;
+	pthread_mutex_lock(&sp->empty_servers_mutex);
     while (!found_port && (!is_queue_empty(waiting_servers) || !is_queue_empty(sp->empty_servers)))
     {
+	pthread_mutex_unlock(&sp->empty_servers_mutex);
         while (!found_port && !is_queue_empty(waiting_servers))
         {
             *curr_port = pop_queue(waiting_servers);
@@ -138,23 +140,28 @@ int handle_syn_port(int sockfd, int* curr_port, int* sockfd_client,
             }
             else if (*port_iter == 0)
             {
+		pthread_mutex_lock(&sp->empty_servers_mutex);
                 push_queue(sp->empty_servers, *curr_port);
+		pthread_mutex_unlock(&sp->empty_servers_mutex);
                 pthread_mutex_unlock(&(sp->mutex));
             }
             else
                 pthread_mutex_unlock(&(sp->mutex));
         }
+	pthread_mutex_lock(&sp->empty_servers_mutex);
         while (!found_port && !is_queue_empty(sp->empty_servers))
         {
             // get a new child server
-            pthread_mutex_lock(&(sp->mutex));
             *curr_port = pop_queue(sp->empty_servers);
+	    pthread_mutex_unlock(&sp->empty_servers_mutex);
             port_to_array_iter(*curr_port, &port_iter,
                     sp->child_server_pop);
+            pthread_mutex_lock(&(sp->mutex));
             if (*port_iter == 1)
             {
                 pthread_mutex_unlock(&(sp->mutex));
                 push_queue(waiting_servers, *curr_port);
+	        pthread_mutex_lock(&sp->empty_servers_mutex);
                 break;
             }
             else if (*port_iter == 0)
@@ -167,8 +174,10 @@ int handle_syn_port(int sockfd, int* curr_port, int* sockfd_client,
             }
 	    else
 	        pthread_mutex_unlock(&(sp->mutex));
+	    pthread_mutex_lock(&sp->empty_servers_mutex);
         }
     }
+	pthread_mutex_unlock(&sp->empty_servers_mutex);
 	if (!found_port)
 	{
 		printf("No child servers available.\n");

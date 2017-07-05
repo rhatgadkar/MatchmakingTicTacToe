@@ -7,7 +7,7 @@
 #define LISTENPORT 4950  // the port clients will be connecting to
 #define MAXBUFLEN 100
 #define BACKLOG 20
-#define MAX_CHILD_SERVERS 250
+#define MAX_CHILD_SERVERS 100
 
 struct server_pop
 {
@@ -15,6 +15,7 @@ struct server_pop
 	int total_pop;
 	struct queue* empty_servers;
 	pthread_mutex_t mutex;
+	pthread_mutex_t empty_servers_mutex;
 };
 
 int setup_connection(int* sockfd, struct addrinfo* servinfo, int port_int);
