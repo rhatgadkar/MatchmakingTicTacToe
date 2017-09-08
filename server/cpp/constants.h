@@ -1,0 +1,9 @@
+#ifndef CONSTANTS_H
+#define CONSTANTS_H
+
+#define PARENT_PORT 4950
+#define BACKLOG 20
+#define MAXBUFLEN 100
+#define MAX_CHILD_SERVERS 100
+
+#endif  // CONSTANTS_H

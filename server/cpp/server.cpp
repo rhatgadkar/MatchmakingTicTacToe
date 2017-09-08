@@ -78,3 +78,51 @@ Server::~Server()
 	close(m_sockfd);
 	freeaddrinfo(m_servinfo);
 }
+
+string receiveFrom(int time)
+{
+	fd_set set;
+	struct timeval timeout;
+	FD_ZERO(&set);
+	FD_SET(sockfd, &set);
+	timeout.tv_sec = time;
+	timeout.tv_usec = 0;
+
+	int numbytes;
+	int status;
+
+	char buf[MAXBUFLEN];
+	memset(buf, 0, MAXBUFLEN);
+
+	status = select(sockfd + 1, &set, NULL, NULL, &timeout);
+	if (status == -1)
+	{
+		cerr << "select" << endl;
+		throw RuntimeError();
+	}
+	else if (status == 0)
+		throw TimeoutError();  // timeout
+	else
+	{
+		for (numbytes = 0; numbytes < MAXBUFLEN; numbytes += status)
+		{
+			status = recv(sockfd, buf + numbytes,
+					MAXBUFLEN - numbytes, 0);
+			if (status <= 0)
+				break;
+		}
+		if (status == -1)
+		{
+			cerr << "read" << endl;
+			throw RuntimeError();
+		}
+		else if (status == 0)
+			throw DisconnectError();  // disconnect
+		else
+		{
+			string toReturn(buf);  // read successful
+			return toReturn;
+		}
+	}
+
+}

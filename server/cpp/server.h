@@ -3,9 +3,6 @@
 
 #include <string>
 
-#define PARENT_PORT 4950
-#define BACKLOG 20
-
 class Server
 {
 public:
@@ -14,7 +11,10 @@ public:
 	int getHostPort() const;
 	int getClientPort() const;
 	std::string getClientIP() const;
-	virtual void acceptClient() = 0;
+	virtual void serverAction() = 0;
+	std::string receiveFrom(int time);
+	void sendTo(std::string text);
+	void acceptClient(int time = 0);
 
 private:
 	int m_sockfd;
@@ -22,14 +22,6 @@ private:
 	int m_clientPort;
 	std::string m_clientIP;
 	struct addrinfo *m_servinfo;
-};
-
-class ParentServer : public Server
-{
-};
-
-class ChildServer : public Server
-{
 };
 
 #endif  // SERVER_H
