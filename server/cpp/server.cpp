@@ -4,6 +4,14 @@
 #include "server.h"
 #include "utilties.h"
 #include <string>
+#include <sys/socket.h>  // for SOCK_STREAM, etc.
+#include <netdb.h>  // for getaddrinfo(...), struct addrinfo, etc.
+#include <cstring>
+#include <sys/time.h>  // for struct timeval
+#include "constants.h"
+#include "exceptions.h"
+#include <unistd.h>  // for FD_SET, select(...), etc.
+#include <arpa/inet.h>  // for inet_ntop(...)
 using namespace std;
 
 Server::Server(int hostPort)
@@ -58,17 +66,17 @@ Server::Server(int hostPort)
 	}
 }
 
-int getHostPort()
+int Server::getHostPort()
 {
 	return m_hostPort;
 }
 
-int getClientPort()
+int Server::getClientPort()
 {
 	return m_clientPort;
 }
 
-string getClientIP()
+string Server::getClientIP()
 {
 	return m_clientIP;
 }
@@ -79,7 +87,7 @@ Server::~Server()
 	freeaddrinfo(m_servinfo);
 }
 
-string receiveFrom(int time)
+string Server::receiveFrom(int time)
 {
 	fd_set set;
 	struct timeval timeout;
@@ -94,7 +102,7 @@ string receiveFrom(int time)
 	char buf[MAXBUFLEN];
 	memset(buf, 0, MAXBUFLEN);
 
-	status = select(sockfd + 1, &set, NULL, NULL, &timeout);
+	status = select(m_sockfd + 1, &set, NULL, NULL, &timeout);
 	if (status == -1)
 	{
 		cerr << "select" << endl;
@@ -106,7 +114,7 @@ string receiveFrom(int time)
 	{
 		for (numbytes = 0; numbytes < MAXBUFLEN; numbytes += status)
 		{
-			status = recv(sockfd, buf + numbytes,
+			status = recv(m_sockfd, buf + numbytes,
 					MAXBUFLEN - numbytes, 0);
 			if (status <= 0)
 				break;
@@ -125,4 +133,72 @@ string receiveFrom(int time)
 		}
 	}
 
+}
+
+void Server::sendTo(string text)
+{
+	int status;
+	int numbytes;
+	char buf[MAXBUFLEN];
+
+	memset(buf, 0, MAXBUFLEN);
+	strcpy(buf, text.c_str());
+
+	for (numbytes = 0; numbytes < MAXBUFLEN; numbytes += status)
+	{
+		status = send(m_sockfd, buf + numbytes, MAXBUFLEN - numbytes,
+				MSG_NOSIGNAL);
+		if (status == -1)
+		{
+			cerr << "send" << endl;
+			throw RuntimeError();
+		}
+	}
+
+}
+
+void Server:acceptClient(int time = 0)
+{
+	if (time != 0)
+	{
+		fd_set set;
+		struct timeval timeout;
+		FD_ZERO(&set);
+		FD_SET(sockfd, &set);
+		timeout.tv_sec = time;
+		timeout.tv_usec = 0;
+
+		int rv = select(m_sockfd + 1, &set, NULL, NULL, &timeout);
+		if (rv == -1)
+		{
+			cerr << "select" << endl;
+			throw RuntimeError();
+		}
+		else if (rv == 0)
+			throw TimeoutError();  // timeout
+	}
+
+	int client_sockfd;
+	struct sockaddr their_addr;
+	socklen_t addr_len = sizeof(their_addr);
+
+	client_sockfd = accept(m_sockfd, &their_addr, &addr_len);
+	if (client_sockfd == -1)
+	{
+		cerr << "accept" << endl;
+		throw RuntimeError();
+	}
+	else
+	{
+		// accept successful
+		struct sockaddr_in* their_addr_v4;
+		their_addr_v4 = (struct sockaddr_in*)&their_addr;
+		char dstIPStr[INET_ADDRSTRLEN];
+		memset(dstIPStr, 0, INET_ADDRSTRLEN);
+		inet_ntop(AF_INET, &their_addr_v4->sin_addr, dstIPStr,
+				sizeof(dstIPStr));
+		string temp(dstIPStr);
+		m_clientIP = temp;
+		m_clientPort = ntohs(their_addr_v4->sin_port);
+	}
 }
