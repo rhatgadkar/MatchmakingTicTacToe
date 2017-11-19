@@ -4,10 +4,10 @@
 #include <exception>
 #include <stdexcept>
 
-class ServerException : public exception
+class ConnectionException : public exception
 {
 public:
-	virtual const char * what() const throw
+	virtual const char* what() const throw
 	{
 		return "ServerException occurred";
 	}
@@ -16,7 +16,7 @@ public:
 class TimeoutException : public exception
 {
 public:
-	virtual const char * what() const throw
+	virtual const char* what() const throw
 	{
 		return "TimeoutException occurred";
 	}
@@ -25,7 +25,7 @@ public:
 class DisconnectException : public exception
 {
 public:
-	virtual const char * what() const throw
+	virtual const char* what() const throw
 	{
 		return "DisconnectException occurred";
 	}

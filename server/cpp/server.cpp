@@ -25,15 +25,16 @@ Server::Server(int hostPort)
 	hints.ai_flags = AI_PASSIVE;  // use my IP
 	string hostPortStr = intToStr(hostPort);
 
-	int st;
-	if ((st = getaddrinfo(NULL, hostPortStr, &hints, &m_servinfo)) != 0)
+	int st = getaddrinfo(NULL, hostPortStr.c_str(), &hints, &m_servinfo);
+	if (st != 0)
 	{
-		cerr << "getaddrinfo: " << gai_strerror(st) << endl;
-		throw ServerError();
+		cerr << "Server::Server::getaddrinfo: " << gai_strerror(st)
+				<< endl;
+		throw ConnectionError();
 	}
 
 	// loop through all the results and bind to the first we can
-	struct addrinfo *p;
+	struct addrinfo* p;
 	for (p = m_servinfo; p != NULL; p = p->ai_next)
 	{
 		if ((m_sockfd = socket(p->ai_family, p->ai_socktype,
@@ -43,8 +44,8 @@ Server::Server(int hostPort)
 		if (setsockopt(m_sockfd, SOL_SOCKET, SO_REUSEADDR, &yes,
 				sizeof(int)) == -1)
 		{
-			cerr << "setsockopt" << endl;
-			throw ServerError();
+			cerr << "Server::Server::setsockopt" << endl;
+			throw ConnectionError();
 		}
 		if (bind(m_sockfd, p->ai_addr, p->ai_addrlen) == -1)
 		{
@@ -56,29 +57,14 @@ Server::Server(int hostPort)
 	if (p == NULL)
 	{
 		cerr << "Failed to bind socket." << endl;
-		throw ServerError();
+		throw ConnectionError();
 	}
 
 	if ((listen(m_sockfd, BACKLOG)) == -1)
 	{
-		cerr << "listen" << endl;
-		throw ServerError();
+		cerr << "Server::Server::listen" << endl;
+		throw ConnectionError();
 	}
-}
-
-int Server::getHostPort()
-{
-	return m_hostPort;
-}
-
-int Server::getClientPort()
-{
-	return m_clientPort;
-}
-
-string Server::getClientIP()
-{
-	return m_clientIP;
 }
 
 Server::~Server()
@@ -105,7 +91,7 @@ string Server::receiveFrom(int time)
 	status = select(m_sockfd + 1, &set, NULL, NULL, &timeout);
 	if (status == -1)
 	{
-		cerr << "select" << endl;
+		cerr << "Server::receiveFrom::select" << endl;
 		throw RuntimeError();
 	}
 	else if (status == 0)
@@ -121,7 +107,7 @@ string Server::receiveFrom(int time)
 		}
 		if (status == -1)
 		{
-			cerr << "read" << endl;
+			cerr << "Server::receiveFrom::read" << endl;
 			throw RuntimeError();
 		}
 		else if (status == 0)
@@ -150,7 +136,7 @@ void Server::sendTo(string text)
 				MSG_NOSIGNAL);
 		if (status == -1)
 		{
-			cerr << "send" << endl;
+			cerr << "Server::sendTo" << endl;
 			throw RuntimeError();
 		}
 	}
@@ -171,7 +157,7 @@ void Server:acceptClient(int time = 0)
 		int rv = select(m_sockfd + 1, &set, NULL, NULL, &timeout);
 		if (rv == -1)
 		{
-			cerr << "select" << endl;
+			cerr << "Server::acceptClient::select" << endl;
 			throw RuntimeError();
 		}
 		else if (rv == 0)
@@ -185,7 +171,7 @@ void Server:acceptClient(int time = 0)
 	client_sockfd = accept(m_sockfd, &their_addr, &addr_len);
 	if (client_sockfd == -1)
 	{
-		cerr << "accept" << endl;
+		cerr << "Server::acceptClient::accept" << endl;
 		throw RuntimeError();
 	}
 	else

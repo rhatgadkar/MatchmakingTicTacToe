@@ -7,10 +7,10 @@ class Server
 {
 public:
 	Server(int hostPort);
-	~Server();
-	int getHostPort() const;
-	int getClientPort() const;
-	std::string getClientIP() const;
+	virtual ~Server();
+	int getHostPort() const { return m_hostPort; }
+	int getClientPort() const { return m_clientPort; }
+	std::string getClientIP() const { return m_clientIP; }
 	virtual void serverAction() = 0;
 	std::string receiveFrom(int time);
 	void sendTo(std::string text);
@@ -21,7 +21,7 @@ private:
 	int m_hostPort;
 	int m_clientPort;
 	std::string m_clientIP;
-	struct addrinfo *m_servinfo;
+	struct addrinfo* m_servinfo;
 };
 
 #endif  // SERVER_H

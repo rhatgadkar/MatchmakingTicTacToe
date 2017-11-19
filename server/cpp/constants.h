@@ -5,5 +5,7 @@
 #define BACKLOG 20
 #define MAXBUFLEN 100
 #define MAX_CHILD_SERVERS 100
+#define FIFO_NAME "FIFO_NAME"
+#define PORT_LEN 4
 
 #endif  // CONSTANTS_H

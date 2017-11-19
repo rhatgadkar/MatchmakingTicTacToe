@@ -8,3 +8,11 @@ string intToStr(int input)
 	ss << input;
 	return ss.str();
 }
+
+int strToInt(const std::string& input)
+{
+	stringstream ss(input);
+	int x = 0;
+	ss >> x;
+	return x;
+}
