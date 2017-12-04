@@ -7,5 +7,6 @@
 #define MAX_CHILD_SERVERS 100
 #define FIFO_NAME "FIFO_NAME"
 #define PORT_LEN 4
+#define MAX_CHILD_POP 2
 
 #endif  // CONSTANTS_H

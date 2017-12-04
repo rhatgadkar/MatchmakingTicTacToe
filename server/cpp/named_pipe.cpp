@@ -5,25 +5,30 @@
 #include <cstring>
 #include "constants.h"
 #include <pthread.h>
+#include <unistd.h>
+#include "exceptions.h"
 using namespace std;
 
 NamedPipe::NamedPipe()
 {
-	mkfifo(FIFO_NAME, S_IFIFO | 0666);
-	m_fifofd = open(NamedPipe::NAME, O_WRONLY);
+	int status;
+
+	status = mkfifo(FIFO_NAME, S_IFIFO | 0666);
+	if (status == -1)
+		throw runtime_error("NamedPipe::NamedPipe::mkfifo");
+
+	m_fifofd = open(FIFO_NAME, O_RDWR | O_NDELAY);
 	if (m_fifofd == -1)
-	{
-		cerr << "NamedPipe::NamedPipe::open" << endl;
-		throw RuntimeError();
-	}
+		throw runtime_error("NamedPipe::NamedPipe::open");
 }
 
 NamedPipe::~NamedPipe()
 {
 	close(m_fifofd);
+	unlink(FIFO_NAME);
 }
 
-string NamedPipe::read(unsigned len)
+string NamedPipe::readPipe(unsigned len) const
 {
 	int status;
 	char buf[MAXBUFLEN];
@@ -31,22 +36,16 @@ string NamedPipe::read(unsigned len)
 	memset(buf, 0, MAXBUFLEN);
 	status = read(m_fifofd, buf, len);
 	if (status == -1)
-	{
-		cerr << "NamedPipe::read::read" << endl;
-		throw RuntimeError();
-	}
+		throw runtime_error("NamedPipe::read::read");
 	string newStr(buf);
 	return newStr;
 }
 
-void NamedPipe::write(const string& text, unsigned len)
+void NamedPipe::writePipe(const string& text, unsigned len) const
 {
 	int status;
 
 	status = write(m_fifofd, text.c_str(), len);
 	if (status == -1)
-	{
-		cerr << "NamedPipe::write::write" << endl;
-		throw RuntimeError();
-	}
+		throw runtime_error("NamedPipe::write::write");
 }

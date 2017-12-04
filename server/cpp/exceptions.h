@@ -4,33 +4,34 @@
 #include <exception>
 #include <stdexcept>
 
-class ConnectionException : public exception
+class ConnectionException : public std::exception
 {
 public:
-	virtual const char* what() const throw
+	virtual const char* what() const throw()
 	{
 		return "ServerException occurred";
 	}
-} ConnectionError;
+};
+extern ConnectionException ConnectionError;
 
-class TimeoutException : public exception
+class TimeoutException : public std::exception
 {
 public:
-	virtual const char* what() const throw
+	virtual const char* what() const throw()
 	{
 		return "TimeoutException occurred";
 	}
-} TimeoutError;
+};
+extern TimeoutException TimeoutError;
 
-class DisconnectException : public exception
+class DisconnectException : public std::exception
 {
 public:
-	virtual const char* what() const throw
+	virtual const char* what() const throw()
 	{
 		return "DisconnectException occurred";
 	}
-} DisconnectError;
-
-runtime_error RuntimeError;
+};
+extern DisconnectException DisconnectError;
 
 #endif  // EXCEPTIONS_H

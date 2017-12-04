@@ -9,12 +9,11 @@ class NamedPipe
 public:
 	NamedPipe();
 	~NamedPipe();
-	std::string read(std::string& text, unsigned len);
-	void write(const std::string& text, unsigned len);
+	std::string readPipe(unsigned len) const;
+	void writePipe(const std::string& text, unsigned len) const;
 
 private:
 	int m_fifofd;
-	static const char* NAME;
 };
 
 #endif  // NAMED_PIPE_H
