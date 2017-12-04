@@ -1,4 +1,4 @@
-Rewriting server code in C++.
+Rewriting server code in C++11.
 
 TODO:
 - implement serverAction() in ParentServer
