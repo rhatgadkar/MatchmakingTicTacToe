@@ -5,7 +5,7 @@ Available for download on Google Play:  https://play.google.com/store/apps/detai
 ![image](https://user-images.githubusercontent.com/8902454/32877499-ae23c66c-ca56-11e7-9fef-c860b496472d.png)
 
 Clients connect to the parent server in port 4950. The matches are held in up to 100 other child
-servers in ports 4951 – 5950.
+servers in ports 4951 – 5050.
 
 Clients get assigned to one of the child server ports. The priority is to choose child servers
 which already have 1 client in them. A queue is used to determine what child servers incoming
