@@ -87,7 +87,7 @@ string Connection::receiveFrom(int time)
 	char buf[MAXBUFLEN];
 	memset(buf, 0, MAXBUFLEN);
 
-	status = select(m_sockfd + 1, &set, NULL, NULL, &timeout);
+	status = select(m_clientSockfd + 1, &set, NULL, NULL, &timeout);
 	if (status == -1)
 		throw runtime_error("Connection::receiveFrom::select");
 	else if (status == 0)
@@ -96,7 +96,7 @@ string Connection::receiveFrom(int time)
 	{
 		for (numbytes = 0; numbytes < MAXBUFLEN; numbytes += status)
 		{
-			status = recv(m_sockfd, buf + numbytes,
+			status = recv(m_clientSockfd, buf + numbytes,
 					MAXBUFLEN - numbytes, 0);
 			if (status <= 0)
 				break;
@@ -125,7 +125,7 @@ void Connection::sendTo(string text)
 
 	for (numbytes = 0; numbytes < MAXBUFLEN; numbytes += status)
 	{
-		status = send(m_sockfd, buf + numbytes, MAXBUFLEN - numbytes,
+		status = send(m_clientSockfd, buf + numbytes, MAXBUFLEN - numbytes,
 				MSG_NOSIGNAL);
 		if (status == -1)
 			throw runtime_error("Connection::sendTo");
@@ -170,5 +170,11 @@ void Connection::acceptClient(int time)
 		string temp(dstIPStr);
 		m_clientIP = temp;
 		m_clientPort = ntohs(their_addr_v4->sin_port);
+		m_clientSockfd = client_sockfd;
 	}
+}
+
+void Connection::closeClient()
+{
+	close(m_clientSockfd);
 }

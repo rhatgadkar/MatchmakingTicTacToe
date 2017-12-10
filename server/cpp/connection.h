@@ -14,9 +14,11 @@ public:
 	std::string receiveFrom(int time);
 	void sendTo(std::string text);
 	void acceptClient(int time = 0);
+	void closeClient();
 
 private:
 	int m_sockfd;
+	int m_clientSockfd;
 	int m_hostPort;
 	int m_clientPort;
 	std::string m_clientIP;

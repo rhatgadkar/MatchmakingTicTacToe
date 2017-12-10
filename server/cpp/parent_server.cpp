@@ -3,6 +3,7 @@
 #include <pthread.h>
 #include "constants.h"
 #include "exceptions.h"
+#include "read_named_pipe.h"
 #include <unistd.h>  // for sleep
 #include <sys/wait.h>  // for waitpid
 #include <unordered_map>
@@ -28,61 +29,149 @@ ParentServer::ParentServer(const Connection& c) : m_connection(c)
 		m_emptyServers.push(port);
 	}
 
-	pthread_mutex_init(&m_emptyServersMutex, NULL);
-	pthread_mutex_init(&m_popMutex, NULL);
+	pthread_mutexattr_init(&m_emptyServersMutexAttr);
+	pthread_mutexattr_settype(&m_emptyServersMutexAttr,
+			PTHREAD_MUTEX_RECURSIVE);
+	pthread_mutex_init(&m_emptyServersMutex, &m_emptyServersMutexAttr);
+
+	pthread_mutexattr_init(&m_popMutexAttr);
+	pthread_mutexattr_settype(&m_popMutexAttr, PTHREAD_MUTEX_RECURSIVE);
+	pthread_mutex_init(&m_popMutex, &m_popMutexAttr);
+
 	m_totalPop = 0;
 }
 
-int ParentServer::getTotalPop() const
+void ParentServer::handleSynPort()
 {
-	lockPopMutex();
-	int totalPop = m_totalPop;
-	unlockPopMutex();
-	return totalPop;
-}
+	m_connection.acceptClient();
+	cout << "Accepted client " << m_clientIP << ":" << m_clientPort << "."
+		<< endl;
 
-int ParentServer::getEmptyServerPort()
-{
+	lockPopMutex();
+	int numPpl = m_totalPop;
+	unlockPopMutex();
+	string numPplStr = intToStr(numPpl);
+	sendTo(numPplStr);
+
+	// find child server port
+	bool foundPort = false;
+	int port;
 	lockEmptyServersMutex();
-	if (m_emptyServers.empty())
+	while (!foundPort &&
+			(!m_waitingServers.empty()) || !m_emptyServers.empty())
 	{
 		unlockEmptyServersMutex();
-		throw std::runtime_error("empty servers queue is empty");
+		// get first waiting server that has population 1
+		while (!foundPort && !m_waitingServers.empty())
+		{
+			port = m_waitingServers.front();
+			m_waitingServers.pop();
+			lockPopMutex();
+			if (m_childServerPop[port] == 1)
+			{
+				m_childServerPop[port]++;
+				m_totalPop++;
+				unlockPopMutex();
+				foundPort = true;
+			}
+			else if (m_childServerPop[port] == 0)
+			{
+				unlockPopMutex();
+				lockEmptyServersMutex();
+				m_emptyServers.push(port);
+				unlockEmptyServersMutex();
+			}
+			else
+				unlockPopMutex();
+
+		}
+		lockEmptyServersMutex();
+		// no waiting server found. get first empty server with
+		// population 1
+		while (!foundPort && !m_emptyServers.empty())
+		{
+			port = m_emptyServers.front();
+			m_emptyServers.pop();
+			unlockEmptyServersMutex();
+			lockPopMutex();
+			if (m_childServerPop[port] == 1)
+			{
+				unlockPopMutex();
+				m_waitingServers.push(port);
+				lockEmptyServersMutex();
+				break;
+			}
+			else if (m_childServerPop[port] == 0)
+			{
+				m_childServerPop[port]++;
+				m_totalPop++;
+				unlockPopMutex();
+				foundPort = true;
+			}
+			else
+				unlockPopMutex();
+			lockEmptyServersMutex();
+		}
 	}
-	int emptyServerPort = m_emptyServers.front();
-	m_emptyServers.pop();
 	unlockEmptyServersMutex();
-	return emptyServerPort;
-
-}
-
-void ParentServer::serverAction()
-{
-}
-
-bool ParentServer::incrementTotalPop(int port)
-{
-	/* Increments total pop and updates m_childServerPop if the result is
-	 * <= 2.  Returns true in this case.  Otherwise return false.
-	*/
-
-	unordered_map<int, int>::iterator foundChild;
-	lockPopMutex();
-	foundChild = m_childServerPop.find(port);
-	if (foundChild != m_childServerPop.end())
+	if (!foundPort)
 	{
-		if (foundChild->second >= 2)
+		sendTo("full");
+		throw std::runtime_error("No child servers available.");
+	}
+
+	string portStr = intToStr(port);
+	sendTo(portStr);
+
+	cout << "Sent ACK to use port: " << port << endl;
+}
+
+void ParentServer::createMatchServer(int port)
+{
+	pid_t child_pid;
+
+	child_pid = fork();
+	if (child_pid != 0)
+	{
+		// parent
+	}
+	else
+	{
+		// child
+		Connection childConnection;
+		ChildServer childServer(childConnection);
+		childServer.run();
+		exit(0);
+	}
+}
+
+void ParentServer::run()
+{
+	startFreeChildsThread();
+
+	do
+	{
+		int port;
+		try
+		{
+			port = handleSynPort();
+			m_connection.closeClient();
+		}
+		catch (...)
+		{
+			continue;
+		}
+
+		lockPopMutex();
+		if (m_childServerPop[port] == 1)
 		{
 			unlockPopMutex();
-			return false;
+			createMatchServer(port);
 		}
-		foundChild->second++;
-		m_totalPop++;
-		unlockPopMutex();
-		return true;
-	}
-	unlockPopMutex();
-	return false;
+		else
+			unlockPopMutex();
+
+	} while (FOREVER);
 }
 
 void ParentServer::startFreeChildsThread()
@@ -96,11 +185,6 @@ void ParentServer::startFreeChildsThread()
 
 void ParentServer::freeChildsAction(const string& portStr)
 {
-	/* Given a portStr, set the value of the corresponding port in
-	 * m_childServerPop to 0, push the port to the m_emptyServers queue,
-	 * and reduce the m_totalPop.
-	*/
-
 	int port = strToInt(portStr);
 	unordered_map<int, int>::iterator foundChild;
 	lockPopMutex();
@@ -130,14 +214,15 @@ void* ParentServer::freeChildsThread(void* args)
 			string portStr;
 			try
 			{
-				portStr = ps->m_namedPipe.readPipe(PORT_LEN);
+				portStr =
+					ps->m_readNamedPipe.readPipe(PORT_LEN);
 			}
 			catch (exception& e)
 			{
 				e.what();
-				cerr <<
-					"ParentServer::freeChildsThread::readPipe"
-					<< endl;
+				string msg = "ParentServer::freeChildsThread" +
+					"::readPipe";
+				cerr << msg << endl;
 			}
 			ps->freeChildsAction(portStr);
 		} while ((waitpid(-1, NULL, WNOHANG)) > 0);

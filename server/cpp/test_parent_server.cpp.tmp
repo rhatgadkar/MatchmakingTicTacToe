@@ -10,45 +10,6 @@
 #include "utilities.h"
 using namespace std;
 
-void testIncrementTotalPop()
-{
-	Connection c(PARENT_PORT);
-	ParentServer ps(c);
-	const unordered_map<int, int>& childServerPop = ps.getChildServerPop();
-	unordered_map<int, int>::const_iterator it;
-	unordered_map<int, int> originalChildServerPop;
-	int originalTotalPop;
-	bool result;
-
-	// verify that total pop and childServerPop remain unchanged using
-	// invalid port
-	originalChildServerPop = childServerPop;
-	originalTotalPop = ps.getTotalPop();
-	result = ps.incrementTotalPop(3000);
-	assert(result == false);
-	assert(ps.getTotalPop() == originalTotalPop);
-	assert(childServerPop.size() == originalChildServerPop.size());
-	for (it = childServerPop.begin(); it != childServerPop.end(); it++)
-		assert(it->second == originalChildServerPop[it->first]);
-
-	// verify that total pop is incremented and childServerPop is
-	// incremented for a valid port
-	originalChildServerPop = childServerPop;
-	originalTotalPop = ps.getTotalPop();
-	result = ps.incrementTotalPop(4951);
-	assert(result == true);
-	assert(originalTotalPop + 1 == ps.getTotalPop());
-	assert(childServerPop.size() == originalChildServerPop.size());
-	for (it = childServerPop.begin(); it != childServerPop.end(); it++)
-	{
-		if (it->first != 4951)
-			assert(it->second == originalChildServerPop[it->first]);
-		else
-			assert(it->second ==
-					originalChildServerPop[it->first] + 1);
-	}
-}
-
 void testFreeChildsThread()
 {
 	Connection c(PARENT_PORT);
@@ -70,7 +31,6 @@ void testFreeChildsThread()
 	port = "3000";
 	namedPipe.writePipe(port, port.length());
 	ps.startFreeChildsThread();
-//	sleep(15);  // the thread should complete in 15 seconds
 	assert(ps.getTotalPop() == originalTotalPop);
 	assert(childServerPop.size() == originalChildServerPop.size());
 	for (it = childServerPop.begin(); it != childServerPop.end(); it++)
@@ -97,7 +57,6 @@ void testFreeChildsThread()
 	originalEmptyServers = emptyServers;
 	namedPipe.writePipe(port, port.length());
 	ps.startFreeChildsThread();
-//	sleep(15);  // the thread should complete in 15 seconds
 	assert(ps.getTotalPop() == originalTotalPop - 1);
 	assert(childServerPop.size() == originalChildServerPop.size());
 	for (it = childServerPop.begin(); it != childServerPop.end(); it++)

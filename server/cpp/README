@@ -1,4 +1,5 @@
 Rewriting server code in C++11.
 
 TODO:
-- implement serverAction() in ParentServer
+- implement child server
+- write unit tests for parent server run() and child server run()

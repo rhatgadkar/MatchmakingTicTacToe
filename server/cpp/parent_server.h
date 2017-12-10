@@ -5,48 +5,64 @@
 #include <queue>
 #include <unordered_map>
 #include "connection.h"
-#include "named_pipe.h"
+#include "read_named_pipe.h"
+#include "server.h"
 
-class ParentServer
+class ParentServer : public Server
 {
 public:
 	ParentServer(const Connection& c);
-	void serverAction();  // TODO: implement this
-	void startFreeChildsThread();
-
-	// setters
-	bool incrementTotalPop(int port);
-
-	// getters
-	const std::unordered_map<int, int>& getChildServerPop() const
-		{ return m_childServerPop; }
-	const std::queue<int>& getEmptyServers() const
-		{ return m_emptyServers; }
-	int getTotalPop() const;
-	const NamedPipe& getNamedPipe() const { return m_namedPipe; }
-	int getEmptyServerPort();
+	virtual void run();
 
 private:
+	// Given a portStr, set the value of the corresponding port in
+	// m_childServerPop to 0, push the port to the m_emptyServers queue,
+	// and reduce the m_totalPop.
 	pthread_t m_freeChildsThread;
 	static void* freeChildsThread(void* args);
 	void freeChildsAction(const std::string& portStr);
+	void startFreeChildsThread();
 
+	// the empty child servers with population 0
 	std::queue<int> m_emptyServers;
 	mutable pthread_mutex_t m_emptyServersMutex;
+	pthread_mutexattr_t m_emptyServersMutexAttr;
 	void lockEmptyServersMutex() const
-		{ pthread_mutex_lock(&m_emptyServersMutex); }
+	{
+		pthread_mutex_lock(&m_emptyServersMutex);
+	}
 	void unlockEmptyServersMutex() const
-		{ pthread_mutex_unlock(&m_emptyServersMutex); }
+	{
+		pthread_mutex_unlock(&m_emptyServersMutex);
+	}
 
+	// child server ports that have a population of 1
+	std::queue<int> m_waitingServers;
+
+	// mapping of ports of child servers and their population
 	std::unordered_map<int, int> m_childServerPop;
 	int m_totalPop;
 	mutable pthread_mutex_t m_popMutex;
-	void lockPopMutex() const { pthread_mutex_lock(&m_popMutex); }
-	void unlockPopMutex() const { pthread_mutex_unlock(&m_popMutex); }
+	pthread_mutexattr_t m_popMutexAttr;
+	void lockPopMutex() const
+	{
+		pthread_mutex_lock(&m_popMutex);
+	}
+	void unlockPopMutex() const
+	{
+		pthread_mutex_unlock(&m_popMutex);
+	}
 
-	const NamedPipe m_namedPipe;
-
+	const ReadNamedPipe m_readNamedPipe;
 	const Connection& m_connection;
+
+	// Give a child server port to the incoming client. If child servers
+	// are full, send a 'full' message to the client.
+	void handleSynPort();
+
+	// Create a child server, by forking a process, which listens on the
+	// specified port.
+	void createMatchServer(int port);
 };
 
 #endif  // PARENT_SERVER_H
