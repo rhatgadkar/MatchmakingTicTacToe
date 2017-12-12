@@ -5,6 +5,8 @@
 #include <sys/stat.h>  // for mkfifo
 #include <fcntl.h>  // for open
 #include <string>
+#include <cstring>
+using namespace std;
 
 ReadNamedPipe::ReadNamedPipe()
 {
@@ -19,7 +21,7 @@ ReadNamedPipe::ReadNamedPipe()
 		throw runtime_error("NamedPipe::NamedPipe::open");
 }
 
-string NamedPipe::readPipe(unsigned len) const
+string ReadNamedPipe::readPipe(unsigned len) const
 {
 	int status;
 	char buf[MAXBUFLEN];

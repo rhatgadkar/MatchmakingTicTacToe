@@ -11,7 +11,8 @@
 class ParentServer : public Server
 {
 public:
-	ParentServer(const Connection& c);
+	ParentServer(Connection& c);
+	virtual ~ParentServer() {};
 	virtual void run();
 
 private:
@@ -54,11 +55,10 @@ private:
 	}
 
 	const ReadNamedPipe m_readNamedPipe;
-	const Connection& m_connection;
 
 	// Give a child server port to the incoming client. If child servers
 	// are full, send a 'full' message to the client.
-	void handleSynPort();
+	int handleSynPort();
 
 	// Create a child server, by forking a process, which listens on the
 	// specified port.

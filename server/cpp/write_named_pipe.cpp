@@ -5,6 +5,7 @@
 #include <sys/stat.h>  // for mkfifo
 #include <fcntl.h>  // for open
 #include <string>
+using namespace std;
 
 WriteNamedPipe::WriteNamedPipe()
 {

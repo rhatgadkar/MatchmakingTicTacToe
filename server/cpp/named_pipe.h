@@ -1,11 +1,12 @@
 #ifndef NAMED_PIPE_H
 #define NAMED_PIPE_H
 
+#include <unistd.h>
+
 class NamedPipe
 {
 public:
-	NamedPipe();
-	virtual ~NamedPipe();
+	virtual ~NamedPipe() { close(m_fifofd); };
 
 protected:
 	int m_fifofd;

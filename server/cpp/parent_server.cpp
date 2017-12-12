@@ -1,4 +1,8 @@
+#include "server.h"
+#include "connection.h"
+#include "server_connection.h"
 #include "parent_server.h"
+#include "child_server.h"
 #include "utilities.h"
 #include <pthread.h>
 #include "constants.h"
@@ -20,7 +24,7 @@ using namespace std;
 #define THREAD_INTERVAL 0
 #endif
 
-ParentServer::ParentServer(const Connection& c) : m_connection(c)
+ParentServer::ParentServer(Connection& c) : Server(c)
 {
 	for (int port = PARENT_PORT + 1;
 			port < PARENT_PORT + 1 + MAX_CHILD_SERVERS; port++)
@@ -41,24 +45,38 @@ ParentServer::ParentServer(const Connection& c) : m_connection(c)
 	m_totalPop = 0;
 }
 
-void ParentServer::handleSynPort()
+int ParentServer::handleSynPort()
 {
-	m_connection.acceptClient();
-	cout << "Accepted client " << m_clientIP << ":" << m_clientPort << "."
-		<< endl;
+	try
+	{
+		m_connection.acceptClient();
+	}
+	catch (...)
+	{
+		throw runtime_error("Error in accepting client.");
+	}
+	cout << "Accepted client " << m_connection.getClientIP() << ":"
+		<< m_connection.getClientPort() << "." << endl;
 
 	lockPopMutex();
 	int numPpl = m_totalPop;
 	unlockPopMutex();
 	string numPplStr = intToStr(numPpl);
-	sendTo(numPplStr);
+	try
+	{
+		m_connection.sendTo(numPplStr);
+	}
+	catch (...)
+	{
+		throw runtime_error("Error in sending total pop to client.");
+	}
 
 	// find child server port
 	bool foundPort = false;
 	int port;
 	lockEmptyServersMutex();
 	while (!foundPort &&
-			(!m_waitingServers.empty()) || !m_emptyServers.empty())
+			(!m_waitingServers.empty() || !m_emptyServers.empty()))
 	{
 		unlockEmptyServersMutex();
 		// get first waiting server that has population 1
@@ -116,14 +134,30 @@ void ParentServer::handleSynPort()
 	unlockEmptyServersMutex();
 	if (!foundPort)
 	{
-		sendTo("full");
-		throw std::runtime_error("No child servers available.");
+		try
+		{
+			m_connection.sendTo("full");
+		}
+		catch (...)
+		{
+			string msg = "Error in sending 'full' to client.";
+			throw runtime_error(msg);
+		}
+		throw runtime_error("No child servers available.");
 	}
 
 	string portStr = intToStr(port);
-	sendTo(portStr);
+	try
+	{
+		m_connection.sendTo(portStr);
+	}
+	catch (...)
+	{
+		throw runtime_error("Error in sending port to client.");
+	}
 
 	cout << "Sent ACK to use port: " << port << endl;
+	return port;
 }
 
 void ParentServer::createMatchServer(int port)
@@ -138,8 +172,8 @@ void ParentServer::createMatchServer(int port)
 	else
 	{
 		// child
-		Connection childConnection;
-		ChildServer childServer(childConnection);
+		ServerConnection childConnection(port);
+		ChildServer childServer(childConnection, port);
 		childServer.run();
 		exit(0);
 	}
@@ -155,17 +189,20 @@ void ParentServer::run()
 		try
 		{
 			port = handleSynPort();
-			m_connection.closeClient();
 		}
 		catch (...)
 		{
+			m_connection.closeClient();
 			continue;
 		}
+		m_connection.closeClient();
 
 		lockPopMutex();
 		if (m_childServerPop[port] == 1)
 		{
 			unlockPopMutex();
+			if (!FOREVER)
+				return;
 			createMatchServer(port);
 		}
 		else
@@ -220,8 +257,8 @@ void* ParentServer::freeChildsThread(void* args)
 			catch (exception& e)
 			{
 				e.what();
-				string msg = "ParentServer::freeChildsThread" +
-					"::readPipe";
+				string msg = "ParentServer::freeChildsThread";
+				msg += "::readPipe";
 				cerr << msg << endl;
 			}
 			ps->freeChildsAction(portStr);
