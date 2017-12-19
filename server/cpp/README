@@ -2,4 +2,4 @@ Rewriting server code in C++11.
 
 TODO:
 - implement child server
-- write unit tests for parent server run() and child server run()
+- write unit tests for child server run()
