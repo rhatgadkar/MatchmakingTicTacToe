@@ -7,7 +7,7 @@
 class ReadNamedPipe : public NamedPipe
 {
 public:
-	ReadNamedPipe();
+	ReadNamedPipe(bool create = true);
 	virtual ~ReadNamedPipe() {}
 	std::string readPipe(unsigned len) const;
 };

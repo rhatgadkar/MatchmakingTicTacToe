@@ -7,7 +7,7 @@
 class WriteNamedPipe : public NamedPipe
 {
 public:
-	WriteNamedPipe();
+	WriteNamedPipe(bool create = true);
 	virtual ~WriteNamedPipe() {}
 	void writePipe(const std::string& text, unsigned len) const;
 };

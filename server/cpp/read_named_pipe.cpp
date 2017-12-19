@@ -8,13 +8,16 @@
 #include <cstring>
 using namespace std;
 
-ReadNamedPipe::ReadNamedPipe()
+ReadNamedPipe::ReadNamedPipe(bool create)
 {
 	int status;
 
-	status = mkfifo(FIFO_NAME, S_IFIFO | 0666);
-	if (status == -1)
-		throw runtime_error("NamedPipe::NamedPipe::mkfifo");
+	if (create)
+	{
+		status = mkfifo(FIFO_NAME, S_IFIFO | 0666);
+		if (status == -1)
+			throw runtime_error("NamedPipe::NamedPipe::mkfifo");
+	}
 
 	m_fifofd = open(FIFO_NAME, O_RDONLY | O_NDELAY);
 	if (m_fifofd == -1)

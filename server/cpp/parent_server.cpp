@@ -124,6 +124,7 @@ int ParentServer::handleSynPort()
 				m_childServerPop[port]++;
 				m_totalPop++;
 				unlockPopMutex();
+				m_waitingServers.push(port);
 				foundPort = true;
 			}
 			else

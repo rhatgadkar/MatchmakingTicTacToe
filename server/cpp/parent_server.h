@@ -56,8 +56,8 @@ private:
 
 	const ReadNamedPipe m_readNamedPipe;
 
-	// Give a child server port to the incoming client. If child servers
-	// are full, send a 'full' message to the client.
+	// Send total pop and child server port to the incoming client. If
+	// child servers are full, send a 'full' message to the client.
 	int handleSynPort();
 
 	// Create a child server, by forking a process, which listens on the

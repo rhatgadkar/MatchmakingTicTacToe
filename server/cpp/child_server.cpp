@@ -19,7 +19,7 @@ void ChildServer::run()
 
 ChildServer::~ChildServer()
 {
-	WriteNamedPipe writeNamedPipe;
+	WriteNamedPipe writeNamedPipe(false);
 	string portStr = intToStr(m_port);
 	writeNamedPipe.writePipe(portStr, portStr.length());
 }

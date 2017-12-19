@@ -24,6 +24,10 @@ public:
 	{
 		m_receivedMsgs = receivedMsgs;
 	}
+	void clearSentMsgs()
+	{
+		m_sentMsgs.clear();
+	}
 
 private:
 	std::list<std::string> m_receivedMsgs;
