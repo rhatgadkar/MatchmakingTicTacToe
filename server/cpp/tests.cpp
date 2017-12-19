@@ -67,6 +67,10 @@ void testParentServer()
 	// test clear 4951 port, send 1 pop and 4952 port
 	// current variable values:
 	// 	waitingServers: [ 4952 ]
+	// 	emptyServers: [ 4953, 4954, ..., 5050 ]
+	// 	pop: 3
+	// after clear 4951 port variable values:
+	// 	waitingServers: [ 4952 ]
 	// 	emptyServers: [ 4953, 4954, ..., 5050, 4951 ]
 	// 	pop: 1
 	// new variable values:
@@ -102,6 +106,10 @@ void testParentServer()
 
 	// test clear 4953 port, send 2 pop and 4954 port
 	// current variable values:
+	// 	waitingServers: [ 4953 ]
+	// 	emptyServers: [ 4954, 4955, ..., 5050, 4951 ]
+	// 	pop: 3
+	// after clear 4953 port variable values:
 	// 	waitingServers: []
 	// 	emptyServers: [ 4954, 4955, ..., 5050, 4951, 4953 ]
 	// 	pop: 2
