@@ -1,14 +1,15 @@
-#ifndef SERVER_CONNECTION_H
-#define SERVER_CONNECTION_H
+#ifndef SERVER_PARENT_CONNECTION_H
+#define SERVER_PARENT_CONNECTION_H
 
-#include "connection.h"
+#include "parent_connection.h"
 #include <string>
+#include <netdb.h>
 
-class ServerConnection : public Connection
+class ServerParentConnection : public ParentConnection
 {
 public:
-	ServerConnection(int hostPort);
-	virtual ~ServerConnection();
+	ServerParentConnection(int hostPort);
+	virtual ~ServerParentConnection();
 	int getHostPort() const { return m_hostPort; }
 	virtual int getClientPort() const { return m_clientPort; }
 	virtual std::string getClientIP() const { return m_clientIP; }
@@ -19,11 +20,11 @@ public:
 
 private:
 	int m_sockfd;
-	int m_clientSockfd;
 	int m_hostPort;
+	struct addrinfo* m_servinfo;
+	int m_clientSockfd;
 	int m_clientPort;
 	std::string m_clientIP;
-	struct addrinfo* m_servinfo;
 };
 
-#endif  // SERVER_CONNECTION_H
+#endif  // SERVER_PARENT_CONNECTION_H

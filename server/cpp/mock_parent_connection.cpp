@@ -1,11 +1,11 @@
-#include "mock_connection.h"
+#include "mock_parent_connection.h"
 #include "exceptions.h"
 #include <vector>
 #include <list>
 #include <string>
 using namespace std;
 
-string MockConnection::receiveFrom(int time)
+string MockParentConnection::receiveFrom(int time)
 {
 	if (m_receivedMsgs.empty())
 		throw runtime_error("m_receivedMsgs is empty.");
@@ -15,7 +15,7 @@ string MockConnection::receiveFrom(int time)
 	return toReturn;
 }
 
-void MockConnection::sendTo(string text)
+void MockParentConnection::sendTo(string text)
 {
 	m_sentMsgs.push_back(text);
 }

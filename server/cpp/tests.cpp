@@ -1,4 +1,4 @@
-#include "mock_connection.h"
+#include "mock_parent_connection.h"
 #include "parent_server.h"
 #include "constants.h"
 #include <string>
@@ -12,7 +12,7 @@ using namespace std;
 
 void testParentServer()
 {
-	MockConnection c;
+	MockParentConnection c;
 	ParentServer p(c);
 	const vector<string>* sentMsgs;
 

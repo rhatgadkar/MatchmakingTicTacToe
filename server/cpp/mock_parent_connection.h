@@ -1,15 +1,15 @@
-#ifndef MOCK_CONNECTION_H
-#define MOCK_CONNECTION_H
+#ifndef MOCK_PARENT_CONNECTION_H
+#define MOCK_PARENT_CONNECTION_H
 
-#include "connection.h"
+#include "parent_connection.h"
 #include <string>
 #include <vector>
 #include <list>
 
-class MockConnection : public Connection
+class MockParentConnection : public ParentConnection
 {
 public:
-	virtual ~MockConnection() {}
+	virtual ~MockParentConnection() {}
 	virtual int getClientPort() const { return 0; }
 	virtual std::string getClientIP() const { return ""; }
 	virtual std::string receiveFrom(int time);
@@ -34,4 +34,4 @@ private:
 	std::vector<std::string> m_sentMsgs;
 };
 
-#endif  // MOCK_CONNECTION_H
+#endif  // MOCK_PARENT_CONNECTION_H

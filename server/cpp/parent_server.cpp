@@ -1,8 +1,7 @@
-#include "server.h"
-#include "connection.h"
-#include "server_connection.h"
+#include "parent_connection.h"
 #include "parent_server.h"
 #include "child_server.h"
+#include "server_child_connection.h"
 #include "utilities.h"
 #include <pthread.h>
 #include "constants.h"
@@ -24,7 +23,7 @@ using namespace std;
 #define THREAD_INTERVAL 0
 #endif
 
-ParentServer::ParentServer(Connection& c) : Server(c)
+ParentServer::ParentServer(ParentConnection& c) : m_parentConnection(c)
 {
 	for (int port = PARENT_PORT + 1;
 			port < PARENT_PORT + 1 + MAX_CHILD_SERVERS; port++)
@@ -49,14 +48,14 @@ int ParentServer::handleSynPort()
 {
 	try
 	{
-		m_connection.acceptClient();
+		m_parentConnection.acceptClient();
 	}
 	catch (...)
 	{
 		throw runtime_error("Error in accepting client.");
 	}
-	cout << "Accepted client " << m_connection.getClientIP() << ":"
-		<< m_connection.getClientPort() << "." << endl;
+	cout << "Accepted client " << m_parentConnection.getClientIP() << ":"
+		<< m_parentConnection.getClientPort() << "." << endl;
 
 	lockPopMutex();
 	int numPpl = m_totalPop;
@@ -64,7 +63,7 @@ int ParentServer::handleSynPort()
 	string numPplStr = intToStr(numPpl);
 	try
 	{
-		m_connection.sendTo(numPplStr);
+		m_parentConnection.sendTo(numPplStr);
 	}
 	catch (...)
 	{
@@ -137,7 +136,7 @@ int ParentServer::handleSynPort()
 	{
 		try
 		{
-			m_connection.sendTo("full");
+			m_parentConnection.sendTo("full");
 		}
 		catch (...)
 		{
@@ -150,7 +149,7 @@ int ParentServer::handleSynPort()
 	string portStr = intToStr(port);
 	try
 	{
-		m_connection.sendTo(portStr);
+		m_parentConnection.sendTo(portStr);
 	}
 	catch (...)
 	{
@@ -173,7 +172,7 @@ void ParentServer::createMatchServer(int port)
 	else
 	{
 		// child
-		ServerConnection childConnection(port);
+		ServerChildConnection childConnection(port);
 		ChildServer childServer(childConnection, port);
 		childServer.run();
 		exit(0);
@@ -193,10 +192,10 @@ void ParentServer::run()
 		}
 		catch (...)
 		{
-			m_connection.closeClient();
+			m_parentConnection.closeClient();
 			continue;
 		}
-		m_connection.closeClient();
+		m_parentConnection.closeClient();
 
 		lockPopMutex();
 		if (m_childServerPop[port] == 1)

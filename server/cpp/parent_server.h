@@ -4,15 +4,15 @@
 #include <pthread.h>
 #include <queue>
 #include <unordered_map>
-#include "connection.h"
 #include "read_named_pipe.h"
 #include "server.h"
+#include "parent_connection.h"
 
 class ParentServer : public Server
 {
 public:
-	ParentServer(Connection& c);
-	virtual ~ParentServer() {};
+	ParentServer(ParentConnection& c);
+	virtual ~ParentServer() {}
 	virtual void run();
 
 private:
@@ -63,6 +63,8 @@ private:
 	// Create a child server, by forking a process, which listens on the
 	// specified port.
 	void createMatchServer(int port);
+
+	ParentConnection& m_parentConnection;
 };
 
 #endif  // PARENT_SERVER_H

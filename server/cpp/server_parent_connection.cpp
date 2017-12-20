@@ -1,4 +1,4 @@
-#include "server_connection.h"
+#include "server_parent_connection.h"
 #include <iostream>
 #include <sstream>
 #include "utilities.h"
@@ -13,7 +13,7 @@
 #include <arpa/inet.h>  // for inet_ntop(...)
 using namespace std;
 
-ServerConnection::ServerConnection(int hostPort)
+ServerParentConnection::ServerParentConnection(int hostPort)
 {
 	m_hostPort = hostPort;
 
@@ -27,8 +27,8 @@ ServerConnection::ServerConnection(int hostPort)
 	int st = getaddrinfo(NULL, hostPortStr.c_str(), &hints, &m_servinfo);
 	if (st != 0)
 	{
-		cerr << "ServerConnection::ServerConnection::getaddrinfo: "
-			<< gai_strerror(st) << endl;
+		cerr << "ServerParentConnection::ServerParentConnection::"
+			<< "getaddrinfo: " << gai_strerror(st) << endl;
 		throw ConnectionError;
 	}
 
@@ -43,8 +43,9 @@ ServerConnection::ServerConnection(int hostPort)
 		if (setsockopt(m_sockfd, SOL_SOCKET, SO_REUSEADDR, &yes,
 				sizeof(int)) == -1)
 		{
-			cerr << "ServerConnection::ServerConnection::"
-				<< "setsockopt" << endl;
+			cerr << "ServerParentConnection::"
+				<< "ServerParentConnection::setsockopt"
+				<< endl;
 			throw ConnectionError;
 		}
 		if (bind(m_sockfd, p->ai_addr, p->ai_addrlen) == -1)
@@ -62,18 +63,19 @@ ServerConnection::ServerConnection(int hostPort)
 
 	if ((listen(m_sockfd, BACKLOG)) == -1)
 	{
-		cerr << "ServerConnection::ServerConnection::listen" << endl;
+		cerr << "ServerParentConnection::ServerParentConnection::"
+			<< "listen" << endl;
 		throw ConnectionError;
 	}
 }
 
-ServerConnection::~ServerConnection()
+ServerParentConnection::~ServerParentConnection()
 {
 	close(m_sockfd);
 	freeaddrinfo(m_servinfo);
 }
 
-string ServerConnection::receiveFrom(int time)
+string ServerParentConnection::receiveFrom(int time)
 {
 	fd_set set;
 	struct timeval timeout;
@@ -90,7 +92,7 @@ string ServerConnection::receiveFrom(int time)
 
 	status = select(m_clientSockfd + 1, &set, NULL, NULL, &timeout);
 	if (status == -1)
-		throw runtime_error("ServerConnection::receiveFrom::select");
+		throw runtime_error("ServerParentConnection::receiveFrom::select");
 	else if (status == 0)
 		throw TimeoutError;  // timeout
 	else
@@ -103,7 +105,7 @@ string ServerConnection::receiveFrom(int time)
 				break;
 		}
 		if (status == -1)
-			throw runtime_error("ServerConnection::receiveFrom::read");
+			throw runtime_error("ServerParentConnection::receiveFrom::read");
 		else if (status == 0)
 			throw DisconnectError;  // disconnect
 		else
@@ -115,7 +117,7 @@ string ServerConnection::receiveFrom(int time)
 
 }
 
-void ServerConnection::sendTo(string text)
+void ServerParentConnection::sendTo(string text)
 {
 	int status;
 	int numbytes;
@@ -129,12 +131,12 @@ void ServerConnection::sendTo(string text)
 		status = send(m_clientSockfd, buf + numbytes,
 				MAXBUFLEN - numbytes, MSG_NOSIGNAL);
 		if (status == -1)
-			throw runtime_error("ServerConnection::sendTo");
+			throw runtime_error("ServerParentConnection::sendTo");
 	}
 
 }
 
-void ServerConnection::acceptClient(int time)
+void ServerParentConnection::acceptClient(int time)
 {
 	if (time != 0)
 	{
@@ -148,7 +150,7 @@ void ServerConnection::acceptClient(int time)
 		int rv = select(m_sockfd + 1, &set, NULL, NULL, &timeout);
 		if (rv == -1)
 		{
-			string msg = "ServerConnection::acceptClient::select";
+			string msg = "ServerParentConnection::acceptClient::select";
 			throw runtime_error(msg);
 		}
 		else if (rv == 0)
@@ -161,7 +163,7 @@ void ServerConnection::acceptClient(int time)
 
 	client_sockfd = accept(m_sockfd, &their_addr, &addr_len);
 	if (client_sockfd == -1)
-		throw runtime_error("ServerConnection::acceptClient::accept");
+		throw runtime_error("ServerParentConnection::acceptClient::accept");
 	else
 	{
 		// accept successful
@@ -178,7 +180,7 @@ void ServerConnection::acceptClient(int time)
 	}
 }
 
-void ServerConnection::closeClient()
+void ServerParentConnection::closeClient()
 {
 	close(m_clientSockfd);
 }

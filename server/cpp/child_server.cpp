@@ -2,11 +2,21 @@
 #include "write_named_pipe.h"
 #include "utilities.h"
 #include <string>
+#include <iostream>
 using namespace std;
 
 void ChildServer::run()
 {
 	// accept client 1
+	try
+	{
+		m_childConnection.acceptClient(15);
+	}
+	catch (...)
+	{
+		cout << "Closing child server." << endl;
+		return;
+	}
 
 	// receive client 1 login
 

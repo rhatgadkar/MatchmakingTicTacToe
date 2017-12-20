@@ -2,17 +2,19 @@
 #define CHILD_SERVER_H
 
 #include "server.h"
-#include "connection.h"
+#include "child_connection.h"
 
 class ChildServer : public Server
 {
 public:
-	ChildServer(Connection& c, int port) : Server(c), m_port(port) {}
+	ChildServer(ChildConnection& c, int port)
+		: m_childConnection(c), m_port(port) {}
 	virtual ~ChildServer();
 	virtual void run();
 
 private:
 	int m_port;
+	ChildConnection& m_childConnection;
 };
 
 #endif  // CHILD_SERVER_H

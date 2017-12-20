@@ -1,12 +1,12 @@
-#ifndef CONNECTION_H
-#define CONNECTION_H
+#ifndef CHILD_CONNECTION_H
+#define CHILD_CONNECTION_H
 
 #include <string>
 
-class Connection
+class ChildConnection
 {
 public:
-	virtual ~Connection() {}
+	virtual ~ChildConnection() {}
 	virtual int getClientPort() const = 0;
 	virtual std::string getClientIP() const = 0;
 	virtual std::string receiveFrom(int time) = 0;
@@ -15,4 +15,4 @@ public:
 	virtual void closeClient() = 0;
 };
 
-#endif  // CONNECTION_H
+#endif  // CHILD_CONNECTION_H
