@@ -34,4 +34,24 @@ public:
 };
 extern DisconnectException DisconnectError;
 
+class IncorrectLoginException : public std::exception
+{
+public:
+	virtual const char* what() const throw()
+	{
+		return "IncorrectLoginException occurred";
+	}
+};
+extern IncorrectLoginException IncorrectLoginError;
+
+class UserInGameException : public std::exception
+{
+public:
+	virtual const char* what() const throw()
+	{
+		return "UserInGameException occurred";
+	}
+};
+extern UserInGameException UserInGameError;
+
 #endif  // EXCEPTIONS_H

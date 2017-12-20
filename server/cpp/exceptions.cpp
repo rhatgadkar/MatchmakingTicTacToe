@@ -3,3 +3,4 @@
 ConnectionException ConnectionError;
 TimeoutException TimeoutError;
 DisconnectException DisconnectError;
+UserInGameException UserInGameError;

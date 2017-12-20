@@ -10,12 +10,22 @@ class ServerChildConnection : public ChildConnection
 public:
 	ServerChildConnection(int port) : m_hostPort(port) {}
 	virtual ~ServerChildConnection() {}
-	virtual int getClientPort() const { return m_clientPort; }
-	virtual std::string getClientIP() const { return m_clientIP; }
-	virtual std::string receiveFrom(int time) { return ""; };
-	virtual void sendTo(std::string text) {}
-	virtual void acceptClient(int time = 0) {}
-	virtual void closeClient() {}
+
+	// client 1
+	virtual int getClient1Port() const { return m_clientPort; }
+	virtual std::string getClient1IP() const { return m_clientIP; }
+	virtual std::string receiveFromClient1(int time) { return ""; };
+	virtual void sendToClient1(std::string text) {}
+	virtual void acceptClient1(int time = 0) {}
+	virtual void closeClient1() {}
+
+	// client 2
+	virtual int getClient2Port() const { return m_clientPort; }
+	virtual std::string getClient2IP() const { return m_clientIP; }
+	virtual std::string receiveFromClient2(int time) { return ""; };
+	virtual void sendToClient2(std::string text) {}
+	virtual void acceptClient2(int time = 0) {}
+	virtual void closeClient2() {}
 
 private:
 	int m_sockfd;
