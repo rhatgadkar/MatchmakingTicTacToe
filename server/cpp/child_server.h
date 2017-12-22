@@ -4,6 +4,7 @@
 #include "server.h"
 #include "child_connection.h"
 #include <string>
+#include <pthread.h>
 
 class ChildServer : public Server
 {
@@ -36,6 +37,16 @@ private:
 	{
 		bool* messageReceived;
 		bool* client2AcceptExpired;
+		ChildServer* childServer;
+	};
+
+	static void* client1MatchThread(void* args);
+	static void* client2MatchThread(void* args);
+	struct ClientMatchThreadArgs
+	{
+		char* client1Record;
+		char* client2Record;
+		pthread_mutex_t* clientRecordMutex;
 		ChildServer* childServer;
 	};
 
