@@ -14,17 +14,30 @@ public:
 	virtual void run();
 
 private:
-	bool isLoginProvided(const std::string& login, std::string& username,
-			std::string& password);
+	void setClient1LoginProvided(const std::string& login);
 	bool m_client1LoginProvided;
-	bool m_client2LoginProvided;
 	std::string m_client1Username;
-	std::string m_client2Username;
+	std::string m_client1Password;
 
-	void setClientWinLossMsg(std::string& clientWinLossMsg,
-			const std::string& username, bool loginProvided);
+	void setClient2LoginProvided(const std::string& login);
+	bool m_client2LoginProvided;
+	std::string m_client2Username;
+	std::string m_client2Password;
+
+	void setClient1WinLossMsg();
 	std::string m_client1WinLossMsg;
+
+	void setClient2WinLossMsg();
 	std::string m_client2WinLossMsg;
+
+	bool isClient2Connected();
+	static void* receiveDisconnectClient1Thread(void* args);
+	struct Client2ConnectedThreadArgs
+	{
+		bool* messageReceived;
+		bool* client2AcceptExpired;
+		ChildServer* childServer;
+	};
 
 	int m_port;
 	ChildConnection& m_childConnection;
