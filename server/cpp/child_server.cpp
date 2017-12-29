@@ -337,11 +337,14 @@ void ChildServer::Client::setLoginProvided(const std::string& login)
 	memset(password_c, 0, MAXBUFLEN);
 
 	get_login_info(login.c_str(), username_c, password_c);
-	status = is_login_valid(username_c, password_c);
-	if (status == 0)
-		throw IncorrectLoginError;
-	else if (status == -1)
-		throw UserInGameError;
+	if (FOREVER)
+	{
+		status = is_login_valid(username_c, password_c);
+		if (status == 0)
+			throw IncorrectLoginError;
+		else if (status == -1)
+			throw UserInGameError;
+	}
 
 	m_username = username_c;
 	m_password = password_c;
