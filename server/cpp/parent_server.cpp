@@ -13,16 +13,6 @@
 #include <iostream>
 using namespace std;
 
-#define TEST
-
-#ifndef TEST
-#define FOREVER 1
-#define THREAD_INTERVAL 10
-#else
-#define FOREVER 0
-#define THREAD_INTERVAL 0
-#endif
-
 ParentServer::ParentServer(ParentConnection& c) : m_parentConnection(c)
 {
 	for (int port = PARENT_PORT + 1;

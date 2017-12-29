@@ -86,7 +86,7 @@ void ChildServer::run()
 
 	// wait to accept client 2
 	cout << "Waiting for second client to connect..." << endl;
-	for (;;)
+	do
 	{
 		bool client2Connected = isClient2Connected();
 		if (!client2Connected)
@@ -146,7 +146,7 @@ void ChildServer::run()
 			continue;
 		}
 		break;
-	}
+	} while (FOREVER);
 	cout << "client 2 success" << endl;
 
 	// if login provided, get win/loss records and send to clients
@@ -185,7 +185,7 @@ void ChildServer::run()
 	char client1Record = 'n';
 	char client2Record = 'n';
 	pthread_mutex_t clientRecordMutex;
-	Client::MatchThreadArgs childMatchThreadArgs;
+	MatchThreadArgs childMatchThreadArgs;
 	childMatchThreadArgs.client1Record = &client1Record;
 	childMatchThreadArgs.client2Record = &client2Record;
 	childMatchThreadArgs.clientRecordMutex = &clientRecordMutex;
@@ -199,40 +199,51 @@ void ChildServer::run()
 	pthread_join(client1MatchThread, NULL);
 	pthread_join(client2MatchThread, NULL);
 
-	// set both clients to not in game in database
-	if (m_client1.isLoginProvided())
-		set_user_no_ingame(m_client1.getUsername().c_str());
-	if (m_client2.isLoginProvided())
-		set_user_no_ingame(m_client2.getUsername().c_str());
+	if (FOREVER)
+	{
+		// set both clients to not in game in database
+		if (m_client1.isLoginProvided())
+			set_user_no_ingame(m_client1.getUsername().c_str());
+		if (m_client2.isLoginProvided())
+			set_user_no_ingame(m_client2.getUsername().c_str());
+	}
 
 	// find out who won/loss and update database
 	if (client2Record == 'w')
 	{
 		cout << "Client 1 lost." << endl;
 		cout << "Client 2 won." << endl;
-		update_win_loss_record(m_client1.getUsername().c_str(), 'l',
-				m_client2.getUsername().c_str(), 'w');
+		if (FOREVER)
+			update_win_loss_record(m_client1.getUsername().c_str(),
+					'l', m_client2.getUsername().c_str(),
+					'w');
 	}
 	else if (client1Record == 'w')
 	{
 		cout << "Client 1 won." << endl;
 		cout << "Client 2 lost." << endl;
-		update_win_loss_record(m_client1.getUsername().c_str(), 'w',
-				m_client2.getUsername().c_str(), 'l');
+		if (FOREVER)
+			update_win_loss_record(m_client1.getUsername().c_str(),
+					'w', m_client2.getUsername().c_str(),
+					'l');
 	}
 	else if (client2Record == 'g')
 	{
 		cout << "Client 1 won." << endl;
 		cout << "Client 2 lost." << endl;
-		update_win_loss_record(m_client1.getUsername().c_str(), 'w',
-				m_client2.getUsername().c_str(), 'l');
+		if (FOREVER)
+			update_win_loss_record(m_client1.getUsername().c_str(),
+					'w', m_client2.getUsername().c_str(),
+					'l');
 	}
 	else if (client1Record == 'g')
 	{
 		cout << "Client 1 lost." << endl;
 		cout << "Client 2 won." << endl;
-		update_win_loss_record(m_client1.getUsername().c_str(), 'l',
-				m_client2.getUsername().c_str(), 'w');
+		if (FOREVER)
+			update_win_loss_record(m_client1.getUsername().c_str(),
+					'l', m_client2.getUsername().c_str(),
+					'w');
 	}
 
 	// game is over so close connections to clients
@@ -350,27 +361,186 @@ void ChildServer::Client::setWinLossMsg()
 	string win;
 	string loss;
 
-	memset(win_c, 0, MAXBUFLEN);
-	memset(loss_c, 0, MAXBUFLEN);
-	get_win_loss_record(m_username.c_str(), win_c, loss_c);
-	win = win_c;
-	loss = loss_c;
+	if (FOREVER)
+	{
+		memset(win_c, 0, MAXBUFLEN);
+		memset(loss_c, 0, MAXBUFLEN);
+		get_win_loss_record(m_username.c_str(), win_c, loss_c);
+		win = win_c;
+		loss = loss_c;
+	}
+	else
+	{
+		win = "0";
+		loss = "0";
+	}
 
 	m_winLossMsg = "r" + win + "," + loss + ",";
 	if (m_username != "")
 		m_winLossMsg += m_username;
 }
 
-void* ChildServer::Client::matchThread(void* args)
+void* ChildServer::client1MatchThread(void* args)
 {
-	Client::MatchThreadArgs* a = (Client::MatchThreadArgs*)args;
+	MatchThreadArgs* a = (MatchThreadArgs*)args;
 	char* client1Record = (char*)a->client1Record;
 	char* client2Record = (char*)a->client2Record;
 	pthread_mutex_t* clientRecordMutex =
 		(pthread_mutex_t*)a->clientRecordMutex;
 	ChildServer* cs = a->childServer;
 
-	for (;;)
+	do
+	{
+		string msg;
+		try
+		{
+			msg = cs->m_childConnection.receiveFromClient1(40);
+		}
+		catch (DisconnectException)
+		{
+			cout << "Received 'giveup'" << endl;
+			// send 'giveup' to second address only if no record
+			// has been set previously for other client and break
+			pthread_mutex_lock(clientRecordMutex);
+			if (*client1Record == 'n')
+			{
+				*client2Record = 'g';
+				pthread_mutex_unlock(clientRecordMutex);
+				try
+				{
+					cs->m_childConnection.sendToClient2("giveup");
+				}
+				catch (...)
+				{
+					cerr << "Error in sending 'giveup' to "
+						<< "client 2" << endl;
+				}
+			}
+			break;
+		}
+		catch (TimeoutException)
+		{
+			cout << "Not receiving anything. Closing child server."
+				<< endl;
+			// send 'bye' to client 1 and client 2
+			try
+			{
+				cs->m_childConnection.sendToClient2("bye");
+			}
+			catch (...)
+			{
+				cerr << "Error in sending 'bye' to client 2."
+					<< endl;
+			}
+			try
+			{
+				cs->m_childConnection.sendToClient1("bye");
+			}
+			catch (...)
+			{
+				cerr << "Error in sending 'bye' to client 1."
+					<< endl;
+			}
+			break;
+		}
+		catch (...)
+		{
+			cerr << "Error in receiving message from client 1."
+				<< endl;
+			break;
+		}
+		cout << "Receiving message from client 1: "
+			<< cs->m_childConnection.getClient1IP() << ": " << msg
+			<< endl;
+
+		if (msg == "bye")
+		{
+			cout << "Received 'bye', closing connection to "
+				<< "client 1: "
+				<< cs->m_childConnection.getClient1IP()
+				<< endl;
+			// send bye to client 2
+			try
+			{
+				cs->m_childConnection.sendToClient2("bye");
+			}
+			catch (...)
+			{
+				cerr << "Error in sending 'bye' to client 2"
+					<< endl;
+			}
+			break;
+		}
+		else if (msg == "giveup")
+		{
+			cout << "Received 'giveup'" << endl;
+			// send 'giveup' to second address only if no record
+			// has been set previously for other client and break
+			pthread_mutex_lock(clientRecordMutex);
+			if (*client1Record == 'n')
+			{
+				*client2Record = 'g';
+				pthread_mutex_unlock(clientRecordMutex);
+				try
+				{
+					cs->m_childConnection.sendToClient2("giveup");
+				}
+				catch (...)
+				{
+					cerr << "Error in sending 'giveup' to "
+						<< "client 2" << endl;
+				}
+			}
+			break;
+		}
+		else
+		{
+			// forward message to client 2
+			if (msg[0] == 'w')
+			{
+				pthread_mutex_lock(clientRecordMutex);
+				if (*client1Record == 'n')
+					*client2Record = 'w';
+				pthread_mutex_unlock(clientRecordMutex);
+			}
+			else if (msg[0] == 't')
+			{
+				pthread_mutex_lock(clientRecordMutex);
+				if (*client1Record == 'n')
+					*client2Record = 't';
+				pthread_mutex_unlock(clientRecordMutex);
+			}
+			try
+			{
+				cs->m_childConnection.sendToClient2(msg);
+				cout << "Forwarding message from client 1: "
+					<< cs->m_childConnection.getClient1IP()
+					<< endl;
+			}
+			catch (...)
+			{
+				cerr << "Error forwarding message to client 2."
+					<< endl;
+				break;
+			}
+			if (msg[0] == 'w' || msg[0] == 't')
+				break;
+		}
+	} while (FOREVER);
+
+	return NULL;
+}
+
+void* ChildServer::client2MatchThread(void* args)
+{
+	MatchThreadArgs* a = (MatchThreadArgs*)args;
+	char* client1Record = (char*)a->client1Record;
+	char* client2Record = (char*)a->client2Record;
+	pthread_mutex_t* clientRecordMutex =
+		(pthread_mutex_t*)a->clientRecordMutex;
+	ChildServer* cs = a->childServer;
+
+	do
 	{
 		string msg;
 		try
@@ -507,7 +677,7 @@ void* ChildServer::Client::matchThread(void* args)
 			if (msg[0] == 'w' || msg[0] == 't')
 				break;
 		}
-	}
+	} while (FOREVER);
 
 	return NULL;
 }

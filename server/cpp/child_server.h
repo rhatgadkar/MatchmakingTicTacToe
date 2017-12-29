@@ -15,40 +15,12 @@ public:
 	virtual void run();
 
 private:
-	void setClient1LoginProvided(const std::string& login);
-	bool m_client1LoginProvided;
-	std::string m_client1Username;
-	std::string m_client1Password;
-
-	void setClient2LoginProvided(const std::string& login);
-	bool m_client2LoginProvided;
-	std::string m_client2Username;
-	std::string m_client2Password;
-
-	void setClient1WinLossMsg();
-	std::string m_client1WinLossMsg;
-
-	void setClient2WinLossMsg();
-	std::string m_client2WinLossMsg;
-
-	static void* client1MatchThread(void* args);
-	static void* client2MatchThread(void* args);
-
 	class Client
 	{
 	public:
 		void setLoginProvided(const std::string& login);
 
 		void setWinLossMsg();
-
-		static void* matchThread(void* args);
-		struct MatchThreadArgs
-		{
-			char* client1Record;
-			char* client2Record;
-			pthread_mutex_t* clientRecordMutex;
-			ChildServer* childServer;
-		};
 
 		// getters
 		bool isLoginProvided() { return m_loginProvided; }
@@ -57,7 +29,6 @@ private:
 		std::string getWinLossMsg() { return m_winLossMsg; }
 
 	private:
-		std::string m_clientName;
 		bool m_loginProvided;
 		std::string m_username;
 		std::string m_password;
@@ -70,6 +41,16 @@ private:
 	{
 		bool* messageReceived;
 		bool* client2AcceptExpired;
+		ChildServer* childServer;
+	};
+
+	static void* client1MatchThread(void* args);
+	static void* client2MatchThread(void* args);
+	struct MatchThreadArgs
+	{
+		char* client1Record;
+		char* client2Record;
+		pthread_mutex_t* clientRecordMutex;
 		ChildServer* childServer;
 	};
 

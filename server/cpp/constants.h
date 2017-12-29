@@ -9,4 +9,14 @@
 #define PORT_LEN 4
 #define MAX_CHILD_POP 2
 
+#define TEST
+
+#ifndef TEST
+#define FOREVER 1
+#define THREAD_INTERVAL 10
+#else
+#define FOREVER 0
+#define THREAD_INTERVAL 0
+#endif
+
 #endif  // CONSTANTS_H
