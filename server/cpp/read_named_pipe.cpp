@@ -16,12 +16,12 @@ ReadNamedPipe::ReadNamedPipe(bool create)
 	{
 		status = mkfifo(FIFO_NAME, S_IFIFO | 0666);
 		if (status == -1)
-			throw runtime_error("NamedPipe::NamedPipe::mkfifo");
+			throw runtime_error("ReadNamedPipe::ReadNamedPipe::mkfifo");
 	}
 
 	m_fifofd = open(FIFO_NAME, O_RDONLY | O_NDELAY);
 	if (m_fifofd == -1)
-		throw runtime_error("NamedPipe::NamedPipe::open");
+		throw runtime_error("ReadNamedPipe::ReadNamedPipe::open");
 }
 
 string ReadNamedPipe::readPipe(unsigned len) const
@@ -32,7 +32,7 @@ string ReadNamedPipe::readPipe(unsigned len) const
 	memset(buf, 0, MAXBUFLEN);
 	status = read(m_fifofd, buf, len);
 	if (status == -1)
-		throw runtime_error("NamedPipe::read::read");
+		throw runtime_error("ReadNamedPipe::read::read");
 	string newStr(buf);
 	return newStr;
 }

@@ -15,12 +15,12 @@ WriteNamedPipe::WriteNamedPipe(bool create)
 	{
 		status = mkfifo(FIFO_NAME, S_IFIFO | 0666);
 		if (status == -1)
-			throw runtime_error("NamedPipe::NamedPipe::mkfifo");
+			throw runtime_error("WriteNamedPipe::WriteNamedPipe::mkfifo");
 	}
 
 	m_fifofd = open(FIFO_NAME, O_WRONLY);
 	if (m_fifofd == -1)
-		throw runtime_error("NamedPipe::NamedPipe::open");
+		throw runtime_error("WriteNamedPipe::WriteNamedPipe::open");
 }
 
 void WriteNamedPipe::writePipe(const string& text, unsigned len) const
@@ -29,5 +29,5 @@ void WriteNamedPipe::writePipe(const string& text, unsigned len) const
 
 	status = write(m_fifofd, text.c_str(), len);
 	if (status == -1)
-		throw runtime_error("NamedPipe::write::write");
+		throw runtime_error("WriteNamedPipe::write::write");
 }

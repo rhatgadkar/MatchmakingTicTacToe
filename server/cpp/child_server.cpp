@@ -185,6 +185,13 @@ void ChildServer::run()
 	char client1Record = 'n';
 	char client2Record = 'n';
 	pthread_mutex_t clientRecordMutex;
+	pthread_mutexattr_t clientRecordMutexAttr;
+	pthread_mutexattr_init(&clientRecordMutexAttr);
+	// recursive mutex attribute is used to solve repeated locking of fast
+	// mutex: https://stackoverflow.com/questions/21825291/threading-issues
+	pthread_mutexattr_settype(&clientRecordMutexAttr,
+			PTHREAD_MUTEX_RECURSIVE);
+	pthread_mutex_init(&clientRecordMutex, &clientRecordMutexAttr);
 	MatchThreadArgs childMatchThreadArgs;
 	childMatchThreadArgs.client1Record = &client1Record;
 	childMatchThreadArgs.client2Record = &client2Record;
@@ -316,9 +323,12 @@ bool ChildServer::isClient2Connected()
 
 ChildServer::~ChildServer()
 {
-	WriteNamedPipe writeNamedPipe(false);
-	string portStr = intToStr(m_port);
-	writeNamedPipe.writePipe(portStr, portStr.length());
+	if (FOREVER)
+	{
+		WriteNamedPipe writeNamedPipe(false);
+		string portStr = intToStr(m_port);
+		writeNamedPipe.writePipe(portStr, portStr.length());
+	}
 }
 
 void ChildServer::Client::setLoginProvided(const std::string& login)
@@ -392,7 +402,7 @@ void* ChildServer::client1MatchThread(void* args)
 		(pthread_mutex_t*)a->clientRecordMutex;
 	ChildServer* cs = a->childServer;
 
-	do
+	for (;;)
 	{
 		string msg;
 		try
@@ -419,6 +429,8 @@ void* ChildServer::client1MatchThread(void* args)
 						<< "client 2" << endl;
 				}
 			}
+			else
+				pthread_mutex_unlock(clientRecordMutex);
 			break;
 		}
 		catch (TimeoutException)
@@ -494,6 +506,8 @@ void* ChildServer::client1MatchThread(void* args)
 						<< "client 2" << endl;
 				}
 			}
+			else
+				pthread_mutex_unlock(clientRecordMutex);
 			break;
 		}
 		else
@@ -502,15 +516,15 @@ void* ChildServer::client1MatchThread(void* args)
 			if (msg[0] == 'w')
 			{
 				pthread_mutex_lock(clientRecordMutex);
-				if (*client1Record == 'n')
-					*client2Record = 'w';
+				if (*client2Record == 'n')
+					*client1Record = 'w';
 				pthread_mutex_unlock(clientRecordMutex);
 			}
 			else if (msg[0] == 't')
 			{
 				pthread_mutex_lock(clientRecordMutex);
-				if (*client1Record == 'n')
-					*client2Record = 't';
+				if (*client2Record == 'n')
+					*client1Record = 't';
 				pthread_mutex_unlock(clientRecordMutex);
 			}
 			try
@@ -526,10 +540,18 @@ void* ChildServer::client1MatchThread(void* args)
 					<< endl;
 				break;
 			}
-			if (msg[0] == 'w' || msg[0] == 't')
+			pthread_mutex_lock(clientRecordMutex);
+			if (msg[0] == 'w' || msg[0] == 't' ||
+					*client1Record != 'n' ||
+					*client2Record != 'n')
+			{
+				pthread_mutex_unlock(clientRecordMutex);
 				break;
+			}
+			else
+				pthread_mutex_unlock(clientRecordMutex);
 		}
-	} while (FOREVER);
+	}
 
 	return NULL;
 }
@@ -543,7 +565,7 @@ void* ChildServer::client2MatchThread(void* args)
 		(pthread_mutex_t*)a->clientRecordMutex;
 	ChildServer* cs = a->childServer;
 
-	do
+	for (;;)
 	{
 		string msg;
 		try
@@ -570,6 +592,8 @@ void* ChildServer::client2MatchThread(void* args)
 						<< "client 1" << endl;
 				}
 			}
+			else
+				pthread_mutex_unlock(clientRecordMutex);
 			break;
 		}
 		catch (TimeoutException)
@@ -645,6 +669,8 @@ void* ChildServer::client2MatchThread(void* args)
 						<< "client 1" << endl;
 				}
 			}
+			else
+				pthread_mutex_unlock(clientRecordMutex);
 			break;
 		}
 		else
@@ -677,10 +703,18 @@ void* ChildServer::client2MatchThread(void* args)
 					<< endl;
 				break;
 			}
-			if (msg[0] == 'w' || msg[0] == 't')
+			pthread_mutex_lock(clientRecordMutex);
+			if (msg[0] == 'w' || msg[0] == 't' ||
+					*client1Record != 'n' ||
+					*client2Record != 'n')
+			{
+				pthread_mutex_unlock(clientRecordMutex);
 				break;
+			}
+			else
+				pthread_mutex_unlock(clientRecordMutex);
 		}
-	} while (FOREVER);
+	}
 
 	return NULL;
 }

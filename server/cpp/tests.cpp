@@ -169,40 +169,33 @@ void testChildServer()
 	ChildServer s(c, 4951);
 	const vector<string>* client1SentMsgs;
 	const vector<string>* client2SentMsgs;
+	vector<string> expectedClient1SentMsgs;
+	vector<string> expectedClient2SentMsgs;
 
 	// test client 1, client 2 guest and client 1 win
-	// client 1 send: "r,," "1" "3" "5" "w7"
-	// client 2 send: "r,," "2" "4" "6"
+	// client 1 send: "," "1" "3" "5" "w7"
+	// client 2 send: "," "2" "4" "6"
 	//	verify server send to client 1: "player-1" "r,," "2" "4" "6"
 	//	verify server send to client 2: "r,," "1" "3" "5" "w7"
-	list<string> client1Recv;
-	client1Recv.push_back("r,,");
-	client1Recv.push_back("1");
-	client1Recv.push_back("3");
-	client1Recv.push_back("5");
-	client1Recv.push_back("w7");
-	c.setClient1ReceivedMsgs(client1Recv);
-	list<string> client2Recv;
-	client1Recv.push_back("r,,");
-	client1Recv.push_back("2");
-	client1Recv.push_back("4");
-	client1Recv.push_back("6");
-	c.setClient2ReceivedMsgs(client2Recv);
-	s.run();
-	client1SentMsgs = &c.getClient1SentMsgs();
-	client2SentMsgs = &c.getClient2SentMsgs();
-	assert(client1SentMsgs->at(0) == "player-1");
-	assert(client1SentMsgs->at(1) == "r,,");
-	assert(client1SentMsgs->at(2) == "2");
-	assert(client1SentMsgs->at(3) == "4");
-	assert(client1SentMsgs->at(4) == "6");
-	assert(client2SentMsgs->at(0) == "r,,");
-	assert(client2SentMsgs->at(1) == "1");
-	assert(client2SentMsgs->at(2) == "3");
-	assert(client2SentMsgs->at(3) == "5");
-	assert(client2SentMsgs->at(4) == "w7");
-	c.clearClient1SentMsgs();
-	c.clearClient2SentMsgs();
+	{
+		list<string> client1Recv({ ",", "1", "3", "5", "w7" });
+		list<string> client2Recv({ ",", "2", "4", "6" });
+		expectedClient1SentMsgs = { "player-1", "r,,", "2", "4", "6" };
+		expectedClient2SentMsgs = { "r,,", "1", "3", "5", "w7" };
+		c.setClient1ReceivedMsgs(client1Recv);
+		c.setClient2ReceivedMsgs(client2Recv);
+		s.run();
+		client1SentMsgs = &c.getClient1SentMsgs();
+		client2SentMsgs = &c.getClient2SentMsgs();
+		for (size_t k = 0; k < client1SentMsgs->size(); k++)
+			assert(client1SentMsgs->at(k) ==
+					expectedClient1SentMsgs[k]);
+		for (size_t k = 0; k < client2SentMsgs->size(); k++)
+			assert(client2SentMsgs->at(k) ==
+					expectedClient2SentMsgs[k]);
+		c.clearClient1SentMsgs();
+		c.clearClient2SentMsgs();
+	}
 }
 
 int main()
