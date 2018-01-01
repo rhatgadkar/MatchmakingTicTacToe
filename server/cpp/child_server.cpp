@@ -366,6 +366,7 @@ void ChildServer::Client::setWinLossMsg(const string& opponentUsername)
 	if (!m_loginProvided)
 	{
 		m_winLossMsg = "r,,";
+		m_winLossMsg += opponentUsername;
 		return;
 	}
 
@@ -389,8 +390,7 @@ void ChildServer::Client::setWinLossMsg(const string& opponentUsername)
 	}
 
 	m_winLossMsg = "r" + win + "," + loss + ",";
-	if (m_username != "")
-		m_winLossMsg += opponentUsername;
+	m_winLossMsg += opponentUsername;
 }
 
 void* ChildServer::client1MatchThread(void* args)

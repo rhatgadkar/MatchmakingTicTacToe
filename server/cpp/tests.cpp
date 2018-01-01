@@ -166,7 +166,6 @@ void testParentServer()
 void testChildServer()
 {
 	MockChildConnection c;
-	ChildServer s(c, 4951);
 	const vector<string>* sendToClient1Msgs;
 	const vector<string>* sendToClient2Msgs;
 	vector<string> expectedSendToClient1Msgs;
@@ -178,6 +177,7 @@ void testChildServer()
 	//	verify server send to client 1: "player-1" "r,," "2" "4" "6"
 	//	verify server send to client 2: "r,," "1" "3" "5" "w7"
 	{
+		ChildServer s(c, 4951);
 		list<string> client1Send({ ",", "1", "3", "5", "w7" });
 		list<string> client2Send({ ",", "2", "4", "6" });
 		expectedSendToClient1Msgs = { "player-1", "r,,", "2", "4", "6" };
@@ -203,6 +203,7 @@ void testChildServer()
 	//	verify server send to client 1: "player-1" "r,," "2" "4" "6"
 	//	verify server send to client 2: "r,," "1" "3" "5" "w7"
 	{
+		ChildServer s(c, 4951);
 		list<string> client1Send({ ",", "2", "4", "6", "8" });
 		list<string> client2Send({ ",", "1", "3", "5", "w7" });
 		expectedSendToClient1Msgs = { "player-1", "r,,", "1", "3", "5", "w7" };
@@ -228,6 +229,7 @@ void testChildServer()
 	//	verify server send to client 1: "player-1" "r,," "1" "3" "5"
 	//	verify server send to client 2: "r,," "2" "4" "6" "giveup"
 	{
+		ChildServer s(c, 4951);
 		list<string> client1Send({ ",", "2", "4", "6", "giveup" });
 		list<string> client2Send({ ",", "1", "3", "5" });
 		expectedSendToClient1Msgs = { "player-1", "r,,", "1", "3", "5" };
@@ -253,6 +255,7 @@ void testChildServer()
 	//	verify server send to client 1: "player-1" "r,," "2" "4" "6" "giveup"
 	//	verify server send to client 2: "r,," "1" "3" "5"
 	{
+		ChildServer s(c, 4951);
 		list<string> client1Send({ ",", "1", "3", "5" });
 		list<string> client2Send({ ",", "2", "4", "6", "giveup" });
 		expectedSendToClient1Msgs = { "player-1", "r,,", "2", "4", "6", "giveup" };
@@ -278,6 +281,7 @@ void testChildServer()
 	//	verify server send to client 1: "player-1" "r,," "1" "3" "5"
 	//	verify server send to client 2: "r,," "2" "4" "6" "bye"
 	{
+		ChildServer s(c, 4951);
 		list<string> client1Send({ ",", "2", "4", "6", "bye" });
 		list<string> client2Send({ ",", "1", "3", "5" });
 		expectedSendToClient1Msgs = { "player-1", "r,,", "1", "3", "5" };
@@ -303,6 +307,7 @@ void testChildServer()
 	//	verify server send to client 1: "player-1" "r,," "2" "4" "6" "bye"
 	//	verify server send to client 2: "r,," "1" "3" "5"
 	{
+		ChildServer s(c, 4951);
 		list<string> client1Send({ ",", "1", "3", "5" });
 		list<string> client2Send({ ",", "2", "4", "6", "bye" });
 		expectedSendToClient1Msgs = { "player-1", "r,,", "2", "4", "6", "bye" };
@@ -328,6 +333,7 @@ void testChildServer()
 	//	verify server send to client 1: "player-1" "r0,0,b" "2" "4" "6" "bye"
 	//	verify server send to client 2: "r0,0,a" "1" "3" "5"
 	{
+		ChildServer s(c, 4951);
 		list<string> client1Send({ "a,a", "1", "3", "5" });
 		list<string> client2Send({ "b,b", "2", "4", "6", "bye" });
 		expectedSendToClient1Msgs = { "player-1", "r0,0,b", "2", "4", "6", "bye" };
@@ -347,17 +353,17 @@ void testChildServer()
 		c.clearSendToClient2Msgs();
 	}
 
-	// TODO:
 	// test client 1 non-guest, client 2 guest and client 2 bye
 	// client 1 send: "a,a" "1" "3" "5"
-	// client 2 send: "b,b" "2" "4" "6" "bye"
-	//	verify server send to client 1: "player-1" "r0,0,b" "2" "4" "6" "bye"
-	//	verify server send to client 2: "r0,0,a" "1" "3" "5"
-/*	{
+	// client 2 send: "," "2" "4" "6" "bye"
+	//	verify server send to client 1: "player-1" "r0,0," "2" "4" "6" "bye"
+	//	verify server send to client 2: "r,,a" "1" "3" "5"
+	{
+		ChildServer s(c, 4951);
 		list<string> client1Send({ "a,a", "1", "3", "5" });
-		list<string> client2Send({ "b,b", "2", "4", "6", "bye" });
-		expectedSendToClient1Msgs = { "player-1", "r0,0,b", "2", "4", "6", "bye" };
-		expectedSendToClient2Msgs = { "r0,0,a", "1", "3", "5" };
+		list<string> client2Send({ ",", "2", "4", "6", "bye" });
+		expectedSendToClient1Msgs = { "player-1", "r0,0,", "2", "4", "6", "bye" };
+		expectedSendToClient2Msgs = { "r,,a", "1", "3", "5" };
 		c.setClient1SentMsgs(client1Send);
 		c.setClient2SentMsgs(client2Send);
 		s.run();
@@ -372,18 +378,18 @@ void testChildServer()
 		c.clearSendToClient1Msgs();
 		c.clearSendToClient2Msgs();
 	}
-*/
-	// TODO:
+
 	// test client 1 guest, client 2 non-guest and client 2 bye
-	// client 1 send: "a,a" "1" "3" "5"
+	// client 1 send: "," "1" "3" "5"
 	// client 2 send: "b,b" "2" "4" "6" "bye"
-	//	verify server send to client 1: "player-1" "r0,0,b" "2" "4" "6" "bye"
-	//	verify server send to client 2: "r0,0,a" "1" "3" "5"
-/*	{
-		list<string> client1Send({ "a,a", "1", "3", "5" });
+	//	verify server send to client 1: "player-1" "r,,b" "2" "4" "6" "bye"
+	//	verify server send to client 2: "r0,0," "1" "3" "5"
+	{
+		ChildServer s(c, 4951);
+		list<string> client1Send({ ",", "1", "3", "5" });
 		list<string> client2Send({ "b,b", "2", "4", "6", "bye" });
-		expectedSendToClient1Msgs = { "player-1", "r0,0,b", "2", "4", "6", "bye" };
-		expectedSendToClient2Msgs = { "r0,0,a", "1", "3", "5" };
+		expectedSendToClient1Msgs = { "player-1", "r,,b", "2", "4", "6", "bye" };
+		expectedSendToClient2Msgs = { "r0,0,", "1", "3", "5" };
 		c.setClient1SentMsgs(client1Send);
 		c.setClient2SentMsgs(client2Send);
 		s.run();
@@ -398,7 +404,6 @@ void testChildServer()
 		c.clearSendToClient1Msgs();
 		c.clearSendToClient2Msgs();
 	}
-*/
 }
 
 int main()
