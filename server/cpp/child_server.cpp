@@ -415,9 +415,9 @@ void* ChildServer::client1MatchThread(void* args)
 			// send 'giveup' to second address only if no record
 			// has been set previously for other client and break
 			pthread_mutex_lock(clientRecordMutex);
-			if (*client1Record == 'n')
+			if (*client2Record == 'n')
 			{
-				*client2Record = 'g';
+				*client1Record = 'g';
 				pthread_mutex_unlock(clientRecordMutex);
 				try
 				{
@@ -492,9 +492,9 @@ void* ChildServer::client1MatchThread(void* args)
 			// send 'giveup' to second address only if no record
 			// has been set previously for other client and break
 			pthread_mutex_lock(clientRecordMutex);
-			if (*client1Record == 'n')
+			if (*client2Record == 'n')
 			{
-				*client2Record = 'g';
+				*client1Record = 'g';
 				pthread_mutex_unlock(clientRecordMutex);
 				try
 				{

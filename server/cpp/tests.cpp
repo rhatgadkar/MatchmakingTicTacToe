@@ -167,10 +167,10 @@ void testChildServer()
 {
 	MockChildConnection c;
 	ChildServer s(c, 4951);
-	const vector<string>* client1SentMsgs;
-	const vector<string>* client2SentMsgs;
-	vector<string> expectedClient1SentMsgs;
-	vector<string> expectedClient2SentMsgs;
+	const vector<string>* sendToClient1Msgs;
+	const vector<string>* sendToClient2Msgs;
+	vector<string> expectedSendToClient1Msgs;
+	vector<string> expectedSendToClient2Msgs;
 
 	// test client 1, client 2 guest and client 1 win
 	// client 1 send: "," "1" "3" "5" "w7"
@@ -178,23 +178,98 @@ void testChildServer()
 	//	verify server send to client 1: "player-1" "r,," "2" "4" "6"
 	//	verify server send to client 2: "r,," "1" "3" "5" "w7"
 	{
-		list<string> client1Recv({ ",", "1", "3", "5", "w7" });
-		list<string> client2Recv({ ",", "2", "4", "6" });
-		expectedClient1SentMsgs = { "player-1", "r,,", "2", "4", "6" };
-		expectedClient2SentMsgs = { "r,,", "1", "3", "5", "w7" };
-		c.setClient1ReceivedMsgs(client1Recv);
-		c.setClient2ReceivedMsgs(client2Recv);
+		list<string> client1Send({ ",", "1", "3", "5", "w7" });
+		list<string> client2Send({ ",", "2", "4", "6" });
+		expectedSendToClient1Msgs = { "player-1", "r,,", "2", "4", "6" };
+		expectedSendToClient2Msgs = { "r,,", "1", "3", "5", "w7" };
+		c.setClient1SentMsgs(client1Send);
+		c.setClient2SentMsgs(client2Send);
 		s.run();
-		client1SentMsgs = &c.getClient1SentMsgs();
-		client2SentMsgs = &c.getClient2SentMsgs();
-		for (size_t k = 0; k < client1SentMsgs->size(); k++)
-			assert(client1SentMsgs->at(k) ==
-					expectedClient1SentMsgs[k]);
-		for (size_t k = 0; k < client2SentMsgs->size(); k++)
-			assert(client2SentMsgs->at(k) ==
-					expectedClient2SentMsgs[k]);
-		c.clearClient1SentMsgs();
-		c.clearClient2SentMsgs();
+		sendToClient1Msgs = &c.getSendToClient1Msgs();
+		sendToClient2Msgs = &c.getSendToClient2Msgs();
+		for (size_t k = 0; k < sendToClient1Msgs->size(); k++)
+			assert(sendToClient1Msgs->at(k) ==
+					expectedSendToClient1Msgs[k]);
+		for (size_t k = 0; k < sendToClient2Msgs->size(); k++)
+			assert(sendToClient2Msgs->at(k) ==
+					expectedSendToClient2Msgs[k]);
+		c.clearSendToClient1Msgs();
+		c.clearSendToClient2Msgs();
+	}
+
+	// test client 1, client 2 guest and client 2 win
+	// client 1 send: "," "2" "4" "6" "8"
+	// client 2 send: "," "1" "3" "5" "w7"
+	//	verify server send to client 1: "player-1" "r,," "2" "4" "6"
+	//	verify server send to client 2: "r,," "1" "3" "5" "w7"
+	{
+		list<string> client1Send({ ",", "2", "4", "6", "8" });
+		list<string> client2Send({ ",", "1", "3", "5", "w7" });
+		expectedSendToClient1Msgs = { "player-1", "r,,", "1", "3", "5", "w7" };
+		expectedSendToClient2Msgs = { "r,,", "2", "4", "6", "8" };
+		c.setClient1SentMsgs(client1Send);
+		c.setClient2SentMsgs(client2Send);
+		s.run();
+		sendToClient1Msgs = &c.getSendToClient1Msgs();
+		sendToClient2Msgs = &c.getSendToClient2Msgs();
+		for (size_t k = 0; k < sendToClient1Msgs->size(); k++)
+			assert(sendToClient1Msgs->at(k) ==
+					expectedSendToClient1Msgs[k]);
+		for (size_t k = 0; k < sendToClient2Msgs->size(); k++)
+			assert(sendToClient2Msgs->at(k) ==
+					expectedSendToClient2Msgs[k]);
+		c.clearSendToClient1Msgs();
+		c.clearSendToClient2Msgs();
+	}
+
+	// test client 1, client 2 guest and client 1 giveup
+	// client 1 send: "," "2" "4" "6" "giveup"
+	// client 2 send: "," "1" "3" "5"
+	//	verify server send to client 1: "player-1" "r,," "1" "3" "5"
+	//	verify server send to client 2: "r,," "2" "4" "6" "giveup"
+	{
+		list<string> client1Send({ ",", "2", "4", "6", "giveup" });
+		list<string> client2Send({ ",", "1", "3", "5" });
+		expectedSendToClient1Msgs = { "player-1", "r,,", "1", "3", "5" };
+		expectedSendToClient2Msgs = { "r,,", "2", "4", "6", "giveup" };
+		c.setClient1SentMsgs(client1Send);
+		c.setClient2SentMsgs(client2Send);
+		s.run();
+		sendToClient1Msgs = &c.getSendToClient1Msgs();
+		sendToClient2Msgs = &c.getSendToClient2Msgs();
+		for (size_t k = 0; k < sendToClient1Msgs->size(); k++)
+			assert(sendToClient1Msgs->at(k) ==
+					expectedSendToClient1Msgs[k]);
+		for (size_t k = 0; k < sendToClient2Msgs->size(); k++)
+			assert(sendToClient2Msgs->at(k) ==
+					expectedSendToClient2Msgs[k]);
+		c.clearSendToClient1Msgs();
+		c.clearSendToClient2Msgs();
+	}
+
+	// test client 1, client 2 guest and client 2 giveup
+	// client 1 send: "," "1" "3" "5"
+	// client 2 send: "," "2" "4" "6" "giveup"
+	//	verify server send to client 1: "player-1" "r,," "2" "4" "6" "giveup"
+	//	verify server send to client 2: "r,," "1" "3" "5"
+	{
+		list<string> client1Send({ ",", "1", "3", "5" });
+		list<string> client2Send({ ",", "2", "4", "6", "giveup" });
+		expectedSendToClient1Msgs = { "player-1", "r,,", "2", "4", "6", "giveup" };
+		expectedSendToClient2Msgs = { "r,,", "1", "3", "5" };
+		c.setClient1SentMsgs(client1Send);
+		c.setClient2SentMsgs(client2Send);
+		s.run();
+		sendToClient1Msgs = &c.getSendToClient1Msgs();
+		sendToClient2Msgs = &c.getSendToClient2Msgs();
+		for (size_t k = 0; k < sendToClient1Msgs->size(); k++)
+			assert(sendToClient1Msgs->at(k) ==
+					expectedSendToClient1Msgs[k]);
+		for (size_t k = 0; k < sendToClient2Msgs->size(); k++)
+			assert(sendToClient2Msgs->at(k) ==
+					expectedSendToClient2Msgs[k]);
+		c.clearSendToClient1Msgs();
+		c.clearSendToClient2Msgs();
 	}
 }
 

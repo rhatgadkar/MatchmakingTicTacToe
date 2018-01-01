@@ -18,17 +18,17 @@ public:
 	virtual void sendToClient1(std::string text);
 	virtual void acceptClient1(int time = 0) {}
 	virtual void closeClient1() {}
-	const std::vector<std::string>& getClient1SentMsgs() const
+	const std::vector<std::string>& getSendToClient1Msgs() const
 	{
-		return m_client1SentMsgs;
+		return m_sendToClient1Msgs;
 	}
-	void setClient1ReceivedMsgs(const std::list<std::string>& receivedMsgs)
+	void setClient1SentMsgs(const std::list<std::string>& sentMsgs)
 	{
-		m_client1ReceivedMsgs = receivedMsgs;
+		m_client1SentMsgs = sentMsgs;
 	}
-	void clearClient1SentMsgs()
+	void clearSendToClient1Msgs()
 	{
-		m_client1SentMsgs.clear();
+		m_sendToClient1Msgs.clear();
 	}
 
 	// client 2
@@ -38,25 +38,25 @@ public:
 	virtual void sendToClient2(std::string text);
 	virtual void acceptClient2(int time = 0) {}
 	virtual void closeClient2() {}
-	const std::vector<std::string>& getClient2SentMsgs() const
+	const std::vector<std::string>& getSendToClient2Msgs() const
 	{
-		return m_client2SentMsgs;
+		return m_sendToClient2Msgs;
 	}
-	void setClient2ReceivedMsgs(const std::list<std::string>& receivedMsgs)
+	void setClient2SentMsgs(const std::list<std::string>& sentMsgs)
 	{
-		m_client2ReceivedMsgs = receivedMsgs;
+		m_client2SentMsgs = sentMsgs;
 	}
-	void clearClient2SentMsgs()
+	void clearSendToClient2Msgs()
 	{
-		m_client2SentMsgs.clear();
+		m_sendToClient2Msgs.clear();
 	}
 
 private:
-	std::list<std::string> m_client1ReceivedMsgs;
-	std::vector<std::string> m_client1SentMsgs;
+	std::list<std::string> m_client1SentMsgs;
+	std::vector<std::string> m_sendToClient1Msgs;
 	
-	std::list<std::string> m_client2ReceivedMsgs;
-	std::vector<std::string> m_client2SentMsgs;
+	std::list<std::string> m_client2SentMsgs;
+	std::vector<std::string> m_sendToClient2Msgs;
 };
 
 #endif  // MOCK_CHILD_CONNECTION_H
