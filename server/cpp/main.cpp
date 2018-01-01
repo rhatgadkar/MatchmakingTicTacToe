@@ -1,5 +1,6 @@
 #include "mock_parent_connection.h"
 #include "mock_child_connection.h"
+#include "server_parent_connection.h"
 #include "parent_server.h"
 #include "child_server.h"
 #include "constants.h"
@@ -408,9 +409,24 @@ void testChildServer()
 
 int main()
 {
-	testParentServer();
-	cout << "All Parent Server tests passed!" << endl;
+	if (!FOREVER)
+	{
+		// run mock unit tests:
 
-	testChildServer();
-	cout << "All Child Server tests passed!" << endl;
+		testParentServer();
+		cout << "All Parent Server tests passed!" << endl;
+
+		testChildServer();
+		cout << "All Child Server tests passed!" << endl;
+	}
+	else
+	{
+		// run program:
+
+		ServerParentConnection spc(PARENT_PORT);
+		ParentServer ps(spc);
+		ps.run();
+	}
+
+	return 0;
 }
