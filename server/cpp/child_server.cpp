@@ -150,8 +150,8 @@ void ChildServer::run()
 	cout << "client 2 success" << endl;
 
 	// if login provided, get win/loss records and send to clients
-	m_client1.setWinLossMsg();
-	m_client2.setWinLossMsg();
+	m_client1.setWinLossMsg(m_client2.getUsername());
+	m_client2.setWinLossMsg(m_client1.getUsername());
 	try
 	{
 		cout << "Sending to client 1: " << m_client1.getWinLossMsg()
@@ -361,7 +361,7 @@ void ChildServer::Client::setLoginProvided(const std::string& login)
 	m_loginProvided = true;
 }
 
-void ChildServer::Client::setWinLossMsg()
+void ChildServer::Client::setWinLossMsg(const string& opponentUsername)
 {
 	if (!m_loginProvided)
 	{
@@ -390,7 +390,7 @@ void ChildServer::Client::setWinLossMsg()
 
 	m_winLossMsg = "r" + win + "," + loss + ",";
 	if (m_username != "")
-		m_winLossMsg += m_username;
+		m_winLossMsg += opponentUsername;
 }
 
 void* ChildServer::client1MatchThread(void* args)

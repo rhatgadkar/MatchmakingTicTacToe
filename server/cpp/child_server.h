@@ -20,13 +20,13 @@ private:
 	public:
 		void setLoginProvided(const std::string& login);
 
-		void setWinLossMsg();
+		void setWinLossMsg(const std::string& opponentUsername);
 
 		// getters
-		bool isLoginProvided() { return m_loginProvided; }
-		std::string getUsername() { return m_username; }
-		std::string getPassword() { return m_password; }
-		std::string getWinLossMsg() { return m_winLossMsg; }
+		bool isLoginProvided() const { return m_loginProvided; }
+		std::string getUsername() const { return m_username; }
+		std::string getPassword() const { return m_password; }
+		std::string getWinLossMsg() const { return m_winLossMsg; }
 
 	private:
 		bool m_loginProvided;
