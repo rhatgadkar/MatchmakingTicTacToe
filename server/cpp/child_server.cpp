@@ -8,6 +8,7 @@
 #include <iostream>
 #include <cstring>
 #include <pthread.h>
+#include <unistd.h>
 using namespace std;
 
 void ChildServer::run()
@@ -260,12 +261,12 @@ void ChildServer::run()
 
 void* ChildServer::receiveDisconnectClient1Thread(void* args)
 {
-	Client2ConnectedThreadArgs* a = (Client2ConnectedThreadArgs*)a;
+	Client2ConnectedThreadArgs* a = (Client2ConnectedThreadArgs*)args;
 	bool* messageReceived = a->messageReceived;
 	bool* client2AcceptExpired = a->client2AcceptExpired;
 	ChildServer* cs = a->childServer;
 
-	while (!client2AcceptExpired)
+	while (!(*client2AcceptExpired))
 	{
 		string msg;
 		try
@@ -276,11 +277,14 @@ void* ChildServer::receiveDisconnectClient1Thread(void* args)
 		{
 			continue;
 		}
+		catch (DisconnectException)
+		{
+			*messageReceived = true;
+			break;
+		}
 		catch (...)
 		{
 		}
-		*messageReceived = true;
-		break;
 	}
 
 	return NULL;
@@ -313,6 +317,7 @@ bool ChildServer::isClient2Connected()
 		catch (...)
 		{
 		}
+		sleep(1);
 	}
 	client2AcceptExpired = true;
 	pthread_join(receiveClient1Thread, NULL);

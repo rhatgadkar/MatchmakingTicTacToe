@@ -163,8 +163,10 @@ void ParentServer::createMatchServer(int port)
 	{
 		// child
 		ServerChildConnection childConnection(port);
-		ChildServer childServer(childConnection, port);
-		childServer.run();
+		{
+			ChildServer childServer(childConnection, port);
+			childServer.run();
+		}
 		exit(0);
 	}
 }
