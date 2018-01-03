@@ -80,7 +80,7 @@ string ServerChildConnection::receiveFromClient1(int time)
 	fd_set set;
 	struct timeval timeout;
 	FD_ZERO(&set);
-	FD_SET(m_sockfd, &set);
+	FD_SET(m_clientSockfd1, &set);
 	timeout.tv_sec = time;
 	timeout.tv_usec = 0;
 
@@ -188,7 +188,7 @@ string ServerChildConnection::receiveFromClient2(int time)
 	fd_set set;
 	struct timeval timeout;
 	FD_ZERO(&set);
-	FD_SET(m_sockfd, &set);
+	FD_SET(m_clientSockfd2, &set);
 	timeout.tv_sec = time;
 	timeout.tv_usec = 0;
 
