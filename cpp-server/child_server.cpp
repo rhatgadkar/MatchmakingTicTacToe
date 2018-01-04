@@ -317,7 +317,8 @@ bool ChildServer::isClient2Connected()
 		catch (...)
 		{
 		}
-		sleep(1);
+		if (FOREVER)
+			sleep(1);
 	}
 	client2AcceptExpired = true;
 	pthread_join(receiveClient1Thread, NULL);
@@ -450,7 +451,8 @@ void* ChildServer::client1MatchThread(void* args)
 			}
 			catch (TimeoutException)
 			{
-				sleep(1);
+				if (FOREVER)
+					sleep(1);
 				pthread_mutex_lock(clientRecordMutex);
 				continue;
 			}
@@ -458,7 +460,8 @@ void* ChildServer::client1MatchThread(void* args)
 			{
 				cerr << "Error in receiving message from client 1."
 					<< endl;
-				sleep(1);
+				if (FOREVER)
+					sleep(1);
 				pthread_mutex_lock(clientRecordMutex);
 				continue;
 			}
@@ -651,7 +654,8 @@ void* ChildServer::client2MatchThread(void* args)
 			}
 			catch (TimeoutException)
 			{
-				sleep(1);
+				if (FOREVER)
+					sleep(1);
 				pthread_mutex_lock(clientRecordMutex);
 				continue;
 			}
@@ -659,7 +663,8 @@ void* ChildServer::client2MatchThread(void* args)
 			{
 				cerr << "Error in receiving message from client 2."
 					<< endl;
-				sleep(1);
+				if (FOREVER)
+					sleep(1);
 				pthread_mutex_lock(clientRecordMutex);
 				continue;
 			}
