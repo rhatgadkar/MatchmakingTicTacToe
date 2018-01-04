@@ -9,7 +9,7 @@
 #define PORT_LEN 4
 #define MAX_CHILD_POP 2
 
-// Uncomment below to run the actual program.  Comment below to run unit tests.
+// Keep next line commented to run the actual program.  Uncomment it to run unit tests.
 //#define TEST
 
 #ifndef TEST
