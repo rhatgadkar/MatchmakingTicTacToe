@@ -1,9 +1,9 @@
 #include "child_server.h"
-#include "write_named_pipe.h"
-#include "utilities.h"
-#include "constants.h"
-#include "db-accessor.h"
-#include "exceptions.h"
+#include "../write_named_pipe.h"
+#include "../utilities.h"
+#include "../constants.h"
+#include "../db-accessor.h"
+#include "../exceptions.h"
 #include <string>
 #include <iostream>
 #include <cstring>

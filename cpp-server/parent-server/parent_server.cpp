@@ -1,12 +1,12 @@
 #include "parent_connection.h"
 #include "parent_server.h"
-#include "child_server.h"
-#include "server_child_connection.h"
-#include "utilities.h"
+#include "../child-server/child_server.h"
+#include "../child-server/server_child_connection.h"
+#include "../utilities.h"
 #include <pthread.h>
-#include "constants.h"
-#include "exceptions.h"
-#include "read_named_pipe.h"
+#include "../constants.h"
+#include "../exceptions.h"
+#include "../read_named_pipe.h"
 #include <unistd.h>  // for sleep
 #include <sys/wait.h>  // for waitpid
 #include <unordered_map>

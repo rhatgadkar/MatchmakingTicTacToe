@@ -1,7 +1,7 @@
 #ifndef CHILD_SERVER_H
 #define CHILD_SERVER_H
 
-#include "server.h"
+#include "../server.h"
 #include "child_connection.h"
 #include <string>
 #include <pthread.h>

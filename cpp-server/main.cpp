@@ -1,8 +1,8 @@
-#include "mock_parent_connection.h"
-#include "mock_child_connection.h"
-#include "server_parent_connection.h"
-#include "parent_server.h"
-#include "child_server.h"
+#include "parent-server/mock_parent_connection.h"
+#include "child-server/mock_child_connection.h"
+#include "parent-server/server_parent_connection.h"
+#include "parent-server/parent_server.h"
+#include "child-server/child_server.h"
 #include "constants.h"
 #include <string>
 #include <iostream>

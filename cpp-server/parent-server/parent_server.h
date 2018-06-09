@@ -4,8 +4,8 @@
 #include <pthread.h>
 #include <queue>
 #include <unordered_map>
-#include "read_named_pipe.h"
-#include "server.h"
+#include "../read_named_pipe.h"
+#include "../server.h"
 #include "parent_connection.h"
 
 class ParentServer : public Server
