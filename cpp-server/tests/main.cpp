@@ -1,17 +1,30 @@
-#include "parent-server/mock_parent_connection.h"
-#include "child-server/mock_child_connection.h"
-#include "parent-server/server_parent_connection.h"
-#include "parent-server/parent_server.h"
-#include "child-server/child_server.h"
-#include "constants.h"
+#include "../parent-server/mock_parent_connection.h"
+#include "../parent-server/parent_server.h"
+#include "../child-server/mock_child_connection.h"
+#include "../child-server/child_server.h"
+#include "../write_named_pipe.h"
+#include "../constants.h"
+#include "../utilities.h"
+#include <vector>
+#include <list>
 #include <string>
 #include <iostream>
-#include <vector>
 #include <cassert>
-#include "exceptions.h"
-#include "write_named_pipe.h"
-#include "utilities.h"
 using namespace std;
+
+void testParentServer();
+void testChildServer();
+
+int main()
+{
+	testParentServer();
+	cout << "All Parent Server tests passed!" << endl;
+
+	testChildServer();
+	cout << "All Child Server tests passed!" << endl;
+
+	return 0;
+}
 
 void testParentServer()
 {
@@ -405,28 +418,4 @@ void testChildServer()
 		c.clearSendToClient1Msgs();
 		c.clearSendToClient2Msgs();
 	}
-}
-
-int main()
-{
-	if (!FOREVER)
-	{
-		// run mock unit tests:
-
-		testParentServer();
-		cout << "All Parent Server tests passed!" << endl;
-
-		testChildServer();
-		cout << "All Child Server tests passed!" << endl;
-	}
-	else
-	{
-		// run program:
-
-		ServerParentConnection spc(PARENT_PORT);
-		ParentServer ps(spc);
-		ps.run();
-	}
-
-	return 0;
 }

@@ -162,11 +162,18 @@ void ParentServer::createMatchServer(int port)
 	else
 	{
 		// child
-		ServerChildConnection childConnection(port);
-		{
-			ChildServer childServer(childConnection, port);
-			childServer.run();
-		}
+		string portStr = intToStr(port);
+		const char* argList[] = {
+			"../child-server/a.out",
+			portStr.c_str(),
+			NULL
+		};
+//		ServerChildConnection childConnection(port);
+//		{
+//			ChildServer childServer(childConnection, port);
+//			childServer.run();
+//		}
+		execv(argList[0], (char**) argList);
 		exit(0);
 	}
 }

@@ -5,7 +5,7 @@
 #define BACKLOG 20
 #define MAXBUFLEN 100
 #define MAX_CHILD_SERVERS 100
-#define FIFO_NAME "FIFO_NAME"
+#define FIFO_NAME "/home/rishabh/Documents/MatchmakingTicTacToe/cpp-server/FIFO_NAME"
 #define PORT_LEN 4
 #define MAX_CHILD_POP 2
 
