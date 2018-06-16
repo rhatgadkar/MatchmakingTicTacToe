@@ -3,3 +3,25 @@ C++11 version of server.
 Compile command:
 g++ -c *.cpp -std=c++11 -I /usr/include/postgresql
 g++ *.o -lpthread -lpq -L /usr/lib/postgresql/9.3/lib
+
+TODO:
+- make clean ports a separate cron job process.
+
+DB tables:
+portpop:
+ port | pop 
+------+-----
+ 5004 |   0
+ 5029 |   0
+...
+...
+...
+tttlogin:
+ username | password | ingame 
+----------+----------+--------
+...
+...
+...
+tttrecords:
+ username | win | loss 
+----------+-----+------
