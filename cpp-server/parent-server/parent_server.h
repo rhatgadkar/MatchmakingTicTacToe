@@ -2,9 +2,10 @@
 #define PARENT_SERVER_H
 
 #include <pthread.h>
-#include <queue>
-#include <unordered_map>
+//#include <queue>
+//#include <unordered_map>
 #include "../read_named_pipe.h"
+#include "../write_named_pipe.h"
 #include "../server.h"
 #include "parent_connection.h"
 
@@ -25,36 +26,16 @@ private:
 	void startFreeChildsThread();
 
 	// the empty child servers with population 0
-	std::queue<int> m_emptyServers;
-	mutable pthread_mutex_t m_emptyServersMutex;
-	pthread_mutexattr_t m_emptyServersMutexAttr;
-	void lockEmptyServersMutex() const
-	{
-		pthread_mutex_lock(&m_emptyServersMutex);
-	}
-	void unlockEmptyServersMutex() const
-	{
-		pthread_mutex_unlock(&m_emptyServersMutex);
-	}
+	const ReadNamedPipe m_emptyServersReadNamedPipe;
+	const WriteNamedPipe m_emptyServersWriteNamedPipe;
 
 	// child server ports that have a population of 1
-	std::queue<int> m_waitingServers;
+	const ReadNamedPipe m_waitingServersReadNamedPipe;
+	const WriteNamedPipe m_waitingServersWriteNamedPipe;
 
-	// mapping of ports of child servers and their population
-	std::unordered_map<int, int> m_childServerPop;
-	int m_totalPop;
-	mutable pthread_mutex_t m_popMutex;
-	pthread_mutexattr_t m_popMutexAttr;
-	void lockPopMutex() const
-	{
-		pthread_mutex_lock(&m_popMutex);
-	}
-	void unlockPopMutex() const
-	{
-		pthread_mutex_unlock(&m_popMutex);
-	}
+	// mapping of ports of child servers and their population is in portpop DB
 
-	const ReadNamedPipe m_readNamedPipe;
+	const ReadNamedPipe m_freePortReadNamedPipe;
 
 	// Send total pop and child server port to the incoming client. If
 	// child servers are full, send a 'full' message to the client.

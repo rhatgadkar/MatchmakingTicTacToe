@@ -7,18 +7,18 @@
 #include <string>
 using namespace std;
 
-WriteNamedPipe::WriteNamedPipe(bool create)
+WriteNamedPipe::WriteNamedPipe(const char* fifo_name, bool create)
 {
 	int status;
 
 	if (create)
 	{
-		status = mkfifo(FIFO_NAME, S_IFIFO | 0666);
+		status = mkfifo(fifo_name, S_IFIFO | 0666);
 		if (status == -1)
 			throw runtime_error("WriteNamedPipe::WriteNamedPipe::mkfifo");
 	}
 
-	m_fifofd = open(FIFO_NAME, O_WRONLY);
+	m_fifofd = open(fifo_name, O_WRONLY);
 	if (m_fifofd == -1)
 		throw runtime_error("WriteNamedPipe::WriteNamedPipe::open");
 }

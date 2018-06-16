@@ -7,31 +7,36 @@
 #include "../constants.h"
 #include "../exceptions.h"
 #include "../read_named_pipe.h"
+#include "../write_named_pipe.h"
+#include "../db-accessor.h"
 #include <unistd.h>  // for sleep
 #include <sys/wait.h>  // for waitpid
-#include <unordered_map>
 #include <iostream>
 using namespace std;
 
-ParentServer::ParentServer(ParentConnection& c) : m_parentConnection(c)
+ParentServer::ParentServer(ParentConnection& c) : m_parentConnection(c),
+		m_emptyServersReadNamedPipe(EMPTY_SERVERS_FIFO_NAME),
+		m_emptyServersWriteNamedPipe(EMPTY_SERVERS_FIFO_NAME, false),
+		m_waitingServersReadNamedPipe(WAITING_SERVERS_FIFO_NAME),
+		m_waitingServersWriteNamedPipe(WAITING_SERVERS_FIFO_NAME, false),
+		m_freePortReadNamedPipe(FREE_PORT_FIFO_NAME)
 {
 	for (int port = PARENT_PORT + 1;
 			port < PARENT_PORT + 1 + MAX_CHILD_SERVERS; port++)
 	{
-		m_childServerPop.insert({ port, 0 });
-		m_emptyServers.push(port);
+		string portStr = intToStr(port);
+		set_port_pop(port, 0);
+		try
+		{
+			m_emptyServersWriteNamedPipe.writePipe(portStr,
+					PORT_LEN);
+		}
+		catch (...)
+		{
+			cerr << "Failed to write port to emptyServers pipe"
+					<< endl;
+		}
 	}
-
-	pthread_mutexattr_init(&m_emptyServersMutexAttr);
-	pthread_mutexattr_settype(&m_emptyServersMutexAttr,
-			PTHREAD_MUTEX_RECURSIVE);
-	pthread_mutex_init(&m_emptyServersMutex, &m_emptyServersMutexAttr);
-
-	pthread_mutexattr_init(&m_popMutexAttr);
-	pthread_mutexattr_settype(&m_popMutexAttr, PTHREAD_MUTEX_RECURSIVE);
-	pthread_mutex_init(&m_popMutex, &m_popMutexAttr);
-
-	m_totalPop = 0;
 }
 
 int ParentServer::handleSynPort()
@@ -47,9 +52,7 @@ int ParentServer::handleSynPort()
 	cout << "Accepted client " << m_parentConnection.getClientIP() << ":"
 		<< m_parentConnection.getClientPort() << "." << endl;
 
-	lockPopMutex();
-	int numPpl = m_totalPop;
-	unlockPopMutex();
+	int numPpl = get_total_pop();
 	string numPplStr = intToStr(numPpl);
 	try
 	{
@@ -63,65 +66,121 @@ int ParentServer::handleSynPort()
 	// find child server port
 	bool foundPort = false;
 	int port;
-	lockEmptyServersMutex();
-	while (!foundPort &&
-			(!m_waitingServers.empty() || !m_emptyServers.empty()))
+	while (!foundPort)
 	{
-		unlockEmptyServersMutex();
-		// get first waiting server that has population 1
-		while (!foundPort && !m_waitingServers.empty())
+		bool foundWaitingPort = false;
+		string waitingPort;
+		bool foundEmptyPort = false;
+		string emptyPort;
+		try
 		{
-			port = m_waitingServers.front();
-			m_waitingServers.pop();
-			lockPopMutex();
-			if (m_childServerPop[port] == 1)
-			{
-				m_childServerPop[port]++;
-				m_totalPop++;
-				unlockPopMutex();
-				foundPort = true;
-			}
-			else if (m_childServerPop[port] == 0)
-			{
-				unlockPopMutex();
-				lockEmptyServersMutex();
-				m_emptyServers.push(port);
-				unlockEmptyServersMutex();
-			}
-			else
-				unlockPopMutex();
-
+			waitingPort = m_waitingServersReadNamedPipe.readPipe(
+					PORT_LEN);
+			foundWaitingPort = true;
 		}
-		lockEmptyServersMutex();
-		// no waiting server found. get first empty server with
-		// population 1
-		while (!foundPort && !m_emptyServers.empty())
+		catch (...)
 		{
-			port = m_emptyServers.front();
-			m_emptyServers.pop();
-			unlockEmptyServersMutex();
-			lockPopMutex();
-			if (m_childServerPop[port] == 1)
+			foundWaitingPort = false;
+		}
+		try
+		{
+			emptyPort = m_emptyServersReadNamedPipe.readPipe(
+					PORT_LEN);
+			foundEmptyPort = true;
+		}
+		catch (...)
+		{
+			foundEmptyPort = false;
+		}
+		if (!foundWaitingPort && !foundEmptyPort)
+			break;
+
+		// get first waiting server that has population 1
+		while (!foundPort && foundWaitingPort)
+		{
+			port = strToInt(waitingPort);
+			int portPop = get_port_pop(port);
+			if (portPop == 1)
 			{
-				unlockPopMutex();
-				m_waitingServers.push(port);
-				lockEmptyServersMutex();
+				portPop++;
+				set_port_pop(port, portPop);
+				foundPort = true;
 				break;
 			}
-			else if (m_childServerPop[port] == 0)
+			else if (portPop == 0)
 			{
-				m_childServerPop[port]++;
-				m_totalPop++;
-				unlockPopMutex();
-				m_waitingServers.push(port);
-				foundPort = true;
+				try
+				{
+					m_emptyServersWriteNamedPipe.writePipe(
+							waitingPort, PORT_LEN);
+					foundEmptyPort = true;
+				}
+				catch (...)
+				{
+					cerr << "Failed to write empty port FIFO" << endl;
+				}
 			}
-			else
-				unlockPopMutex();
-			lockEmptyServersMutex();
+			try
+			{
+				waitingPort = m_waitingServersReadNamedPipe.readPipe(
+						PORT_LEN);
+				foundWaitingPort = true;
+			}
+			catch (...)
+			{
+				foundWaitingPort = false;
+			}
+
+		}
+		// no waiting server found. get first empty server with
+		// population 1
+		while (!foundPort && foundEmptyPort)
+		{
+			port = strToInt(emptyPort);
+			int portPop = get_port_pop(port);
+			if (portPop == 1)
+			{
+				try
+				{
+					m_waitingServersWriteNamedPipe.writePipe(
+							emptyPort, PORT_LEN);
+					foundWaitingPort = true;
+				}
+				catch (...)
+				{
+					cerr << "Failed to write waiting port FIFO" << endl;
+				}
+				break;
+			}
+			else if (portPop == 0)
+			{
+				portPop++;
+				set_port_pop(port, portPop);
+				try
+				{
+					m_waitingServersWriteNamedPipe.writePipe(
+							emptyPort, PORT_LEN);
+					foundWaitingPort = true;
+				}
+				catch (...)
+				{
+					cerr << "Failed to write waiting port FIFO" << endl;
+				}
+				foundPort = true;
+				break;
+			}
+			try
+			{
+				emptyPort = m_emptyServersReadNamedPipe.readPipe(
+						PORT_LEN);
+				foundEmptyPort = true;
+			}
+			catch (...)
+			{
+				foundEmptyPort = false;
+			}
 		}
 	}
-	unlockEmptyServersMutex();
 	if (!foundPort)
 	{
 		try
@@ -168,11 +227,6 @@ void ParentServer::createMatchServer(int port)
 			portStr.c_str(),
 			NULL
 		};
-//		ServerChildConnection childConnection(port);
-//		{
-//			ChildServer childServer(childConnection, port);
-//			childServer.run();
-//		}
 		execv(argList[0], (char**) argList);
 		exit(0);
 	}
@@ -196,16 +250,13 @@ void ParentServer::run()
 		}
 		m_parentConnection.closeClient();
 
-		lockPopMutex();
-		if (m_childServerPop[port] == 1)
+		int portPop = get_port_pop(port);
+		if (portPop == 1)
 		{
-			unlockPopMutex();
 			if (!FOREVER)
 				return;
 			createMatchServer(port);
 		}
-		else
-			unlockPopMutex();
 
 	} while (FOREVER);
 }
@@ -222,19 +273,17 @@ void ParentServer::startFreeChildsThread()
 void ParentServer::freeChildsAction(const string& portStr)
 {
 	int port = strToInt(portStr);
-	unordered_map<int, int>::iterator foundChild;
-	lockPopMutex();
-	foundChild = m_childServerPop.find(port);
-	if (foundChild != m_childServerPop.end() && foundChild->second != 0)
+	cout << "clearing port: " << port << endl;
+	set_port_pop(port, 0);
+	try
 	{
-		cout << "clearing port: " << port << endl;
-		m_totalPop -= foundChild->second;
-		foundChild->second = 0;
-		lockEmptyServersMutex();
-		m_emptyServers.push(port);
-		unlockEmptyServersMutex();
+		m_emptyServersWriteNamedPipe.writePipe(
+				portStr, PORT_LEN);
 	}
-	unlockPopMutex();
+	catch (...)
+	{
+		cerr << "Failed to write empty port FIFO" << endl;
+	}
 }
 
 void* ParentServer::freeChildsThread(void* args)
@@ -251,7 +300,8 @@ void* ParentServer::freeChildsThread(void* args)
 			try
 			{
 				portStr =
-					ps->m_readNamedPipe.readPipe(PORT_LEN);
+					ps->m_freePortReadNamedPipe.readPipe(PORT_LEN);
+				ps->freeChildsAction(portStr);
 			}
 			catch (exception& e)
 			{
@@ -260,7 +310,6 @@ void* ParentServer::freeChildsThread(void* args)
 				msg += "::readPipe";
 				cerr << msg << endl;
 			}
-			ps->freeChildsAction(portStr);
 		} while ((waitpid(-1, NULL, WNOHANG)) > 0);
 
 	} while (FOREVER);

@@ -7,7 +7,7 @@
 class ReadNamedPipe : public NamedPipe
 {
 public:
-	ReadNamedPipe(bool create = true);
+	ReadNamedPipe(const char* fifo_name, bool create = true);
 	virtual ~ReadNamedPipe() {}
 	std::string readPipe(unsigned len) const;
 };

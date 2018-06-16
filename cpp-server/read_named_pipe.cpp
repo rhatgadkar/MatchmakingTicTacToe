@@ -8,18 +8,18 @@
 #include <cstring>
 using namespace std;
 
-ReadNamedPipe::ReadNamedPipe(bool create)
+ReadNamedPipe::ReadNamedPipe(const char* fifo_name, bool create)
 {
 	int status;
 
 	if (create)
 	{
-		status = mkfifo(FIFO_NAME, S_IFIFO | 0666);
+		status = mkfifo(fifo_name, S_IFIFO | 0666);
 		if (status == -1)
 			throw runtime_error("ReadNamedPipe::ReadNamedPipe::mkfifo");
 	}
 
-	m_fifofd = open(FIFO_NAME, O_RDONLY | O_NDELAY);
+	m_fifofd = open(fifo_name, O_RDONLY | O_NDELAY);
 	if (m_fifofd == -1)
 		throw runtime_error("ReadNamedPipe::ReadNamedPipe::open");
 }
@@ -32,7 +32,9 @@ string ReadNamedPipe::readPipe(unsigned len) const
 	memset(buf, 0, MAXBUFLEN);
 	status = read(m_fifofd, buf, len);
 	if (status == -1)
-		throw runtime_error("ReadNamedPipe::read::read");
+		throw runtime_error("ReadNamedPipe::read : read returned -1");
+	if (strlen(buf) != len)
+		throw runtime_error("ReadNamedPipe::read : could not read len");
 	string newStr(buf);
 	return newStr;
 }

@@ -2,10 +2,13 @@
 #define VAR_SIZE 80
 
 #include <libpq-fe.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
+#include <string>
 #include "db-accessor.h"
+#include "utilities.h"
+using namespace std;
 
 static PGconn * db_connect(const char *conninfo);
 static PGresult * exec_command(PGconn *conn, const char *cmd, int get_data);
@@ -312,4 +315,127 @@ exec_command(PGconn *conn, const char *cmd, int get_data)
 		exit(1);
 	}
 	return res;
+}
+
+int
+get_port_pop(int port)
+{
+	PGconn *conn;
+	int status;
+	char cmd_str[CMD_SIZE];
+	PGresult *res;
+	int output_null;
+
+	conn = db_connect("dbname=mydb");
+	memset(cmd_str, 0, CMD_SIZE);
+
+	// check if user exists
+	status = snprintf(cmd_str, CMD_SIZE,
+			"SELECT * \
+			FROM portpop \
+			WHERE portpop.port=%d",
+			port);
+	if (status < 0)
+	{
+		fprintf(stderr, "snprintf failed\n");
+		PQfinish(conn);
+		return -1;
+	}
+	res = exec_command(conn, cmd_str, 1);
+	output_null = PQgetisnull(res, 0, 0);
+	if (!output_null)
+	{
+		// port exists - return pop
+		char* pop = PQgetvalue(res, 0, 1);
+		string pop_str(pop);
+		PQclear(res);
+		PQfinish(conn);
+		return strToInt(pop_str);
+	}
+	else
+	{
+		printf("Port does not exist in DB.\n");
+		PQclear(res);
+		PQfinish(conn);
+		return -2;
+	}
+}
+
+void
+set_port_pop(int port, int pop)
+{
+	PGconn *conn;
+	int status;
+	char cmd_str[CMD_SIZE];
+	PGresult *res;
+
+	memset(cmd_str, 0, CMD_SIZE);
+	conn = db_connect("dbname=mydb");
+
+	int port_pop = get_port_pop(port);
+	if (port_pop < 0)
+	{
+		// port does not exist, so insert it
+		printf("Adding new port.\n");
+		status = snprintf(cmd_str, CMD_SIZE,
+				"INSERT INTO portpop (port,pop)\
+				VALUES (%d,%d)",
+				port, pop);
+		if (status < 0)
+		{
+			fprintf(stderr, "snprintf failed\n");
+			PQfinish(conn);
+			return;
+		}
+		res = exec_command(conn, cmd_str, 0);
+		PQfinish(conn);
+		return;
+	}
+
+	memset(cmd_str, 0, CMD_SIZE);
+
+	status = snprintf(cmd_str, CMD_SIZE,
+			"UPDATE portpop \
+			SET pop=%d \
+			WHERE portpop.port=%d",
+			pop, port);
+	if (status < 0)
+	{
+		fprintf(stderr, "snprintf failed\n");
+		PQfinish(conn);
+		exit(1);
+	}
+	res = exec_command(conn, cmd_str, 0);
+	memset(cmd_str, 0, CMD_SIZE);
+
+	PQclear(res);
+	PQfinish(conn);
+}
+
+int
+get_total_pop()
+{
+	PGconn *conn;
+	int status;
+	char cmd_str[CMD_SIZE];
+	PGresult *res;
+
+	conn = db_connect("dbname=mydb");
+	memset(cmd_str, 0, CMD_SIZE);
+
+	status = snprintf(cmd_str, CMD_SIZE,
+			"SELECT SUM(pop) \
+			FROM portpop;");
+	if (status < 0)
+	{
+		fprintf(stderr, "snprintf failed\n");
+		PQfinish(conn);
+		exit(1);
+	}
+	res = exec_command(conn, cmd_str, 1);
+	char* pop = PQgetvalue(res, 0, 0);
+	string pop_str(pop);
+	PQclear(res);
+	PQfinish(conn);
+	return strToInt(pop_str);
 }

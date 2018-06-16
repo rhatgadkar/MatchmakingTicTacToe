@@ -331,9 +331,15 @@ ChildServer::~ChildServer()
 {
 	if (FOREVER)
 	{
-		WriteNamedPipe writeNamedPipe(false);
+		WriteNamedPipe writeNamedPipe(FREE_PORT_FIFO_NAME, false);
 		string portStr = intToStr(m_port);
-		writeNamedPipe.writePipe(portStr, portStr.length());
+		try
+		{
+			writeNamedPipe.writePipe(portStr, portStr.length());
+		}
+		catch (...)
+		{
+		}
 	}
 }
 
