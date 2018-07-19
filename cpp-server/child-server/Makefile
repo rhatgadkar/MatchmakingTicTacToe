@@ -38,4 +38,4 @@ write_named_pipe.o : ../write_named_pipe.cpp ../write_named_pipe.h \
 	$(CC) $(CFLAGS) ../write_named_pipe.cpp
 
 clean:
-	rm *.o
+	rm a.out *.o

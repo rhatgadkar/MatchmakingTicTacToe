@@ -66,4 +66,4 @@ write_named_pipe.o : ../write_named_pipe.cpp ../write_named_pipe.h \
 	$(CC) $(CFLAGS) ../write_named_pipe.cpp
 
 clean:
-	rm *.o ../EMPTY_SERVERS_FIFO ../FREE_PORT_FIFO ../WAITING_SERVERS_FIFO
+	rm a.out *.o ../EMPTY_SERVERS_FIFO ../FREE_PORT_FIFO ../WAITING_SERVERS_FIFO
