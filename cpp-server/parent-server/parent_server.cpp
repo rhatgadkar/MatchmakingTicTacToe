@@ -1,7 +1,5 @@
 #include "parent_connection.h"
 #include "parent_server.h"
-#include "../child-server/child_server.h"
-#include "../child-server/server_child_connection.h"
 #include "../utilities.h"
 #include <pthread.h>
 #include "../constants.h"

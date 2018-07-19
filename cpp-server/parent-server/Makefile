@@ -11,10 +11,8 @@ main.o : main.cpp server_parent_connection.h parent_server.h ../constants.h
 	$(CC) $(CFLAGS) main.cpp
 
 parent_server.o : parent_server.cpp parent_server.h parent_connection.h \
-		../child-server/child_server.h \
-		../child-server/server_child_connection.h ../utilities.h \
-		../constants.h ../exceptions.h ../read_named_pipe.h \
-		../write_named_pipe.h ../db-accessor.h
+		../utilities.h ../constants.h ../exceptions.h \
+		../read_named_pipe.h ../write_named_pipe.h ../db-accessor.h
 	$(CC) $(CFLAGS) parent_server.cpp
 
 server_parent_connection.o : server_parent_connection.cpp \

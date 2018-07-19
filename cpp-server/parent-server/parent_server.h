@@ -2,8 +2,6 @@
 #define PARENT_SERVER_H
 
 #include <pthread.h>
-//#include <queue>
-//#include <unordered_map>
 #include "../read_named_pipe.h"
 #include "../write_named_pipe.h"
 #include "../server.h"
@@ -17,9 +15,8 @@ public:
 	virtual void run();
 
 private:
-	// Given a portStr, set the value of the corresponding port in
-	// m_childServerPop to 0, push the port to the m_emptyServers queue,
-	// and reduce the m_totalPop.
+	// Given a portStr, set the value of the corresponding port's pop in
+	// the database to 0, push the port to the empty servers named pipe.
 	pthread_t m_freeChildsThread;
 	static void* freeChildsThread(void* args);
 	void freeChildsAction(const std::string& portStr);
