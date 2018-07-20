@@ -32,6 +32,7 @@ void testParentServer()
 	ParentServer p(c);
 	const vector<string>* sentMsgs;
 
+	// ParentServer Test 1
 	// test send 0 pop and 4951 port
 	// current variable values:
 	// 	waitingServers: []
@@ -47,7 +48,9 @@ void testParentServer()
 	assert(sentMsgs->at(0) == "0");
 	assert(sentMsgs->at(1) == "4951");
 	c.clearSentMsgs();
+	cout << "Parent Server Test 1 passed!" << endl;
 
+	// ParentServer Test 2
 	// test send 1 pop and 4951 port
 	// current variable values:
 	// 	waitingServers: [ 4951 ]
@@ -63,7 +66,9 @@ void testParentServer()
 	assert(sentMsgs->at(0) == "1");
 	assert(sentMsgs->at(1) == "4951");
 	c.clearSentMsgs();
+	cout << "Parent Server Test 2 passed!" << endl;
 
+	// ParentServer Test 3
 	// test send 2 pop and 4952 port
 	// current variable values:
 	// 	waitingServers: []
@@ -79,7 +84,9 @@ void testParentServer()
 	assert(sentMsgs->at(0) == "2");
 	assert(sentMsgs->at(1) == "4952");
 	c.clearSentMsgs();
+	cout << "ParentServer Test 3 passed!" << endl;
 
+	// ParentServer Test 4
 	// test clear 4951 port, send 1 pop and 4952 port
 	// current variable values:
 	// 	waitingServers: [ 4952 ]
@@ -94,7 +101,7 @@ void testParentServer()
 	// 	emptyServers: [ 4953, 4954, ..., 5050, 4951 ]
 	// 	pop: 2
 	{
-		WriteNamedPipe wnp(false);
+		WriteNamedPipe wnp(FREE_PORT_FIFO_NAME, false);
 		wnp.writePipe("4951", PORT_LEN);
 	}
 	p.run();
@@ -103,7 +110,9 @@ void testParentServer()
 	assert(sentMsgs->at(0) == "1");
 	assert(sentMsgs->at(1) == "4952");
 	c.clearSentMsgs();
+	cout << "ParentServer Test 4 passed!" << endl;
 
+	// ParentServer Test 5
 	// test send 2 pop and 4953 port
 	// current variable values:
 	// 	waitingServers: []
@@ -119,7 +128,9 @@ void testParentServer()
 	assert(sentMsgs->at(0) == "2");
 	assert(sentMsgs->at(1) == "4953");
 	c.clearSentMsgs();
+	cout << "ParentServer Test 5 passed!" << endl;
 
+	// ParentServer Test 6
 	// test clear 4953 port, send 2 pop and 4954 port
 	// current variable values:
 	// 	waitingServers: [ 4953 ]
@@ -134,7 +145,7 @@ void testParentServer()
 	// 	emptyServers: [ 4955, 4956, ..., 5050, 4951, 4953 ]
 	// 	pop: 3
 	{
-		WriteNamedPipe wnp(false);
+		WriteNamedPipe wnp(FREE_PORT_FIFO_NAME, false);
 		wnp.writePipe("4953", PORT_LEN);
 	}
 	p.run();
@@ -143,7 +154,9 @@ void testParentServer()
 	assert(sentMsgs->at(0) == "2");
 	assert(sentMsgs->at(1) == "4954");
 	c.clearSentMsgs();
+	cout << "ParentServer Test 6 passed!" << endl;
 
+	// ParentServer Test 7
 	// test 200 pop
 	// current variable values:
 	// 	waitingServers: [ 4954 ]
@@ -160,7 +173,9 @@ void testParentServer()
 		assert(sentMsgs->at(0) == intToStr(pop));
 		c.clearSentMsgs();
 	}
+	cout << "ParentServer Test 7 passed!" << endl;
 
+	// ParentServer Test 8
 	// test 'full' gets sent after 200 pop
 	// current variable values:
 	// 	waitingServers: []
@@ -175,6 +190,7 @@ void testParentServer()
 	assert(sentMsgs->at(0) == "200");
 	assert(sentMsgs->at(1) == "full");
 	c.clearSentMsgs();
+	cout << "ParentServer Test 8 passed!" << endl;
 }
 
 void testChildServer()
@@ -185,6 +201,7 @@ void testChildServer()
 	vector<string> expectedSendToClient1Msgs;
 	vector<string> expectedSendToClient2Msgs;
 
+	// ChildServer Test 1
 	// test client 1, client 2 guest and client 1 win
 	// client 1 send: "," "1" "3" "5" "w7"
 	// client 2 send: "," "2" "4" "6"
@@ -210,7 +227,9 @@ void testChildServer()
 		c.clearSendToClient1Msgs();
 		c.clearSendToClient2Msgs();
 	}
+	cout << "ChildServer Test 1 passed!" << endl;
 
+	// ChildServer Test 2
 	// test client 1, client 2 guest and client 2 win
 	// client 1 send: "," "2" "4" "6" "8"
 	// client 2 send: "," "1" "3" "5" "w7"
@@ -236,7 +255,9 @@ void testChildServer()
 		c.clearSendToClient1Msgs();
 		c.clearSendToClient2Msgs();
 	}
+	cout << "ChildServer Test 2 passed!" << endl;
 
+	// ChildServer Test 3
 	// test client 1, client 2 guest and client 1 giveup
 	// client 1 send: "," "2" "4" "6" "giveup"
 	// client 2 send: "," "1" "3" "5"
@@ -262,7 +283,9 @@ void testChildServer()
 		c.clearSendToClient1Msgs();
 		c.clearSendToClient2Msgs();
 	}
+	cout << "ChildServer Test 3 passed!" << endl;
 
+	// ChildServer Test 4
 	// test client 1, client 2 guest and client 2 giveup
 	// client 1 send: "," "1" "3" "5"
 	// client 2 send: "," "2" "4" "6" "giveup"
@@ -288,7 +311,9 @@ void testChildServer()
 		c.clearSendToClient1Msgs();
 		c.clearSendToClient2Msgs();
 	}
+	cout << "ChildServer Test 4 passed!" << endl;
 
+	// ChildServer Test 5
 	// test client 1, client 2 guest and client 1 bye
 	// client 1 send: "," "2" "4" "6" "bye"
 	// client 2 send: "," "1" "3" "5"
@@ -314,7 +339,9 @@ void testChildServer()
 		c.clearSendToClient1Msgs();
 		c.clearSendToClient2Msgs();
 	}
+	cout << "ChildServer Test 5 passed!" << endl;
 
+	// ChildServer Test 6
 	// test client 1, client 2 guest and client 2 bye
 	// client 1 send: "," "1" "3" "5"
 	// client 2 send: "," "2" "4" "6" "bye"
@@ -340,7 +367,9 @@ void testChildServer()
 		c.clearSendToClient1Msgs();
 		c.clearSendToClient2Msgs();
 	}
+	cout << "ChildServer Test 6 passed!" << endl;
 
+	// ChildServer Test 7
 	// test client 1, client 2 non-guests and client 2 bye
 	// client 1 send: "a,a" "1" "3" "5"
 	// client 2 send: "b,b" "2" "4" "6" "bye"
@@ -366,7 +395,9 @@ void testChildServer()
 		c.clearSendToClient1Msgs();
 		c.clearSendToClient2Msgs();
 	}
+	cout << "ChildServer Test 7 passed!" << endl;
 
+	// ChildServer Test 8
 	// test client 1 non-guest, client 2 guest and client 2 bye
 	// client 1 send: "a,a" "1" "3" "5"
 	// client 2 send: "," "2" "4" "6" "bye"
@@ -392,7 +423,9 @@ void testChildServer()
 		c.clearSendToClient1Msgs();
 		c.clearSendToClient2Msgs();
 	}
+	cout << "ChildServer Test 8 passed!" << endl;
 
+	// ChildServer Test 9
 	// test client 1 guest, client 2 non-guest and client 2 bye
 	// client 1 send: "," "1" "3" "5"
 	// client 2 send: "b,b" "2" "4" "6" "bye"
@@ -418,4 +451,5 @@ void testChildServer()
 		c.clearSendToClient1Msgs();
 		c.clearSendToClient2Msgs();
 	}
+	cout << "ChildServer Test 9 passed!" << endl;
 }
