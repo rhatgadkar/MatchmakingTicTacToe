@@ -70,6 +70,8 @@ int ParentServer::handleSynPort()
 		string waitingPort;
 		bool foundEmptyPort = false;
 		string emptyPort;
+
+		// get first waiting server that has population 1
 		try
 		{
 			waitingPort = m_waitingServersReadNamedPipe.readPipe(
@@ -80,20 +82,6 @@ int ParentServer::handleSynPort()
 		{
 			foundWaitingPort = false;
 		}
-		try
-		{
-			emptyPort = m_emptyServersReadNamedPipe.readPipe(
-					PORT_LEN);
-			foundEmptyPort = true;
-		}
-		catch (...)
-		{
-			foundEmptyPort = false;
-		}
-		if (!foundWaitingPort && !foundEmptyPort)
-			break;
-
-		// get first waiting server that has population 1
 		while (!foundPort && foundWaitingPort)
 		{
 			port = strToInt(waitingPort);
@@ -130,8 +118,19 @@ int ParentServer::handleSynPort()
 			}
 
 		}
-		// no waiting server found. get first empty server with
-		// population 1
+		if (foundPort)
+			break;
+
+		// no waiting server found. get first empty server
+		try
+		{
+			emptyPort = m_emptyServersReadNamedPipe.readPipe(PORT_LEN);
+			foundEmptyPort = true;
+		}
+		catch (...)
+		{
+			foundEmptyPort = false;
+		}
 		while (!foundPort && foundEmptyPort)
 		{
 			port = strToInt(emptyPort);
@@ -178,6 +177,9 @@ int ParentServer::handleSynPort()
 				foundEmptyPort = false;
 			}
 		}
+
+		if (!foundWaitingPort && !foundEmptyPort)
+			break;
 	}
 	if (!foundPort)
 	{
