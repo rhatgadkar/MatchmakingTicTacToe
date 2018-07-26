@@ -604,6 +604,8 @@ void* ChildServer::client1MatchThread(void* args)
 		pthread_mutex_lock(clientRecordMutex);
 	}
 	pthread_mutex_unlock(clientRecordMutex);
+	if (!FOREVER)
+		sleep(1);  // hack to allow client2MatchThread to finish
 
 	return NULL;
 }
@@ -736,6 +738,7 @@ void* ChildServer::client2MatchThread(void* args)
 				cerr << "Error in sending 'bye' to client 1"
 					<< endl;
 			}
+
 			break;
 		}
 		else if (msg == "giveup")
@@ -760,6 +763,7 @@ void* ChildServer::client2MatchThread(void* args)
 			}
 			else
 				pthread_mutex_unlock(clientRecordMutex);
+
 			break;
 		}
 		else
@@ -807,6 +811,8 @@ void* ChildServer::client2MatchThread(void* args)
 		pthread_mutex_lock(clientRecordMutex);
 	}
 	pthread_mutex_unlock(clientRecordMutex);
+	if (!FOREVER)
+		sleep(1);  // hack to allow client1MatchThread to finish
 
 	return NULL;
 }
