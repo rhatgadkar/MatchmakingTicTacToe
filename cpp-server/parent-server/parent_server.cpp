@@ -1,15 +1,13 @@
 #include "parent_connection.h"
 #include "parent_server.h"
 #include "../utilities.h"
-#include <pthread.h>
 #include "../constants.h"
 #include "../exceptions.h"
 #include "../read_named_pipe.h"
 #include "../write_named_pipe.h"
 #include "../db-accessor.h"
-#include <unistd.h>  // for sleep
-#include <sys/wait.h>  // for waitpid
 #include <iostream>
+#include <sys/wait.h>  // for waitpid
 using namespace std;
 
 ParentServer::ParentServer(ParentConnection& c) : m_parentConnection(c),
@@ -234,7 +232,7 @@ void ParentServer::createMatchServer(int port)
 
 void ParentServer::run()
 {
-	startFreeChildsThread();
+	startCronFreeChildsProcess();
 
 	do
 	{
@@ -261,58 +259,26 @@ void ParentServer::run()
 	} while (FOREVER);
 }
 
-void ParentServer::startFreeChildsThread()
+void ParentServer::startCronFreeChildsProcess()
 {
-	pthread_create(&m_freeChildsThread, NULL,
-			&ParentServer::freeChildsThread, this);
+	pid_t child_pid;
+
+	child_pid = fork();
+	if (child_pid != 0)
+	{
+		// parent
+	}
+	else
+	{
+		// child
+		const char* argList[] = {
+			"../cron-free-childs/a.out",
+			NULL
+		};
+		execv(argList[0], (char**) argList);
+		exit(0);
+	}
 
 	if (!FOREVER)
-		pthread_join(m_freeChildsThread, NULL);
-}
-
-void ParentServer::freeChildsAction(const string& portStr)
-{
-	int port = strToInt(portStr);
-	cout << "clearing port: " << port << endl;
-	set_port_pop(port, 0);
-	try
-	{
-		m_emptyServersWriteNamedPipe.writePipe(
-				portStr, PORT_LEN);
-	}
-	catch (...)
-	{
-		cerr << "Failed to write empty port FIFO" << endl;
-	}
-}
-
-void* ParentServer::freeChildsThread(void* args)
-{
-	ParentServer* ps = (ParentServer*)args;
-
-	do
-	{
-		sleep(THREAD_INTERVAL);
-
-		do
-		{
-			string portStr;
-			try
-			{
-				portStr =
-					ps->m_freePortReadNamedPipe.readPipe(PORT_LEN);
-				ps->freeChildsAction(portStr);
-			}
-			catch (exception& e)
-			{
-				e.what();
-				string msg = "ParentServer::freeChildsThread";
-				msg += "::readPipe";
-				cerr << msg << endl;
-			}
-		} while ((waitpid(-1, NULL, WNOHANG)) > 0);
-
-	} while (FOREVER);
-
-	return NULL;
+		waitpid(child_pid, NULL, 0);
 }

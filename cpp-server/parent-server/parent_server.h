@@ -1,11 +1,11 @@
 #ifndef PARENT_SERVER_H
 #define PARENT_SERVER_H
 
-#include <pthread.h>
 #include "../read_named_pipe.h"
 #include "../write_named_pipe.h"
 #include "../server.h"
 #include "parent_connection.h"
+#include "../constants.h"
 
 class ParentServer : public Server
 {
@@ -17,10 +17,7 @@ public:
 private:
 	// Given a portStr, set the value of the corresponding port's pop in
 	// the database to 0, push the port to the empty servers named pipe.
-	pthread_t m_freeChildsThread;
-	static void* freeChildsThread(void* args);
-	void freeChildsAction(const std::string& portStr);
-	void startFreeChildsThread();
+	void startCronFreeChildsProcess();
 
 	// the empty child servers with population 0
 	const ReadNamedPipe m_emptyServersReadNamedPipe;
@@ -31,7 +28,6 @@ private:
 	const WriteNamedPipe m_waitingServersWriteNamedPipe;
 
 	// mapping of ports of child servers and their population is in portpop DB
-
 	const ReadNamedPipe m_freePortReadNamedPipe;
 
 	// Send total pop and child server port to the incoming client. If

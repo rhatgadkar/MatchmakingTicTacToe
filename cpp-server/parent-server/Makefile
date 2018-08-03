@@ -5,7 +5,7 @@ CFLAGS = -c -I/usr/include/postgresql -std=c++11
 LFLAGS = -L/usr/lib/postgresql/9.3/lib
 
 a.out : $(OBJS)
-	$(CC) $(LFLAGS) $(OBJS) -lpq -lpthread
+	$(CC) $(LFLAGS) $(OBJS) -lpq
 
 main.o : main.cpp server_parent_connection.h parent_server.h ../constants.h
 	$(CC) $(CFLAGS) main.cpp
