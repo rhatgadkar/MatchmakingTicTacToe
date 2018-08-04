@@ -18,7 +18,7 @@ WriteNamedPipe::WriteNamedPipe(const char* fifo_name, bool create)
 			throw runtime_error("WriteNamedPipe::WriteNamedPipe::mkfifo");
 	}
 
-	m_fifofd = open(fifo_name, O_WRONLY);
+	m_fifofd = open(fifo_name, O_WRONLY | O_NDELAY);
 	if (m_fifofd == -1)
 		throw runtime_error("WriteNamedPipe::WriteNamedPipe::open");
 }
