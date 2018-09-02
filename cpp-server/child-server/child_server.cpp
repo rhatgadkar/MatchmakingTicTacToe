@@ -80,6 +80,13 @@ void ChildServer::run()
 	catch (...)
 	{
 		cerr << "Error sending player 1 ACK to client 1" << endl;
+
+		if (FOREVER)
+		{
+			// set both clients to not in game in database
+			if (m_client1.isLoginProvided())
+				set_user_no_ingame(m_client1.getUsername().c_str());
+		}
 		return;
 	}
 	cout << "First client connected: " << m_childConnection.getClient1IP()
@@ -94,6 +101,13 @@ void ChildServer::run()
 		{
 			m_childConnection.closeClient1();
 			cout << "No opponent found for this server." << endl;
+
+			if (FOREVER)
+			{
+				// set both clients to not in game in database
+				if (m_client1.isLoginProvided())
+					set_user_no_ingame(m_client1.getUsername().c_str());
+			}
 			return;
 		}
 
@@ -163,6 +177,15 @@ void ChildServer::run()
 	{
 		cerr << "Error sending message to client 1." << endl;
 		m_childConnection.closeClient2();
+
+		if (FOREVER)
+		{
+			// set both clients to not in game in database
+			if (m_client1.isLoginProvided())
+				set_user_no_ingame(m_client1.getUsername().c_str());
+			if (m_client2.isLoginProvided())
+				set_user_no_ingame(m_client2.getUsername().c_str());
+		}
 		return;
 	}
 	try
@@ -175,6 +198,15 @@ void ChildServer::run()
 	{
 		cerr << "Error sending message to client 2." << endl;
 		m_childConnection.closeClient2();
+
+		if (FOREVER)
+		{
+			// set both clients to not in game in database
+			if (m_client1.isLoginProvided())
+				set_user_no_ingame(m_client1.getUsername().c_str());
+			if (m_client2.isLoginProvided())
+				set_user_no_ingame(m_client2.getUsername().c_str());
+		}
 		return;
 	}
 	cout << "Second client connected: " << m_childConnection.getClient2IP()
