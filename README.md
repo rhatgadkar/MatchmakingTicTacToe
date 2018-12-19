@@ -1,6 +1,6 @@
 Networked matchmaking TicTacToe game.  Pairs of players automatically get matched to a game.  The server is hosted on an AWS EC2.
 
-Available for download on Google Play:  https://play.google.com/store/apps/details?id=com.mmttt.canvastry&hl=en-US
+Was available on Google Play from July 2017 to September 2018.
 
 ![image](https://user-images.githubusercontent.com/8902454/32877499-ae23c66c-ca56-11e7-9fef-c860b496472d.png)
 
